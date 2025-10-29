@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="description" content="Inventarplaner für das THW Aachen" />
+        <title>THW Aachen</title>
+
+        <!-- include bootstrap here to avoid flash of unstyled content; not sure if we'll use it yet -->
+        <!-- <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css" /> -->
+    </head>
+
+    <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root">
+            <div
+                style="
+                    display: flex;
+                    height: 100vh;
+                    place-content: center;
+                    place-items: center;
+                    text-align: center;
+                    flex-direction: column;
+                "
+            >
+                <h1 style="font-size: 30px">THW Aachen</h1>
+                <div style="font-size: 20px">Anwendung wird geladen...</div>
+            </div>
+        </div>
+        <script type="module" src="/src/index.tsx"></script>
+    </body>
+</html>
