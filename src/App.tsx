@@ -3,17 +3,31 @@ import styled from 'styled-components';
 import Sidebar from './features/sidebar/Sidebar';
 
 const PageWrapper = styled.div`
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background: white;
+
+    @media (min-width: 768px) {
+        padding-left: 250px;
+    }
+`;
+
+const AppContent = styled.div`
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
 `;
 
 const App = () => {
     return (
         <PageWrapper>
             <Sidebar />
-            <div className="app-content">
+            <AppContent>
                 <Outlet />
-            </div>
+            </AppContent>
         </PageWrapper>
     );
 };
