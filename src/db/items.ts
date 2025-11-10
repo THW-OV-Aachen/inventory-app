@@ -28,6 +28,7 @@ export interface ItemDb {
 }
 
 export interface ItemGroupDb {
+    id?: number;
     amountTarget: number;
     amountActual: number;
     itemNumber: string;

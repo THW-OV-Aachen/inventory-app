@@ -8,6 +8,7 @@ export class InventoryDb extends Dexie {
         super('InventoryDb');
 
         this.version(1).stores({
+            itemGroups: ['++id', '&itemNumber', 'amountTarget', 'amountActual', 'remark'].join(','),
             items: [
                 '++id',
                 'name',
