@@ -1,5 +1,5 @@
 import { type IDbInventoryItem, type IDbItemDefinition } from '../db/legacy.items';
-import { db } from '../db/db';
+import { db } from '../db/legacy.db';
 
 import { useLiveQuery } from 'dexie-react-hooks';
 
