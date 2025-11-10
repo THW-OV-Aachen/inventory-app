@@ -1,5 +1,13 @@
 import Dexie, { type Table } from 'dexie';
-import type { IOrganisationalUnit, IItemType, IManufacturer, IDbItemDefinition, IDbInventoryItem } from './items';
+import type { ItemDb, ItemGroupDb } from './items';
+
+import type {
+    IOrganisationalUnit,
+    IItemType,
+    IManufacturer,
+    IDbItemDefinition,
+    IDbInventoryItem,
+} from './legacy.items';
 
 export class InventoryDb extends Dexie {
     public organisationalUnits!: Table<IOrganisationalUnit, number>;
@@ -35,5 +43,33 @@ export class InventoryDb extends Dexie {
     }
 }
 
+export class ItemInventoryDb extends Dexie {
+    public items!: Table<ItemDb, number>;
+    public itemGroups!: Table<ItemGroupDb, number>;
+
+    constructor() {
+        super('ItemInventoryDb');
+
+        this.version(1).stores({
+            items: [
+                '++id',
+                'name',
+                'isSet',
+                'remark',
+                'availability',
+                'damageLevel',
+                'lastInspection',
+                'inspectionIntervalDays',
+                'location',
+                '&itemNumber',
+                'inventoryNumber',
+                'deviceNumber',
+            ].join(','),
+        });
+    }
+}
+
 // Global instance for your app
 export const db = new InventoryDb();
+
+export const itemDb = new ItemInventoryDb();

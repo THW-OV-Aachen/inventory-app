@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { type IDbInventoryItem, CompoundType } from '../../db/items';
-import { lookupApi, inventoryApi } from '../../app/api';
+import { type IDbInventoryItem, CompoundType } from '../../db/legacy.items';
+import { lookupApi, inventoryApi } from '../../app/legacy.api';
 
 const SeedDataForm = () => {
     const [name, setName] = useState('');

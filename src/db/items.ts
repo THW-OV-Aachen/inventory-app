@@ -1,46 +1,35 @@
-export interface IOrganisationalUnit {
-    id?: number;
-    name: string;
-}
-
-export const CompoundType = {
-    SET: 'set',
-    PART: 'part',
+export const DamageLevelType = {
+    NONE: 'none',
+    MINOR: 'minor',
+    MAJOR: 'major',
+    TOTAL: 'total',
 } as const;
 
-export type CompoundType = (typeof CompoundType)[keyof typeof CompoundType];
+export type DamageLevelType = (typeof DamageLevelType)[keyof typeof DamageLevelType];
 
-export interface IItemType {
+export interface ItemDb {
     id?: number;
-    name: string; // e.g. 'Kettensäge', 'Funkgerät'
+
+    name?: string;
+    isSet: boolean;
+    remark?: string;
+
+    availability: boolean;
+
+    damageLevel: DamageLevelType;
+    lastInspection?: string; //change to moment.js Date,
+    inspectionIntervalDays?: number;
+
+    location?: string;
+
+    itemNumber: string;
+    inventoryNumber?: string;
+    deviceNumber?: string;
 }
 
-export interface IManufacturer {
-    id?: number;
-    name: string;
-}
-
-export interface IDbItemDefinition {
-    id?: number;
-    name?: string; // e.g. 'Gegenstand_74'; may be ommitted if 'type' is specified
-
-    manufacturerId?: number;
-    itemTypeId?: number;
-}
-
-export interface IDbInventoryItem {
-    id?: number;
-    externalId: string; // "Sachnummer"
-    floor: number; // "Ebene"
+export interface ItemGroupDb {
     amountTarget: number;
     amountActual: number;
-    isAvailable: boolean;
-    position: string; // "Ort"
-    inventoryId?: string;
-    deviceId?: string;
-
-    compoundType: CompoundType; // 'set' | 'part'
-
-    organisationalUnitId: number;
-    itemDefinitionId: number;
+    itemNumber: string;
+    remark: string;
 }

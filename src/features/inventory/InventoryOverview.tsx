@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { inventoryApi } from '../../app/api';
+import { inventoryApi } from '../../app/legacy.api';
 import { useHasScope } from '../auth/utils';
 import { WindowTitle } from '../../utils/title/WindowTitle';
 import { DataTable, Column } from '../../utils/table/Table';
