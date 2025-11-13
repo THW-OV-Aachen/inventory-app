@@ -7,7 +7,7 @@ export const DamageLevelType = {
 
 export type DamageLevelType = (typeof DamageLevelType)[keyof typeof DamageLevelType];
 
-export interface ItemDb {
+export interface IItem {
     id: string;
     inventoryNumber?: string;
     deviceNumber?: string;

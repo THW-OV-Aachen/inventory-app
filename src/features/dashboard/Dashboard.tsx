@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { type IDbInventoryItem, CompoundType } from '../../db/legacy.items';
 import { lookupApi, inventoryApi } from '../../app/legacy.api';
+import { importExcel } from '../../db/utils/importExcel';
+import { inventoryApi as newInventoryApi } from '../../app/api';
 
 const SeedDataForm = () => {
     const [name, setName] = useState('');
@@ -65,6 +67,8 @@ const Dashboard = () => {
     const orgUnits = lookupApi.useOrganisationalUnits();
     const itemDefinitions = lookupApi.useItemDefinitions();
 
+    const importedItems = newInventoryApi.useItems();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -108,6 +112,27 @@ const Dashboard = () => {
         }
     };
 
+    const [file, setFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFile(e.target.files?.[0] ?? null);
+    };
+
+    const handleImportClick = async () => {
+        if (!file) {
+            alert('Select a file');
+            return;
+        }
+        setImporting(true);
+        try {
+            await importExcel(file);
+            alert('Import finished');
+        } finally {
+            setImporting(false);
+        }
+    };
+
     return (
         <div
             style={{
@@ -118,6 +143,12 @@ const Dashboard = () => {
             }}
         >
             <h1>Inventory App</h1>
+            <>
+                <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
+                <button onClick={handleImportClick} disabled={importing}>
+                    Import
+                </button>
+            </>
 
             <SeedDataForm />
 
@@ -151,7 +182,7 @@ const Dashboard = () => {
 
             <hr />
 
-            <h4>3. Current Inventory</h4>
+            <h4>3. Current Inventory Legacy DB</h4>
             <table border={1} cellPadding={5} style={{ borderCollapse: 'collapse', width: '100%' }}>
                 <thead style={{ background: '#eee' }}>
                     <tr>
@@ -190,6 +221,45 @@ const Dashboard = () => {
                     ))}
                 </tbody>
             </table>
+            <h4>4. Current Inventory Imported DB</h4>
+            {/* <table border={1} cellPadding={5} style={{ borderCollapse: 'collapse', width: '100%' }}>
+                <thead style={{ background: '#eee' }}>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sachnummer</th>
+                        <th>Position (Ort)</th>
+                        <th>Amount (Actual/Target)</th>
+                        <th>Def. ID (FK)</th>
+                        <th>Org. ID (FK)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {inventoryItems.length === 0 && (
+                        <tr>
+                            <td colSpan={7}>No inventory items found.</td>
+                        </tr>
+                    )}
+                    {inventoryItems.map((item: any) => (
+                        <tr key={item.id}>
+                            <td>{item.id}</td>
+                            <td>{item.externalId}</td>
+                            <td>{item.position}</td>
+                            <td>
+                                {item.amountActual} / {item.amountTarget}
+                            </td>
+                            <td>{item.itemDefinitionId}</td>
+                            <td>{item.organisationalUnitId}</td>
+                            <td>
+                                <button onClick={() => handleDelete(item.id!)} style={{ color: 'red' }}>
+                                    Delete
+                                </button>
+                                <button onClick={() => handleUpdateAmount(item.id!)}>Update Amount</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table> */}
         </div>
     );
 };
