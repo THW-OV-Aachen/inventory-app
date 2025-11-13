@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { type IDbInventoryItem, CompoundType } from '../../db/legacy.items';
 import { lookupApi, inventoryApi } from '../../app/legacy.api';
-import { importExcel } from '../../db/utils/importExcel';
+import { exportExcel, importExcel } from '../../db/utils/excel';
 import { inventoryApi as newInventoryApi } from '../../app/api';
 
 const SeedDataForm = () => {
@@ -67,8 +67,6 @@ const Dashboard = () => {
     const orgUnits = lookupApi.useOrganisationalUnits();
     const itemDefinitions = lookupApi.useItemDefinitions();
 
-    const importedItems = newInventoryApi.useItems();
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -112,8 +110,12 @@ const Dashboard = () => {
         }
     };
 
+    // import + export excel
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    const newDBInventoryItems = newInventoryApi.useItems();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFile(e.target.files?.[0] ?? null);
@@ -133,6 +135,24 @@ const Dashboard = () => {
         }
     };
 
+    const handleExportClick = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportExcel(newDBInventoryItems);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventory.xlsx';
+
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert('Export failed: ' + (error as Error).message);
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div
             style={{
@@ -146,7 +166,10 @@ const Dashboard = () => {
             <>
                 <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
                 <button onClick={handleImportClick} disabled={importing}>
-                    Import
+                    {importing ? 'Importing…' : 'Import'}
+                </button>
+                <button onClick={handleExportClick} disabled={exporting} style={{ marginLeft: 8 }}>
+                    {exporting ? 'Exporting…' : 'Export'}
                 </button>
             </>
 

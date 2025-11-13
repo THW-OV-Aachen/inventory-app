@@ -2,6 +2,53 @@ import ExcelJS from 'exceljs';
 import { type IItem } from '../items';
 import { inventoryApi } from '../../app/api';
 
+export async function exportExcel(items: IItem[]): Promise<Blob> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Inventory');
+
+    const headers = [
+        'OE',
+        'Art',
+        'Menge Soll',
+        'Menge Ist',
+        'Verfügbarkeit',
+        'Ort',
+        'Ebene',
+        'Ausstattung | Hersteller | Typ',
+        'Sachnummer',
+        'Inventar Nr',
+        'Gerätenr.',
+        'Schadenszustand',
+        'Letzte Prüfung',
+        'Prüfintervall (Monate)',
+        'Bemerkung',
+    ];
+    sheet.addRow(headers);
+
+    items.forEach((item) => {
+        sheet.addRow([
+            'AC1N',
+            item.isSet ? 'Satz' : 'Teil',
+            item.amountTarget,
+            item.amountActual,
+            item.availability,
+            item.location,
+            item.level,
+            item.name, // Placeholder for "Ausstattung | Hersteller | Typ"
+            item.id,
+            item.inventoryNumber ?? '',
+            item.deviceNumber ?? '',
+            item.damageLevel,
+            item.lastInspection ?? '',
+            item.inspectionIntervalMonths ?? '',
+            item.remark ?? '',
+        ]);
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
 export async function importExcel(file: File): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const buffer = await file.arrayBuffer();
