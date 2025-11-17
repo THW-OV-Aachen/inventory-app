@@ -1,6 +1,4 @@
 import Dexie, { type Table } from 'dexie';
-import type { ItemDb, ItemGroupDb } from './items';
-
 import type {
     IOrganisationalUnit,
     IItemType,
@@ -38,32 +36,6 @@ export class InventoryDb extends Dexie {
                 'compoundType',
                 'organisationalUnitId',
                 'itemDefinitionId',
-            ].join(','),
-        });
-    }
-}
-
-export class ItemInventoryDb extends Dexie {
-    public items!: Table<ItemDb, number>;
-    public itemGroups!: Table<ItemGroupDb, number>;
-
-    constructor() {
-        super('ItemInventoryDb');
-
-        this.version(1).stores({
-            items: [
-                '++id',
-                'name',
-                'isSet',
-                'remark',
-                'availability',
-                'damageLevel',
-                'lastInspection',
-                'inspectionIntervalDays',
-                'location',
-                '&itemNumber',
-                'inventoryNumber',
-                'deviceNumber',
             ].join(','),
         });
     }
