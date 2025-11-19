@@ -8,6 +8,11 @@ import ImportExport from './features/importExport/ImportExport';
 import Overview from './features/overview/Overview';
 import ItemPage from './features/items/ItemPage';
 
+import MaintenanceOverview from './features/maintenance/maintenanceOverview';
+import Guide from './features/guide/guide';
+import ItemAdding from './features/add/itemAdding';
+import ImportExportScreen from './features/importExport/ImportScreen';
+
 const AppRoutes = () => {
     return (
         <Routes>
@@ -20,8 +25,16 @@ const AppRoutes = () => {
                 <Route path="*" element={<PrivateOutlet />}>
                     <Route path="inventory" element={<InventoryOverview />} />
                 </Route>
+
+                <Route path="maintenance" element={<MaintenanceOverview />} />
+                <Route path="guide" element={<Guide />} />
+
+                <Route path="itemAdding" element={<ItemAdding />} />
+
+                <Route path="ImportScreen" element={<ImportExportScreen />} />
             </Route>
         </Routes>
     );
 };
+
 export default AppRoutes;
