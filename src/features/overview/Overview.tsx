@@ -80,7 +80,9 @@ const OverviewPage = () => {
                     </select>
                 </div>
                 <div className="d-flex flex-column gap-2 mt-2 mt-sm-0">
-                    <button className="btn btn-primary">+Item</button>
+                    <button className="btn btn-primary" onClick={() => navigate('/itemAdding')}>
+                        +Item
+                    </button>
                     <button className="btn btn-primary">+Pack</button>
                 </div>
             </div>
