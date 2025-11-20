@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'; //bootstrap
 
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
-import logo from '../assets/favicon.svg';
+import logo from './assets/favicon.svg';
 import Sidebar from './features/sidebar/Sidebar';
 
 const LayoutWrapper = styled.div`
