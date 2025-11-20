@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { db } from '../../db/db';
 import type { IItem, DamageLevelType } from '../../db/items';
 
-const ItemPage = () => {
+const ItemDetails = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const [text, setText] = useState('');
@@ -108,4 +108,4 @@ const ItemPage = () => {
     );
 };
 
-export default ItemPage;
+export default ItemDetails;

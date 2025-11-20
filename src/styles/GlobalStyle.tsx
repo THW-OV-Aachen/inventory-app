@@ -9,8 +9,7 @@ const GlobalStyle = createGlobalStyle`
 
   body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #f0f4f8, #4d6c91ff);
-    color: #1f2937;
+    color: var(--color-font-primary);
   }
 
   a {
@@ -18,7 +17,5 @@ const GlobalStyle = createGlobalStyle`
     color: #3b82f6;
   }
 `;
-
-
 
 export default GlobalStyle;
