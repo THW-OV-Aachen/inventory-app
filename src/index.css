@@ -6,8 +6,14 @@
     --color-primary-rgb: 0, 51, 153;
     --color-font-primary: #323249;
     --color-font-secondary: #6e6e79;
-    --color-warning: #f06f6b;
+    --color-forbidden: #9a67ec;
+    --color-forbidden-rgb: 154, 103, 236;
+    --color-danger: #f06f6b;
+    --color-danger-rgb: 240, 111, 107;
+    --color-warning: #eecd63;
+    --color-warning-rgb: 238, 205, 99;
     --color-success: #0bbb59;
+    --color-success-rgb: 11, 187, 89;
 
     color: #000;
     background-color: #fff;

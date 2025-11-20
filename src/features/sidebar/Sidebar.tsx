@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick } from 'lucide-react';
+import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick, Compass } from 'lucide-react';
 import logo from '../../assets/favicon.svg';
 import IconContainer from '../../utils/IconContainer';
 
@@ -88,8 +88,8 @@ const NavLink = styled(Link)<{ $active?: boolean }>`
     background: ${(p) => (p.$active ? 'rgba(var(--color-primary-rgb), .075)' : 'unset')};
     color: ${(p) => (p.$active ? 'var(--color-primary)' : 'var(--color-font-secondary)')};
     font-weight: ${(p) => (p.$active ? 'bold' : 'normal')};
-    padding: 8px;
-    border-radius: 4px;
+    padding: 12px 8px;
+    border-radius: 6px;
     align-items: center;
 
     &:hover {
@@ -106,14 +106,13 @@ const Sidebar = () => {
     const location = useLocation();
 
     const links = [
-        { to: '/', label: 'Home', icon: Home },
-        { to: '/dashboard', label: 'Inventory Overview', icon: Eye },
-        { to: '/maintenance', label: 'Maintenance Overview', icon: Wrench },
-        { to: '/items', label: 'Items Overview', icon: ToyBrick },
+        { to: '/dashboard', label: 'Home', icon: Home },
+        { to: '/maintenance', label: 'Wartungsübersicht', icon: Wrench },
+        { to: '/items', label: 'Inventar', icon: ToyBrick },
     ];
 
     const bottomLinks = [
-        { to: '/guide', label: 'Guide', icon: CircleQuestionMark },
+        { to: '/guide', label: 'Guide', icon: Compass },
         { to: '/ImportScreen', label: 'Import/Export', icon: CircleQuestionMark },
     ];
 
