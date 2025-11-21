@@ -15,7 +15,7 @@ const SidebarWrapper = styled.aside<{ open: boolean }>`
     transition: width 0.3s ease;
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    z-index: 3000;
 
     @media (min-width: 768px) {
         width: 220px;
@@ -71,7 +71,7 @@ const ToggleButton = styled.button`
     border: none;
     border-radius: 6px;
     padding: 8px;
-    z-index: 1100;
+    z-index: 3100;
     cursor: pointer;
     display: flex;
     align-items: center;

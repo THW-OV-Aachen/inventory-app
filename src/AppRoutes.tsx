@@ -13,11 +13,14 @@ import Guide from './features/guide/guide';
 import ItemAdding from './features/add/itemAdding';
 import ImportExportScreen from './features/importExport/ImportScreen';
 
+import Home from './features/home/home';
+
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<App />}>
-                <Route path="" element={<Navigate to="/dashboard" replace />} />
+                <Route path="" element={<Navigate to="/home" replace />} />
+                <Route path="home" element={<Home />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="importExport" element={<ImportExport />} />
                 <Route path="overview" element={<Overview />} />
