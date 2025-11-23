@@ -491,7 +491,7 @@ const ItemOverview = () => {
     const navigate = useNavigate();
     const [items, setItems] = useState<IItem[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [sortField, setSortField] = useState<SortField | null>('id');
+    const [sortField, setSortField] = useState<SortField | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
     const [filters, setFilters] = useState<{
@@ -950,8 +950,15 @@ const InfoInline = (props: { children: ReactNode | ReactNode[]; infoComponent: R
                 </Tooltip>
             }
             delay={{ show: 150, hide: 300 }}
+            trigger={['hover', 'focus', 'click']}
         >
-            <span style={{ position: 'relative', display: 'inline-block' }}>
+            <span
+                style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <span>{children}</span>
                 <span
                     style={{
