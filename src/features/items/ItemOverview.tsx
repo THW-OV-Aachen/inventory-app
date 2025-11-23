@@ -12,7 +12,7 @@ import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import { parseLocationString, mapLocationKey, parseLocationStringRaw } from '../../utils/locationString';
 import React from 'react';
-import StatusBadge from '../../utils/StatusBadge';
+import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
 import { inventoryApi } from '../../app/api';
 import { Button } from 'react-bootstrap';
 
@@ -321,66 +321,81 @@ const ItemOverview = () => {
                                 </HeaderContent>
                             </HeaderCell>
                         </TableHeader>
-                        {sortedItems.map((item) => (
-                            <TableRow key={item.id} onClick={() => navigate(`/items/${item.id}`)}>
-                                <TableCell>{item.inventoryNumber ?? '-'}</TableCell>
-                                <TableCell>{item.name ?? '-'}</TableCell>
-                                <TableCell>{item.isSet ? 'Satz' : 'Teil'}</TableCell>
-                                <CellAmount>
-                                    <span>
-                                        <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
-                                            {item.availability ?? '-'}
-                                        </InfoInline>
-                                    </span>
-                                    <span>
-                                        <InfoInline infoComponent={<span>Tatsächliche Menge</span>}>
-                                            {item.amountActual ?? '-'}
-                                        </InfoInline>
-                                    </span>
-                                    <span>
-                                        <InfoInline infoComponent={<span>Zielmenge</span>}>
-                                            {item.amountTarget ?? '-'}
-                                        </InfoInline>
-                                    </span>
-                                </CellAmount>
-                                <TableCell>
-                                    <StatusBadge damageLevelType={item.damageLevel} />
-                                </TableCell>
-                                <TableCell>
-                                    {(() => {
-                                        const components = parseLocationStringRaw(item.location);
-                                        return (
-                                            <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
-                                                {Object.entries(components).map(([key, value]) => {
-                                                    return (
-                                                        <React.Fragment key={`${item.id}-${key}`}>
-                                                            {key === 'subcontainerNumber' && '.'}
-                                                            {key === 'toolNumber' && '-'}
-                                                            <InfoInline
-                                                                infoComponent={
-                                                                    <span>
-                                                                        {mapLocationKey(key)}
-                                                                        {key === 'type' && ': '}{' '}
-                                                                        {key === 'type' &&
-                                                                            (value === 'R'
-                                                                                ? 'Rollcontainer'
-                                                                                : 'Box (EU-Palette)')}
-                                                                    </span>
-                                                                }
-                                                            >
-                                                                <span>{value}</span>
-                                                            </InfoInline>
-                                                        </React.Fragment>
-                                                    );
-                                                })}
-                                            </div>
-                                        );
-                                    })()}
-                                </TableCell>
-                                <TableCell>{item.id ?? '-'}</TableCell>
-                                <TableCell>{item.deviceNumber ?? '-'}</TableCell>
-                            </TableRow>
-                        ))}
+                        {sortedItems.map((item) => {
+                            const damageLevel = DamageLevelStyles[item.damageLevel as DamageLevelType];
+
+                            return (
+                                <TableRow
+                                    key={item.id}
+                                    onClick={() => navigate(`/items/${item.id}`)}
+                                    $mobileBgColor={damageLevel.colorBg}
+                                    $mobileColor={damageLevel.color}
+                                >
+                                    <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
+                                    <TableCell id="name">{item.name ?? '-'}</TableCell>
+                                    <TableCell id="isSet" $hideOnMobile>
+                                        {item.isSet ? 'Satz' : 'Teil'}
+                                    </TableCell>
+                                    <CellAmount id="amounts" $hideOnMobile>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
+                                                {item.availability ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Tatsächliche Menge</span>}>
+                                                {item.amountActual ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Zielmenge</span>}>
+                                                {item.amountTarget ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                    </CellAmount>
+                                    <TableCell id="damageLevel">
+                                        <StatusBadge damageLevelType={item.damageLevel} />
+                                    </TableCell>
+                                    <TableCell id="location">
+                                        {(() => {
+                                            const components = parseLocationStringRaw(item.location);
+                                            return (
+                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
+                                                    {Object.entries(components).map(([key, value]) => {
+                                                        return (
+                                                            <React.Fragment key={`${item.id}-${key}`}>
+                                                                {key === 'subcontainerNumber' && '.'}
+                                                                {key === 'toolNumber' && '-'}
+                                                                <InfoInline
+                                                                    infoComponent={
+                                                                        <span>
+                                                                            {mapLocationKey(key)}
+                                                                            {key === 'type' && ': '}{' '}
+                                                                            {key === 'type' &&
+                                                                                (value === 'R'
+                                                                                    ? 'Rollcontainer'
+                                                                                    : 'Box (EU-Palette)')}
+                                                                        </span>
+                                                                    }
+                                                                >
+                                                                    <span>{value}</span>
+                                                                </InfoInline>
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </TableCell>
+                                    <TableCell id="id" $hideOnMobile>
+                                        {item.id ?? '-'}
+                                    </TableCell>
+                                    <TableCell id="deviceNumber" $hideOnMobile>
+                                        {item.deviceNumber ?? '-'}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </Table>
 
                     <PaginationContainer>
@@ -527,11 +542,15 @@ const PageEllipsis = styled.span`
     color: var(--color-font-secondary);
 `;
 
-const TableCell = styled.div`
+const TableCell = styled.div<{ $hideOnMobile?: boolean }>`
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 4px;
+
+    @media (max-width: 812px) {
+        display: ${(p) => (p.$hideOnMobile ? 'none' : 'flex')};
+    }
 `;
 
 const InfoInline = (props: { children: ReactNode | ReactNode[]; infoComponent: ReactNode | ReactNode[] }) => {
@@ -605,7 +624,7 @@ const SortIndicator = (props: { active: boolean; sortDirection: SortDirection })
     );
 };
 
-const CellAmount = styled.div`
+const CellAmount = styled.div<{ $hideOnMobile?: boolean }>`
     --flex-gap: 6px;
     display: flex;
     flex-direction: row;
@@ -618,13 +637,25 @@ const CellAmount = styled.div`
         float: right;
         margin-left: var(--flex-gap);
     }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: ${(p) => (p.$hideOnMobile ? 'none' : 'flex')};
+    }
 `;
 
 const Table = styled.div`
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: flex;
+        flex-direction: column;
+        max-width: 100%;
+        gap: 8px;
+        border-radius: 0;
+    }
 `;
 
 const TableRowBase = styled.div`
@@ -644,6 +675,15 @@ const TableRowBase = styled.div`
     & > *:last-child {
         border-right: 1px solid var(--border-color);
     }
+
+    max-width: 100%;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        & > * {
+            border: none !important;
+        }
+        display: block;
+    }
 `;
 
 const TableHeader = styled(TableRowBase)`
@@ -653,9 +693,13 @@ const TableHeader = styled(TableRowBase)`
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: none;
+    }
 `;
 
-const TableRow = styled(TableRowBase)`
+const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string }>`
     & > * {
         background-color: white;
     }
@@ -671,6 +715,17 @@ const TableRow = styled(TableRowBase)`
 
     &:hover span.info-icon {
         opacity: 1;
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        background-color: ${(p) => p.$mobileBgColor} !important;
+        border: 1px solid ${(p) => p.$mobileColor} !important;
+
+        border-radius: 8px;
+
+        & > * {
+            background-color: transparent !important;
+        }
     }
 `;
 
