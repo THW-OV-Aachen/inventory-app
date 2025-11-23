@@ -1,9 +1,13 @@
-const IconContainer = (props: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }) => {
+const IconContainer = (props: {
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    width?: string;
+    height?: string;
+}) => {
     return (
         <div
             style={{
-                width: '1.2em',
-                height: '1.2em',
+                width: props.width ?? '1.2em',
+                height: props.height ?? '1.2em',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

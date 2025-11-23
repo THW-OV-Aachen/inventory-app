@@ -1,4 +1,4 @@
-import { type IItem } from '../db/items';
+import { DamageLevelType, type IItem } from '../db/items';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 
@@ -6,6 +6,11 @@ export type Scope = 'user' | 'editor' | 'admin';
 export interface PaginationParams {
     page: number;
     pageSize: number;
+}
+export interface FilterParams {
+    damageLevel?: DamageLevelType | null;
+    type?: 'isSet' | 'isPart' | null;
+    location?: string | null;
 }
 export interface PaginatedResult<T> {
     data: T[];
@@ -57,12 +62,18 @@ export const inventoryApi = {
             throw error;
         }
     },
-    async fetchItemsPaginatedWithFilter(params: PaginationParams, searchTerm: string): Promise<PaginatedResult<IItem>> {
+    async fetchItemsPaginatedWithFilter(
+        params: PaginationParams,
+        searchTerm: string,
+        filters?: FilterParams
+    ): Promise<PaginatedResult<IItem>> {
         const { page, pageSize } = params;
         const offset = (page - 1) * pageSize;
 
         try {
-            if (!searchTerm) {
+            const hasFilters = filters && (filters.damageLevel || filters.type || filters.location);
+
+            if (!searchTerm && !hasFilters) {
                 return await this.fetchItemsPaginated(params);
             }
 
@@ -70,11 +81,24 @@ export const inventoryApi = {
             const allItems = await db.items.orderBy('id').toArray();
 
             const term = searchTerm.toLowerCase();
-            const filteredItems = allItems.filter((item) =>
-                [item.name, item.location, item.id, item.inventoryNumber || '', item.deviceNumber || ''].some((field) =>
-                    field.toLowerCase().includes(term)
-                )
-            );
+            const filteredItems = allItems.filter((item) => {
+                const matchesSearch =
+                    !searchTerm ||
+                    [item.name, item.location, item.id, item.inventoryNumber || '', item.deviceNumber || ''].some(
+                        (field) => field.toLowerCase().includes(term)
+                    );
+
+                const matchesDamageLevel = !filters?.damageLevel || item.damageLevel === filters.damageLevel;
+
+                const matchesType =
+                    !filters?.type ||
+                    (filters.type === 'isSet' ? item.isSet : filters.type === 'isPart' ? !item.isSet : true);
+
+                const matchesLocation =
+                    !filters?.location || item.location.toLowerCase().includes(filters.location.toLowerCase());
+
+                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation;
+            });
 
             const totalItems = filteredItems.length;
             const totalPages = Math.ceil(totalItems / pageSize);
