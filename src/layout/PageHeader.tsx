@@ -39,6 +39,10 @@ const PageTitle = styled.h2`
   font-size: 22px;
   color: #1e293b;  
   font-weight: 600;
+
+  @media (max-width: 1023px) {
+    display: none;
+  }
 `;
 
 const Actions = styled.div`
