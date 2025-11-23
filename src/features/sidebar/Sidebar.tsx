@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick, Compass, Columns2 } from 'lucide-react';
+import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick, Compass, Columns2, FolderSync } from 'lucide-react';
 import logo from '../../assets/favicon.svg';
 import IconContainer from '../../utils/IconContainer';
 
@@ -27,7 +27,7 @@ const SidebarWrapper = styled.aside<{ $open: boolean }>`
         position: absolute;
         bottom: 0;
 
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 -4px 12px rgba(var(--color-font-primary-rgb), 0.1);
     }
 `;
 
@@ -198,6 +198,7 @@ const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         padding: 16px;
         flex-shrink: 0;
+        border-radius: 0;
     }
 `;
 
@@ -212,8 +213,8 @@ const Sidebar = () => {
     ];
 
     const bottomLinks = [
-        { to: '/guide', label: 'Guide', icon: Compass },
-        { to: '/ImportScreen', label: 'Import/ Export', icon: CircleQuestionMark },
+        { to: '/guide', label: 'Guide', icon: CircleQuestionMark },
+        { to: '/ImportScreen', label: 'Import/ Export', icon: FolderSync },
     ];
 
     return (
