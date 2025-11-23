@@ -14,6 +14,13 @@ const TopBar = styled.div`
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 10px;
+
+    @media (min-width: 1024px) {
+        width: 100%;
+        max-width: 896px;
+        margin: 0 auto 20px auto;
+        padding: 0 16px;
+    }
 `;
 
 const SearchAndSortContainer = styled.div`
@@ -29,6 +36,10 @@ const SearchInput = styled.input`
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 5px;
+
+    @media (min-width: 1024px) {
+        padding: 10px 12px;
+    }
 `;
 
 const SortSelect = styled.select`
@@ -37,6 +48,10 @@ const SortSelect = styled.select`
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: white;
+
+    @media (min-width: 1024px) {
+        padding: 10px 12px;
+    }
 `;
 
 const ButtonColumn = styled.div`
@@ -56,6 +71,11 @@ const Button = styled.button`
     width: 80px;
     &:hover {
         background-color: #0056b3;
+    }
+
+    @media (min-width: 1024px) {
+        width: 100px;
+        padding: 10px 16px;
     }
 `;
 
