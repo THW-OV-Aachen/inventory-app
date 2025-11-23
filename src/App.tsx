@@ -14,8 +14,9 @@ const LayoutWrapper = styled.div`
 
     background: transparent;
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: column;
+        padding-bottom: 56px;
     }
 `;
 

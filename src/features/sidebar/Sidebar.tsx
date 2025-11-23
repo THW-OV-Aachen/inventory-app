@@ -20,7 +20,7 @@ const SidebarWrapper = styled.aside<{ $open: boolean }>`
 
     z-index: 1000;
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         height: unset;
         width: 100vw;
 
@@ -44,7 +44,7 @@ const SidebarHeaderWrapper = styled(SidebarSection)<{ $sidebarOpen?: boolean }>`
     position: relative;
     overflow: hidden;
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         display: none;
     }
 `;
@@ -56,7 +56,7 @@ const SectionLine = styled.div`
     content: '';
     background-color: var(--color-bg-accent-darker);
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         display: none;
     }
 `;
@@ -134,7 +134,7 @@ const LinkList = styled(SidebarSection)`
 
     padding-top: 12px;
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: row;
         padding: 0;
         gap: 16px;
@@ -155,7 +155,7 @@ const LinkList = styled(SidebarSection)`
 const LinkSpacer = styled.div`
     flex: 1;
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         display: none;
     }
 `;
@@ -195,7 +195,7 @@ const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
         background-color: ${(p) => (p.$active ? '' : 'var(--color-bg-accent-darker)')};
     }
 
-    @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         padding: 16px;
         flex-shrink: 0;
     }
