@@ -1,20 +1,31 @@
-// itemoverview.tsx
-
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { db } from '../../db/db';
 import { type IItem, DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Hourglass, Icon, Info, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    ArrowDownAZ,
+    ArrowDownZA,
+    Hourglass,
+    Info,
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    ArrowDownNarrowWide,
+    Check,
+    X,
+    Box,
+    Boxes,
+} from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
-import { parseLocationString, mapLocationKey, parseLocationStringRaw } from '../../utils/locationString';
+import { mapLocationKey, parseLocationStringRaw } from '../../utils/locationString';
 import React from 'react';
 import StatusBadge, { DamageLevelStyles, StatusBadgeWrapper } from '../../utils/StatusBadge';
-import { inventoryApi } from '../../app/api';
-import { Button } from 'react-bootstrap';
+import { inventoryApi, type FilterParams } from '../../app/api';
+import { Button, Form } from 'react-bootstrap';
+import DamageLevelTranslation from '../../utils/damageLevels';
 
 type SortField =
     | 'id'
@@ -28,13 +39,39 @@ type SortField =
     | 'deviceNumber';
 type SortDirection = 'asc' | 'desc';
 
-const ItemFilter = (props: { searchTerm: string; setSearchTerm: React.Dispatch<React.SetStateAction<string>> }) => {
+const sortFieldLabels: Record<string, string> = {
+    inventoryNumber: 'Inventar-Nr.',
+    name: 'Name',
+    damageLevel: 'Zustand',
+    location: 'Ort',
+};
+
+const ItemFilter = (props: {
+    searchTerm: string;
+    setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+    sortField: SortField | null;
+    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
+    sortDirection: SortDirection;
+    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
+    filters: FilterParams;
+    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
+}) => {
     const navigate = useNavigate();
-    const { searchTerm, setSearchTerm } = props;
+    const { searchTerm, setSearchTerm, sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } =
+        props;
 
     return (
         <ItemFilterWrapper>
-            <ItemFilterSearchbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <ItemFilterSearchbar
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                sortField={sortField}
+                setSortField={setSortField}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                filters={filters}
+                setFilters={setFilters}
+            />
             <AddEntityButtons>
                 <button className="btn btn-primary" onClick={() => navigate('/itemAdding')}>
                     Gegenstand hinzufügen
@@ -66,13 +103,321 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
 
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        flex-direction: column;
+        gap: 16px;
+    }
+`;
+
+const ItemSortButton = (props: {
+    sortField: SortField | null;
+    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
+    sortDirection: SortDirection;
+    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
+    filters: FilterParams;
+    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
+}) => {
+    const { sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } = props;
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [localLocation, setLocalLocation] = useState(filters.location || '');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
+        setLocalLocation(filters.location || '');
+    }, [filters.location]);
+
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    const handleFieldSelect = (field: SortField) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setLocalLocation(value);
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            setFilters((prev) => ({
+                ...prev,
+                location: value || undefined,
+            }));
+        }, 300);
+    };
+
+    return (
+        <>
+            <div
+                style={{
+                    display: 'block',
+                    height: '1.5rem',
+                    width: '1px',
+                    content: '',
+                    background: 'var(--color-bg-accent-darker)',
+                }}
+            />
+            <SortButtonWrapper ref={dropdownRef}>
+                <SortButton onClick={() => setIsOpen(!isOpen)} $isActive={sortField !== null}>
+                    <IconContainer icon={ArrowDownNarrowWide} />
+                </SortButton>
+
+                {isOpen && (
+                    <SortFilterDropdown>
+                        <DropdownHeader>
+                            <span>Sortieren nach</span>
+                            <ClearButton
+                                onClick={() => {
+                                    setSortField(null);
+                                    setSortDirection('asc');
+                                }}
+                                isVisible={sortField !== null}
+                            />
+                        </DropdownHeader>
+
+                        <DropdownContent>
+                            {(Object.keys(sortFieldLabels) as SortField[]).map((field) => (
+                                <SortOption
+                                    key={field}
+                                    onClick={() => handleFieldSelect(field)}
+                                    $isActive={sortField === field}
+                                >
+                                    <SortOptionLabel>
+                                        {sortField === field && (
+                                            <IconContainer icon={sortDirection === 'asc' ? ArrowDownAZ : ArrowDownZA} />
+                                        )}
+                                        <span>{sortFieldLabels[field]}</span>
+                                    </SortOptionLabel>
+                                    {sortField === field && <IconContainer icon={Check} />}
+                                </SortOption>
+                            ))}
+                        </DropdownContent>
+
+                        <DropdownHeader>
+                            <span>Filtern nach</span>
+                            <ClearButton
+                                onClick={() => setFilters({})}
+                                isVisible={[filters.damageLevel, filters.type, filters.location].some(
+                                    (e) => e !== null && e !== undefined
+                                )}
+                            />
+                        </DropdownHeader>
+                        <DropdownContent>
+                            <FilterOptionLabel>
+                                <span>Zustand</span>
+                                <Form.Select
+                                    value={filters.damageLevel || ''}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                        const damageLevelFilter =
+                                            e.target.value === '' ? null : (e.target.value as DamageLevelType);
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            damageLevel: damageLevelFilter,
+                                        }));
+                                    }}
+                                >
+                                    <option value="">Alle</option>
+                                    {Object.entries(DamageLevelTranslation).map(([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </FilterOptionLabel>
+                            <FilterOptionLabel>
+                                <span>Typ</span>
+                                <Form.Select
+                                    value={filters.type || ''}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                        const typeFilter =
+                                            e.target.value === '' ? null : (e.target.value as 'isSet' | 'isPart');
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            type: typeFilter,
+                                        }));
+                                    }}
+                                >
+                                    <option value="">Alle</option>
+                                    <option value="isSet">Satz</option>
+                                    <option value="isPart">Teil</option>
+                                </Form.Select>
+                            </FilterOptionLabel>
+                            <FilterOptionLabel>
+                                <span>Ort</span>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Ort filtern..."
+                                    onChange={handleLocationChange}
+                                    value={localLocation}
+                                />
+                            </FilterOptionLabel>
+                        </DropdownContent>
+                    </SortFilterDropdown>
+                )}
+            </SortButtonWrapper>
+        </>
+    );
+};
+
+const FilterOptionLabel = styled.div``;
+
+const SortButtonWrapper = styled.div`
+    position: relative;
+`;
+
+const SortButton = styled.button<{ $isActive: boolean }>`
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: ${(props) => (props.$isActive ? 'var(--color-primary)' : 'var(--color-font-secondary)')};
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: var(--color-primary);
+    }
+`;
+
+const SortFilterDropdown = styled.div`
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--color-bg);
+    border: 1px solid var(--color-bg-accent-darker);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-width: 250px;
+    z-index: 1000;
+`;
+
+const DropdownHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-bg-accent);
+    font-weight: 600;
+    font-size: 14px;
+`;
+
+const ClearButton = (props: { onClick: React.MouseEventHandler<HTMLButtonElement>; isVisible?: boolean }) => {
+    return (
+        <ClearButtonWrapper onClick={props.onClick} $isVisible={props.isVisible}>
+            <IconContainer icon={X} />
+            Zurücksetzen
+        </ClearButtonWrapper>
+    );
+};
+
+const ClearButtonWrapper = styled.button<{ $isVisible?: boolean }>`
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-font-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    visibility: ${(props) => (props.$isVisible ? 'visible' : 'hidden')};
+    pointer-events: ${(props) => (props.$isVisible ? 'auto' : 'none')};
+
+    &:hover {
+        background: var(--color-bg-accent);
+        color: var(--color-font);
+    }
+`;
+
+const DropdownContent = styled.div`
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 14px;
+
+    & input,
+    & select {
+        font-size: 14px;
+        margin: 4px 0 8px 0;
+    }
+
+    & input:last-of-type {
+        margin-bottom: 0;
+    }
+`;
+
+const SortOption = styled.button<{ $isActive: boolean }>`
+    background: ${(props) => (props.$isActive ? 'var(--color-bg-accent)' : 'transparent')};
+    border: none;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 6px;
+    color: ${(props) => (props.$isActive ? 'var(--color-primary)' : 'var(--color-font-secondary)')};
+    font-weight: ${(props) => (props.$isActive ? '600' : '400')};
+
+    &:hover {
+        background: var(--color-bg-accent);
+    }
+`;
+
+const SortOptionLabel = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
 `;
 
 const ItemFilterSearchbar = (props: {
     searchTerm: string;
     setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+    sortField: SortField | null;
+    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
+    sortDirection: SortDirection;
+    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
+    filters: FilterParams;
+    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
 }) => {
-    const { searchTerm, setSearchTerm } = props;
+    const { searchTerm, setSearchTerm, sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } =
+        props;
 
     return (
         <SearchbarWrapper>
@@ -83,6 +428,14 @@ const ItemFilterSearchbar = (props: {
                 placeholder="Suche nach ID, Name, Ort, Inventar- oder Gerätenummer..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <ItemSortButton
+                sortField={sortField}
+                setSortField={setSortField}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                filters={filters}
+                setFilters={setFilters}
             />
         </SearchbarWrapper>
     );
@@ -97,7 +450,10 @@ const SearchbarWrapper = styled.div`
     padding: 16px 16px;
     border-radius: 8px;
     gap: 12px;
+    font-size: 16px;
+    line-height: 1;
 
+    color: var(--color-font-secondary);
     background: var(--color-bg);
 
     & > input {
@@ -105,6 +461,12 @@ const SearchbarWrapper = styled.div`
         padding: 0;
         margin: 0;
         outline: none;
+        flex: 1;
+        min-width: 0;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         &:focus {
             box-shadow: none;
@@ -116,6 +478,13 @@ const AddEntityButtons = styled.div`
     display: flex;
     flex-direction: row;
     gap: 4px;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        width: 100%;
+        & > button {
+            padding: 12px;
+        }
+    }
 `;
 
 const ItemOverview = () => {
@@ -124,6 +493,12 @@ const ItemOverview = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [sortField, setSortField] = useState<SortField | null>('id');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+    const [filters, setFilters] = useState<{
+        damageLevel?: DamageLevelType | null;
+        type?: 'isSet' | 'isPart' | null;
+        location?: string | null;
+    }>({});
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -139,7 +514,8 @@ const ItemOverview = () => {
             try {
                 const result = await inventoryApi.fetchItemsPaginatedWithFilter(
                     { page: currentPage, pageSize },
-                    searchTerm
+                    searchTerm,
+                    filters
                 );
                 setItems(result.data);
                 setTotalItems(result.pagination.totalItems);
@@ -152,12 +528,12 @@ const ItemOverview = () => {
         };
 
         fetchItems();
-    }, [currentPage, pageSize, searchTerm]);
+    }, [currentPage, pageSize, searchTerm, filters]);
 
     // Reset to page 1 when search term changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm]);
+    }, [searchTerm, filters]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -245,7 +621,16 @@ const ItemOverview = () => {
 
     return (
         <div>
-            <ItemFilter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <ItemFilter
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                sortField={sortField}
+                setSortField={setSortField}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                filters={filters}
+                setFilters={setFilters}
+            />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -333,8 +718,8 @@ const ItemOverview = () => {
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
-                                    <TableCell id="isSet" $hideOnMobile>
-                                        {item.isSet ? 'Satz' : 'Teil'}
+                                    <TableCell id="isSet">
+                                        <IconContainer icon={item.isSet ? Boxes : Box} />
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
@@ -400,7 +785,7 @@ const ItemOverview = () => {
 
                     <PaginationContainer>
                         <PaginationInfo>
-                            Zeige {items.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} bis{' '}
+                            Zeige {items.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} -{' '}
                             {Math.min(currentPage * pageSize, totalItems)} von {totalItems} Gegenständen
                         </PaginationInfo>
                         <PaginationControls>
@@ -487,7 +872,7 @@ const PaginationContainer = styled.div`
     margin-top: 20px;
     border-top: 1px solid var(--color-bg-accent);
 
-    @media (max-width: 812px) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: column;
         gap: 16px;
     }
@@ -548,7 +933,7 @@ const TableCell = styled.div<{ $hideOnMobile?: boolean }>`
     flex-direction: row;
     gap: 4px;
 
-    @media (max-width: 812px) {
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         display: ${(p) => (p.$hideOnMobile ? 'none' : 'flex')};
     }
 `;
@@ -722,7 +1107,7 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         grid-template-areas:
             'inventoryNumber damageLevel'
             'name name'
-            'location location';
+            'location isSet';
         gap: 12px;
         padding: 16px;
 
@@ -754,6 +1139,13 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
 
         & > #location {
             grid-area: location;
+            font-size: 14px;
+            color: var(--color-font-secondary);
+        }
+
+        & > #isSet {
+            justify-self: end;
+            grid-area: isSet;
             font-size: 14px;
             color: var(--color-font-secondary);
         }
