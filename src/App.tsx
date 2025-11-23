@@ -9,14 +9,14 @@ import Sidebar from './features/sidebar/Sidebar';
 const LayoutWrapper = styled.div`
     position: relative;
     display: flex;
-    height: 100vh;
+    height: calc(100vh - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
     width: 100vw;
 
     background: transparent;
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: column;
-        padding-bottom: 56px;
+        padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
     }
 `;
 

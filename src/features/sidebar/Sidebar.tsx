@@ -1,7 +1,7 @@
-import { useState, type JSX } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick, Compass, Columns2, FolderSync } from 'lucide-react';
+import { Home, Wrench, CircleQuestionMark, ToyBrick, Columns2, FolderSync } from 'lucide-react';
 import logo from '../../assets/favicon.svg';
 import IconContainer from '../../utils/IconContainer';
 
@@ -199,6 +199,7 @@ const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
         padding: 16px;
         flex-shrink: 0;
         border-radius: 0;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
 `;
 
