@@ -7,10 +7,24 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
   }
 
+  html {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
   body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #f0f4f8, #4d6c91ff);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
     color: #1f2937;
+    min-height: 100dvh;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  #root {
+    min-height: 100dvh;
+    min-height: 100vh;
   }
 
   a {
