@@ -219,10 +219,10 @@ const ItemOverview = () => {
             <ItemFilter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
             <Table>
                 <TableHeader>
-                    <HeaderCell onClick={() => handleSort('id')}>
+                    <HeaderCell onClick={() => handleSort('inventoryNumber')}>
                         <HeaderContent>
-                            <span>ID</span>
-                            <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
+                            <span>Inventar-Nr.</span>
+                            <SortIndicator active={sortField === 'inventoryNumber'} sortDirection={sortDirection} />
                         </HeaderContent>
                     </HeaderCell>
                     <HeaderCell onClick={() => handleSort('name')}>
@@ -262,10 +262,10 @@ const ItemOverview = () => {
                             <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
                         </HeaderContent>
                     </HeaderCell>
-                    <HeaderCell onClick={() => handleSort('inventoryNumber')}>
+                    <HeaderCell onClick={() => handleSort('id')}>
                         <HeaderContent>
-                            <span>Inventar-Nr.</span>
-                            <SortIndicator active={sortField === 'inventoryNumber'} sortDirection={sortDirection} />
+                            <span>ID</span>
+                            <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
                         </HeaderContent>
                     </HeaderCell>
                     <HeaderCell onClick={() => handleSort('deviceNumber')}>
@@ -277,10 +277,15 @@ const ItemOverview = () => {
                 </TableHeader>
                 {sortedAndFilteredItems.map((item) => (
                     <TableRow key={item.id} onClick={() => navigate(`/items/${item.id}`)}>
-                        <TableCell>{item.id ?? '-'}</TableCell>
+                        <TableCell>{item.inventoryNumber ?? '-'}</TableCell>
                         <TableCell>{item.name ?? '-'}</TableCell>
                         <TableCell>{item.isSet ? 'Satz' : 'Teil'}</TableCell>
                         <CellAmount>
+                            <span>
+                                <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
+                                    {item.availability ?? '-'}
+                                </InfoInline>
+                            </span>
                             <span>
                                 <InfoInline infoComponent={<span>Tatsächliche Menge</span>}>
                                     {item.amountActual ?? '-'}
@@ -289,11 +294,6 @@ const ItemOverview = () => {
                             <span>
                                 <InfoInline infoComponent={<span>Zielmenge</span>}>
                                     {item.amountTarget ?? '-'}
-                                </InfoInline>
-                            </span>
-                            <span>
-                                <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
-                                    {item.availability ?? '-'}
                                 </InfoInline>
                             </span>
                         </CellAmount>
@@ -331,7 +331,7 @@ const ItemOverview = () => {
                                 );
                             })()}
                         </TableCell>
-                        <TableCell>{item.inventoryNumber ?? '-'}</TableCell>
+                        <TableCell>{item.id ?? '-'}</TableCell>
                         <TableCell>{item.deviceNumber ?? '-'}</TableCell>
                     </TableRow>
                 ))}
