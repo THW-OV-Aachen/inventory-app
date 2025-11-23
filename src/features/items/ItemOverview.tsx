@@ -1,18 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { db } from '../../db/db';
 import { type IItem, DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Hourglass, Search } from 'lucide-react';
+import { ArrowDownAZ, ArrowDownZA, Hourglass, Icon, Info, Search } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
-
-const DamageLevelTranslation = {
-    none: 'unbeschädigt',
-    minor: 'leicht beschädigt',
-    major: 'stark beschädigt',
-    total: 'zerstört',
-} as const;
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
+import { parseLocationString, mapLocationKey, parseLocationStringRaw } from '../../utils/locationString';
+import React from 'react';
+import StatusBadge from '../../utils/StatusBadge';
 
 type SortField =
     | 'id'
@@ -92,7 +90,7 @@ const SearchbarWrapper = styled.div`
     align-items: center;
     width: 100%;
     border: 1px solid var(--color-bg-accent-darker);
-    padding: 0 16px;
+    padding: 16px 16px;
     border-radius: 8px;
     gap: 12px;
 
@@ -117,6 +115,7 @@ const AddEntityButtons = styled.div`
 `;
 
 const ItemOverview = () => {
+    const navigate = useNavigate();
     const [items, setItems] = useState<IItem[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [sortField, setSortField] = useState<SortField | null>('id');
@@ -253,6 +252,13 @@ const ItemOverview = () => {
                     <HeaderCell onClick={() => handleSort('location')}>
                         <HeaderContent>
                             <span>Ort</span>
+                            <InfoIndicator>
+                                <p>
+                                    <b>Lagerkennung:</b>{' '}
+                                </p>
+                                <p>[Ebene]-[Containertyp*][Container-Nr.].[Subcontainer-Nr.]-[Werkzeug-Nr.]</p>
+                                <p>(*R=Rollcontainer, G=EU-Box)</p>
+                            </InfoIndicator>
                             <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
                         </HeaderContent>
                     </HeaderCell>
@@ -270,23 +276,135 @@ const ItemOverview = () => {
                     </HeaderCell>
                 </TableHeader>
                 {sortedAndFilteredItems.map((item) => (
-                    <TableRow key={item.id}>
-                        <div>{item.id ?? '-'}</div>
-                        <div>{item.name ?? '-'}</div>
-                        <div>{item.isSet ? 'Satz' : 'Teil'}</div>
+                    <TableRow key={item.id} onClick={() => navigate(`/items/${item.id}`)}>
+                        <TableCell>{item.id ?? '-'}</TableCell>
+                        <TableCell>{item.name ?? '-'}</TableCell>
+                        <TableCell>{item.isSet ? 'Satz' : 'Teil'}</TableCell>
                         <CellAmount>
-                            <span>{item.amountActual ?? '-'}</span>
-                            <span>{item.amountTarget ?? '-'}</span>
-                            <span>{item.availability ?? '-'}</span>
+                            <span>
+                                <InfoInline infoComponent={<span>Tatsächliche Menge</span>}>
+                                    {item.amountActual ?? '-'}
+                                </InfoInline>
+                            </span>
+                            <span>
+                                <InfoInline infoComponent={<span>Zielmenge</span>}>
+                                    {item.amountTarget ?? '-'}
+                                </InfoInline>
+                            </span>
+                            <span>
+                                <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
+                                    {item.availability ?? '-'}
+                                </InfoInline>
+                            </span>
                         </CellAmount>
-                        <div>{DamageLevelTranslation[item.damageLevel] ?? '-'}</div>
-                        <div>{item.location ?? '-'}</div>
-                        <div>{item.inventoryNumber ?? '-'}</div>
-                        <div>{item.deviceNumber ?? '-'}</div>
+                        <TableCell>
+                            <StatusBadge damageLevelType={item.damageLevel} />
+                        </TableCell>
+                        <TableCell>
+                            {(() => {
+                                const components = parseLocationStringRaw(item.location);
+                                return (
+                                    <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
+                                        {Object.entries(components).map(([key, value]) => {
+                                            return (
+                                                <React.Fragment key={`${item.id}-${key}`}>
+                                                    {key === 'subcontainerNumber' && '.'}
+                                                    {key === 'toolNumber' && '-'}
+                                                    <InfoInline
+                                                        infoComponent={
+                                                            <span>
+                                                                {mapLocationKey(key)}
+                                                                {key === 'type' && ': '}{' '}
+                                                                {key === 'type' &&
+                                                                    (value === 'R'
+                                                                        ? 'Rollcontainer'
+                                                                        : 'Box (EU-Palette)')}
+                                                            </span>
+                                                        }
+                                                    >
+                                                        <span>{value}</span>
+                                                    </InfoInline>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+                        </TableCell>
+                        <TableCell>{item.inventoryNumber ?? '-'}</TableCell>
+                        <TableCell>{item.deviceNumber ?? '-'}</TableCell>
                     </TableRow>
                 ))}
             </Table>
         </div>
+    );
+};
+
+const TableCell = styled.div`
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 4px;
+`;
+
+const InfoInline = (props: { children: ReactNode | ReactNode[]; infoComponent: ReactNode | ReactNode[] }) => {
+    const { children, infoComponent } = props;
+
+    return (
+        <OverlayTrigger
+            placement="bottom"
+            overlay={
+                <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
+                    {infoComponent}
+                </Tooltip>
+            }
+            delay={{ show: 150, hide: 300 }}
+        >
+            <span style={{ position: 'relative', display: 'inline-block' }}>
+                <span>{children}</span>
+                <span
+                    style={{
+                        width: '100%',
+                        height: '0px',
+                        display: 'block',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        content: '',
+                        borderBottom: '2px dotted rgba(var(--color-primary-rgb), .2)',
+                    }}
+                />
+            </span>
+        </OverlayTrigger>
+    );
+};
+
+const InfoIndicator = (props: { children: ReactNode | ReactNode[] }) => {
+    const { children } = props;
+
+    return (
+        <OverlayTrigger
+            placement="bottom"
+            overlay={
+                <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
+                    {children}
+                </Tooltip>
+            }
+            delay={{ show: 150, hide: 300 }}
+        >
+            <span
+                className="info-icon"
+                style={{
+                    width: '1em',
+                    height: '1em',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Info />
+            </span>
+        </OverlayTrigger>
     );
 };
 
@@ -359,11 +477,18 @@ const TableRow = styled(TableRowBase)`
         background-color: var(--color-bg-hover, #f8f9fa);
         cursor: pointer;
     }
+
+    & span.info-icon {
+        opacity: 0;
+    }
+
+    &:hover span.info-icon {
+        opacity: 1;
+    }
 `;
 
 const HeaderCell = styled.div`
     cursor: pointer;
-    user-select: none;
 `;
 
 const HeaderContent = styled.div`
