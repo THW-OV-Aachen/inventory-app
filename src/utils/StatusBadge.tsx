@@ -33,7 +33,7 @@ const StatusBadge = (props: { damageLevelType: DamageLevelType }) => {
     );
 };
 
-const StatusBadgeWrapper = styled.div<{ $color: string; $bgColor: string }>`
+export const StatusBadgeWrapper = styled.div<{ $color: string; $bgColor: string }>`
     border-radius: 6px;
     border: 1px solid ${(p) => p.$color};
     color: ${(p) => p.$color};
