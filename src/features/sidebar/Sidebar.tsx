@@ -1,95 +1,104 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, Home, Wrench, Eye, CircleQuestionMark, ToyBrick } from 'lucide-react';
+import logo from '../../assets/favicon.svg';
+import IconContainer from '../../utils/IconContainer';
+
+const SidebarSection = styled.div`
+    padding-left: 8px;
+    padding-right: 8px;
+`;
 
 const SidebarWrapper = styled.aside<{ open: boolean }>`
-    position: fixed;
-    top: 0;
-    left: 0;
-    transform: ${({ open }) => (open ? 'translateX(0)' : 'translateX(-100%)')};
-    height: 100vh;
-    background: #1e293b;
-    color: white;
-    overflow: hidden;
-    transition: width 0.3s ease;
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    background-color: var(--color-bg-accent);
+    font-size: 16px;
 
     @media (min-width: 768px) {
-        width: 220px;
+        width: 320px;
     }
 `;
 
-const SidebarHeader = styled.div<{ $sidebarOpen?: boolean }>`
-    padding: 20px;
-    padding-left: ${({ $sidebarOpen }) => ($sidebarOpen ? '60px' : '20px')};
-
-    font-size: 20px;
+const SidebarHeaderWrapper = styled(SidebarSection)<{ $sidebarOpen?: boolean }>`
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
     font-weight: bold;
-    background: #0f172a;
-    border-bottom: 1px solid #334155;
+    font-size: 20px;
+
+    padding: 20px 12px;
 `;
 
-const NavLinks = styled.nav`
-    flex: 1;
+const SectionLine = styled.div`
+    height: 1px;
+    width: 100%;
+    display: block;
+    content: '';
+    background-color: var(--color-bg-accent-darker);
+`;
+
+const LogoWrapper = styled.div`
+    overflow: hidden;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+
+    img {
+        width: 100%;
+        height: 100%;
+    }
+`;
+
+const SidebarHeader = () => {
+    return (
+        <SidebarHeaderWrapper>
+            <LogoWrapper>
+                <img src={logo} alt="Logo" />
+            </LogoWrapper>
+            THW Inventar
+        </SidebarHeaderWrapper>
+    );
+};
+
+const LinkList = styled(SidebarSection)`
     display: flex;
     flex-direction: column;
-    padding: 10px;
     gap: 4px;
+`;
+
+const NavLinks = styled(LinkList)`
+    display: flex;
+    flex-direction: column;
+    padding-top: 12px;
+`;
+
+const BottomLinks = styled(LinkList)`
+    margin-top: auto;
 `;
 
 const NavLink = styled(Link)<{ $active?: boolean }>`
     display: flex;
+    flex-direction: row;
+    gap: 8px;
+    background: ${(p) => (p.$active ? 'rgba(var(--color-primary-rgb), .075)' : 'unset')};
+    color: ${(p) => (p.$active ? 'var(--color-primary)' : 'var(--color-font-secondary)')};
+    font-weight: ${(p) => (p.$active ? 'bold' : 'normal')};
+    padding: 8px;
+    border-radius: 4px;
     align-items: center;
-    gap: 10px; /* 👈 space between icon and text */
-    padding: 10px 14px;
-    border-radius: 6px;
-    color: ${({ $active }) => ($active ? '#0f172a' : 'white')};
-    background: ${({ $active }) => ($active ? '#e2e8f0' : 'transparent')};
-    font-weight: ${({ $active }) => ($active ? '600' : '400')};
-    text-decoration: none;
-    transition: all 0.2s ease;
 
     &:hover {
-        background: ${({ $active }) => ($active ? '#cbd5e1' : '#334155')};
-    }
-
-    svg {
-        width: 18px;
-        height: 18px;
+        background-color: ${(p) => (p.$active ? '' : 'var(--color-bg-accent-darker)')};
     }
 `;
 
 const ToggleButton = styled.button`
-    position: fixed;
-    top: 14px;
-    left: 14px;
-    background: #1e293b;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px;
-    z-index: 1100;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-
-    /*
-  {/@media (min-width: 768px) {
     display: none;
-  }
-  */
-`;
-
-const BottomLinks = styled.nav`
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    margin-top: auto; // this pushes it to the bottom
 `;
 
 const Sidebar = () => {
@@ -97,15 +106,15 @@ const Sidebar = () => {
     const location = useLocation();
 
     const links = [
-        { to: '/', label: 'Home', icon: <Home /> },
-        { to: '/dashboard', label: 'Inventory Overview', icon: <Eye /> },
-        { to: '/maintenance', label: 'Maintenance Overview', icon: <Wrench /> },
-        { to: '/overview', label: 'Items Overview', icon: <ToyBrick /> },
+        { to: '/', label: 'Home', icon: Home },
+        { to: '/dashboard', label: 'Inventory Overview', icon: Eye },
+        { to: '/maintenance', label: 'Maintenance Overview', icon: Wrench },
+        { to: '/items', label: 'Items Overview', icon: ToyBrick },
     ];
 
     const bottomLinks = [
-        { to: '/guide', label: 'Guide', icon: <CircleQuestionMark /> },
-        { to: '/ImportScreen', label: 'Import/Export', icon: <CircleQuestionMark /> },
+        { to: '/guide', label: 'Guide', icon: CircleQuestionMark },
+        { to: '/ImportScreen', label: 'Import/Export', icon: CircleQuestionMark },
     ];
 
     return (
@@ -113,7 +122,8 @@ const Sidebar = () => {
             <ToggleButton onClick={() => setOpen(!open)}>{open ? <Menu size={18} /> : <Menu size={18} />}</ToggleButton>
 
             <SidebarWrapper open={open}>
-                <SidebarHeader $sidebarOpen={open}>Inventory App</SidebarHeader>
+                <SidebarHeader />
+                <SectionLine />
                 <NavLinks>
                     {links.map((link) => (
                         <NavLink
@@ -122,7 +132,7 @@ const Sidebar = () => {
                             $active={location.pathname === link.to}
                             onClick={() => setOpen(false)}
                         >
-                            {link.icon}
+                            <IconContainer icon={link.icon} key={link.label} />
                             {link.label}
                         </NavLink>
                     ))}
@@ -136,7 +146,7 @@ const Sidebar = () => {
                             $active={location.pathname === link.to}
                             onClick={() => setOpen(false)}
                         >
-                            {link.icon}
+                            <IconContainer icon={link.icon} key={link.label} />
                             {link.label}
                         </NavLink>
                     ))}

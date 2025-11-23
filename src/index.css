@@ -1,4 +1,14 @@
 :root {
+    --color-bg: #ffffff;
+    --color-bg-accent: #f3f3f3;
+    --color-bg-accent-darker: #e3e3e3;
+    --color-primary: #003399;
+    --color-primary-rgb: 0, 51, 153;
+    --color-font-primary: #323249;
+    --color-font-secondary: #6e6e79;
+    --color-warning: #f06f6b;
+    --color-success: #0bbb59;
+
     color: #000;
     background-color: #fff;
 }
