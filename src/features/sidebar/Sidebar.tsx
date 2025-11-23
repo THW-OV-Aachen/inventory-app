@@ -9,16 +9,18 @@ const SidebarWrapper = styled.aside<{ open: boolean }>`
   top: 0;
   left: 0;
   transform: ${({ open }) => (open ? 'translateX(0)' : 'translateX(-100%)')};
-  height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
   background: #1e293b;
   color: white;
   overflow: hidden;
-  transition: width 0.3s ease;
-  display: flex;
+  transition: transform 0.3s ease;
+  display: none;
   flex-direction: column;
   z-index: 1000;
 
   @media (min-width: 768px) {
+    display: flex;
     width: 220px;
   }
 `;
@@ -75,14 +77,12 @@ const ToggleButton = styled.button`
   padding: 8px;
   z-index: 1100;
   cursor: pointer;
-  display: flex;
+  display: none;
   align-items: center;
 
-  /*
-  {/@media (min-width: 768px) {
-    display: none;
+  @media (min-width: 768px) {
+    display: flex;
   }
-  */
 `;
 
 const BottomLinks = styled.nav`

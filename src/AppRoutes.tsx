@@ -13,6 +13,7 @@ import ItemOverview from './features/item/itemOverview';
 
 import Home from './features/home/home';
 import Guide from './features/guide/guide';
+import More from './features/more/More';
 
 import ItemAdding from './features/item/itemAdding';
 
@@ -30,7 +31,8 @@ const AppRoutes = () => {
                 </Route>
 
                 <Route path="maintenance" element={<MaintenanceOverview />} />
-                <Route path= "guide" element={<Guide />} />
+                <Route path="guide" element={<Guide />} />
+                <Route path="more" element={<More />} />
 
                 <Route path="itemOverview" element={<ItemOverview />} />
                 <Route path="/itemAdding" element={<ItemAdding />} />
