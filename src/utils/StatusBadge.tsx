@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import type { DamageLevelType } from '../db/items';
 import DamageLevelTranslation from './damageLevels';
 
-const DamageLevelStyles = {
+export const DamageLevelStyles = {
     none: {
         color: 'var(--color-success)',
         colorBg: 'rgba(var(--color-success-rgb), .05)',

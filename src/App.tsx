@@ -29,6 +29,10 @@ const ContentArea = styled.div`
 
     height: 100%;
     width: 100%;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 12px 16px;
+    }
 `;
 
 const MainLayout = () => {
