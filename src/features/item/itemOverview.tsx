@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import styled from 'styled-components';
 import PageHeader from '../../layout/PageHeader';
-
-
-
+import ItemsList from './ItemsList/ItemsList';
+import { db } from '../../db/db';
 
 const contentWidth = '400px';
-
-const PageContainer = styled.div`
-    padding: 20px;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    background-color: transparent;
-`;
 
 const TopBar = styled.div`
     width: ${contentWidth};
@@ -69,79 +59,96 @@ const Button = styled.button`
     }
 `;
 
-const ItemCard = styled.div<{ status: string }>`
-    width: ${contentWidth};
-    border-radius: 10px;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    background-color: ${({ status }) => (status === 'Good' ? '#b8f3c1' : status === 'Soon' ? '#ffe8a1' : '#f8a6a6')};
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition:
-        transform 0.1s ease,
-        box-shadow 0.1s ease;
-
-    &:hover {
-        transform: scale(1.02);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-    }
-`;
-
-const ItemTitle = styled.div`
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 5px;
-`;
-
-const InfoRow = styled.div`
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #333;
-`;
-
-const Label = styled.span`
-    font-weight: 600;
-`;
-
 const ItemOverview = () => {
     const navigate = useNavigate();
-
     const [sortOption, setSortOption] = useState('item');
-    const [items, setItems] = useState([
-        { id: 1, status: 'Good', location: '3B' },
-        { id: 2, status: 'Soon', location: '2C' },
-        { id: 3, status: 'Danger!', location: '1C' },
-        { id: 4, status: 'Good', location: '3C' },
-        { id: 5, status: 'Good', location: '3D' },
-    ]);
+
+    // Fetch inventory items from IndexedDB with live updates
+    const inventoryItemsFromDB = useLiveQuery(() => db.inventoryItems.toArray(), []);
+
+    // Hardcoded test data (fallback when DB is empty)
+    const hardcodedItems = [
+        {
+            id: 1,
+            externalId: '001',
+            floor: 3,
+            amountTarget: 5,
+            amountActual: 5,
+            isAvailable: true,
+            position: '3B',
+            compoundType: 'set' as const,
+            organisationalUnitId: 1,
+            itemDefinitionId: 1,
+        },
+        {
+            id: 2,
+            externalId: '002',
+            floor: 2,
+            amountTarget: 5,
+            amountActual: 3,
+            isAvailable: true,
+            position: '2C',
+            compoundType: 'part' as const,
+            organisationalUnitId: 1,
+            itemDefinitionId: 2,
+        },
+        {
+            id: 3,
+            externalId: '003',
+            floor: 1,
+            amountTarget: 10,
+            amountActual: 0,
+            isAvailable: false,
+            position: '1C',
+            compoundType: 'set' as const,
+            organisationalUnitId: 1,
+            itemDefinitionId: 3,
+        },
+        {
+            id: 4,
+            externalId: '004',
+            floor: 3,
+            amountTarget: 8,
+            amountActual: 8,
+            isAvailable: true,
+            position: '3C',
+            compoundType: 'part' as const,
+            organisationalUnitId: 1,
+            itemDefinitionId: 4,
+        },
+        {
+            id: 5,
+            externalId: '005',
+            floor: 3,
+            amountTarget: 2,
+            amountActual: 2,
+            isAvailable: true,
+            position: '3D',
+            compoundType: 'set' as const,
+            organisationalUnitId: 1,
+            itemDefinitionId: 5,
+        },
+    ];
+
+    // Use DB items if available, otherwise use hardcoded test data
+    const inventoryItems = inventoryItemsFromDB && inventoryItemsFromDB.length > 0 
+        ? inventoryItemsFromDB 
+        : hardcodedItems;
 
     const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value;
         setSortOption(value);
-
-        let sorted = [...items];
-        if (value === 'item') {
-            sorted.sort((a, b) => a.id - b.id);
-        } else if (value === 'status') {
-            sorted.sort((a, b) => a.status.localeCompare(b.status));
-        } else if (value === 'location') {
-            sorted.sort((a, b) => a.location.localeCompare(b.location));
-        }
-        setItems(sorted);
+        // TODO: Implement sorting logic
     };
 
-    const handleCardClick = (itemId: number) => {
-        // Navigate to /items page — you can pass state or params if needed
-        navigate(`/itemDetails`);
+    const handleItemClick = (itemId: number) => {
+        navigate(`/itemDetails`, { state: { itemId } });
     };
 
     return (
-    <div>
-      <PageHeader title="Items Overview" />
-            
-        
-        
+        <div>
+            <PageHeader title="Items Overview" />
+
             <TopBar>
                 <SearchAndSortContainer>
                     <SearchInput placeholder="Search" />
@@ -158,23 +165,9 @@ const ItemOverview = () => {
                 </ButtonColumn>
             </TopBar>
 
-            {items.map((item) => (
-                <ItemCard key={item.id} status={item.status} onClick={() => handleCardClick(item.id)}>
-                    <ItemTitle>Item #{item.id}</ItemTitle>
-                    <InfoRow>
-                        <div>
-                            <Label>Maintenance Stat:</Label> {item.status}
-                        </div>
-                        <div>
-                            <Label>Location:</Label> {item.location}
-                        </div>
-                    </InfoRow>
-                </ItemCard>
-            ))}
-        
-        
-
-    </div>    
+            {/* Responsive items list (cards on small, table on large) */}
+            <ItemsList items={inventoryItems} onItemClick={handleItemClick} />
+        </div>
     );
 };
 
