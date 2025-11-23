@@ -56,11 +56,45 @@ const Button = styled.button<{ variant?: 'primary' | 'success' }>`
         background-color: ${({ variant }) => (variant === 'success' ? '#218838' : '#0056b3')};
     }
 `;
+const ModalOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+`;
+
+const ModalTitle = styled.h3`
+    margin: 0 0 10px 0;
+`;
+
+const ModalText = styled.p`
+    margin: 0 0 16px 0;
+`;
+
+const ModalButtons = styled.div`
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+`;
 
 const ImportExportScreen = () => {
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
 
     const inventoryItems = inventoryApi.useItems(); // fetch current items
 
@@ -73,15 +107,43 @@ const ImportExportScreen = () => {
             alert('Select a file first.');
             return;
         }
+
+        if ((inventoryItems?.length ?? 0) > 0) {
+            setPendingFile(file);
+            setShowConfirm(true);
+            return;
+        }
+        await performImport(file, /* extend */ true);
+    };
+
+    const performImport = async (f: File, extend: boolean) => {
         setImporting(true);
         try {
-            await importExcel(file);
+            if (!extend) {
+                await inventoryApi.clearAll();
+            }
+            await importExcel(f);
             alert('Import finished!');
         } catch (err) {
             alert('Import failed: ' + (err as Error).message);
         } finally {
             setImporting(false);
+            setPendingFile(null);
+            setShowConfirm(false);
         }
+    };
+
+    const handleConfirmChoice = async (choice: 'extend' | 'overwrite' | 'cancel') => {
+        if (choice === 'cancel') {
+            setShowConfirm(false);
+            setPendingFile(null);
+            return;
+        }
+        if (!pendingFile) {
+            setShowConfirm(false);
+            return;
+        }
+        await performImport(pendingFile, choice === 'extend');
     };
 
     const handleExportClick = async () => {
@@ -117,6 +179,25 @@ const ImportExportScreen = () => {
                     </Button>
                 </ButtonGroup>
             </Card>
+            {showConfirm && (
+                <ModalOverlay>
+                    <ModalBox role="dialog" aria-modal="true" aria-labelledby="import-confirm-title">
+                        <ModalTitle id="import-confirm-title">Die Datenbank enthält bereits Elemente</ModalTitle>
+                        <ModalText>
+                            Die aktuelle Datenbank enthält bereits Einträge. Möchten Sie die vorhandenen Daten erweitern
+                            (aktuelle Einträge beibehalten und neue hinzufügen) oder die Datenbank überschreiben
+                            (vorhandene Einträge löschen und nur die neuen importieren )?
+                        </ModalText>
+                        <ModalButtons>
+                            <Button onClick={() => handleConfirmChoice('cancel')}>Abbrechen</Button>
+                            <Button onClick={() => handleConfirmChoice('extend')}>Erweitern</Button>
+                            <Button variant="success" onClick={() => handleConfirmChoice('overwrite')}>
+                                Überschreiben
+                            </Button>
+                        </ModalButtons>
+                    </ModalBox>
+                </ModalOverlay>
+            )}
         </Container>
     );
 };

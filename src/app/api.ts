@@ -26,4 +26,12 @@ export const inventoryApi = {
             console.error('Failed to delete item: ', error);
         }
     },
+    async clearAll(): Promise<void> {
+        try {
+            await db.items.clear();
+        } catch (err) {
+            console.error('Failed to clear items', err);
+            throw err;
+        }
+    },
 };
