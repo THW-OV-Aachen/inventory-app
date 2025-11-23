@@ -12,7 +12,7 @@ import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import { parseLocationString, mapLocationKey, parseLocationStringRaw } from '../../utils/locationString';
 import React from 'react';
-import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
+import StatusBadge, { DamageLevelStyles, StatusBadgeWrapper } from '../../utils/StatusBadge';
 import { inventoryApi } from '../../app/api';
 import { Button } from 'react-bootstrap';
 
@@ -682,7 +682,6 @@ const TableRowBase = styled.div`
         & > * {
             border: none !important;
         }
-        display: block;
     }
 `;
 
@@ -718,13 +717,45 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
     }
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            'inventoryNumber damageLevel'
+            'name name'
+            'location location';
+        gap: 12px;
+        padding: 16px;
+
         background-color: ${(p) => p.$mobileBgColor} !important;
         border: 1px solid ${(p) => p.$mobileColor} !important;
-
         border-radius: 8px;
 
         & > * {
             background-color: transparent !important;
+            padding: 0 !important; /* Remove default padding */
+        }
+
+        & > #inventoryNumber {
+            grid-area: inventoryNumber;
+        }
+        & > #name {
+            grid-area: name;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        & > #damageLevel {
+            grid-area: damageLevel;
+            justify-self: end;
+
+            & > ${StatusBadgeWrapper} {
+                background-color: transparent;
+            }
+        }
+
+        & > #location {
+            grid-area: location;
+            font-size: 14px;
+            color: var(--color-font-secondary);
         }
     }
 `;
