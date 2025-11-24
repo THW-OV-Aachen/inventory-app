@@ -15,7 +15,7 @@ import Home from './features/home/home';
 import Guide from './features/guide/guide';
 import More from './features/more/More';
 
-import ItemAdding from './features/item/itemAdding';
+import ItemAdding from './features/add/itemAdding';
 
 
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, Home, Wrench, Eye , CircleQuestionMark, ToyBrick} from 'lucide-react'
+import { Menu, Home, Wrench, Eye , CircleHelp, ToyBrick} from 'lucide-react'
 
 
 const SidebarWrapper = styled.aside<{ open: boolean }>`
@@ -109,7 +109,7 @@ const Sidebar = () => {
   ];
 
   const bottomLinks = [
-  { to: '/guide', label: 'Guide', icon: <CircleQuestionMark /> },
+  { to: '/guide', label: 'Guide', icon: <CircleHelp /> },
   ];
 
   return (
