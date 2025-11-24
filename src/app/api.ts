@@ -28,7 +28,7 @@ export const inventoryApi = {
             console.error('Failed to read item: ', error);
             return undefined;
         }
-    }
+    },
     async updateItem(id: string | number, changes: Partial<IItem>): Promise<boolean> {
         try {
             await db.items.update(id as any, changes);
