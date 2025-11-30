@@ -1,8 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
+    --color-bg: #ffffff;
+    --color-bg-accent: #f8fafc;
+    --color-bg-accent-darker: #e2e8f0;
+    --color-primary: #003399;
+    --color-primary-rgb: 0, 51, 153;
+    --color-font-primary: #323249;
+    --color-font-primary-rgb: 50, 50, 73;
+    --color-font-secondary: #6e6e79;
+    --color-forbidden: #9a67ec;
+    --color-forbidden-rgb: 154, 103, 236;
+    --color-danger: #f06f6b;
+    --color-danger-rgb: 240, 111, 107;
+    --color-warning: #eecd63;
+    --color-warning-rgb: 238, 205, 99;
+    --color-success: #0bbb59;
+    --color-success-rgb: 11, 187, 89;
+
     color: #000;
     background-color: #fff;
+}
+
+body {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    touch-action: none;
 }

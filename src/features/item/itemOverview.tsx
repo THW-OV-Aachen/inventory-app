@@ -1,362 +1,709 @@
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import styled from 'styled-components';
-import { Search, SlidersHorizontal, Plus, Package } from 'lucide-react';
-import PageHeader from '../../layout/PageHeader';
-import ItemsList from './ItemsList/ItemsList';
-import { db } from '../../db/db';
-
-const ControlsWrapper = styled.div`
-    width: 100%;
-    max-width: 100%;
-    margin-top: 8px;
-    margin-bottom: 16px;
-    box-sizing: border-box;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #f8f9fa;
-    padding-top: 8px;
-    padding-bottom: 8px;
-
-    @media (min-width: 1024px) {
-        width: 100%;
-        max-width: 896px;
-        margin: 8px auto 20px auto;
-        padding: 8px 16px;
-        background-color: #f8f9fa;
-    }
-`;
-
-const FilterBar = styled.div`
-    background: white;
-    border: 0.5px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-`;
-
-const SearchRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-`;
-
-const SearchInputWrapper = styled.div`
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 10px;
-
-    &:focus-within {
-        border-color: #007bff;
-        background: white;
-    }
-`;
-
-const SearchInput = styled.input`
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    outline: none;
-    color: #1e293b;
-
-    &::placeholder {
-        color: #94a3b8;
-    }
-`;
-
-const SortRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-`;
-
-const SortSelectWrapper = styled.div`
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 10px;
-`;
-
-const SortSelect = styled.select`
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    outline: none;
-    color: #1e293b;
-    cursor: pointer;
-
-    &:focus {
-        outline: none;
-    }
-`;
-
-const ActionButtons = styled.div`
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    justify-content: flex-end;
-    padding-top: 6px;
-    border-top: 1px solid #e2e8f0;
-`;
-
-const PrimaryButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 16px;
-    border: none;
-    background-color: #4A90E2;
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background-color: #3a7bc8;
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
-`;
-
-const SecondaryButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 16px;
-    border: 1px solid #6B7A90;
-    background-color: #f1f3f6;
-    color: #6B7A90;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background-color: #e8ebef;
-        border-color: #5a6878;
-        color: #5a6878;
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
-`;
+import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass } from 'lucide-react';
+import type { DamageLevelType, IItem } from '../../db/items';
+import { ItemFilter, type SortDirection, type SortField } from './ItemFilterPanel';
+import { inventoryApi } from '../../app/api';
+import StatusBadge, { DamageLevelStyles, StatusBadgeWrapper } from '../../utils/StatusBadge';
+import IconContainer from '../../utils/IconContainer';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import React from 'react';
+import { parseLocationStringRaw, mapLocationKey } from '../../utils/locationString';
 
 const ItemOverview = () => {
     const navigate = useNavigate();
-    const [sortOption, setSortOption] = useState('item');
+    const [items, setItems] = useState<IItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [sortField, setSortField] = useState<SortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-    // Fetch inventory items from IndexedDB with live updates
-    const inventoryItemsFromDB = useLiveQuery(() => db.inventoryItems.toArray(), []);
+    const [filters, setFilters] = useState<{
+        damageLevel?: DamageLevelType | null;
+        type?: 'isSet' | 'isPart' | null;
+        location?: string | null;
+    }>({});
 
-    // Hardcoded test data (fallback when DB is empty)
-    const hardcodedItems = [
-        {
-            id: 1,
-            externalId: '001',
-            floor: 3,
-            amountTarget: 5,
-            amountActual: 5,
-            isAvailable: true,
-            position: '3B',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 1,
-        },
-        {
-            id: 2,
-            externalId: '002',
-            floor: 2,
-            amountTarget: 5,
-            amountActual: 3,
-            isAvailable: true,
-            position: '2C',
-            compoundType: 'part' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 2,
-        },
-        {
-            id: 3,
-            externalId: '003',
-            floor: 1,
-            amountTarget: 10,
-            amountActual: 0,
-            isAvailable: false,
-            position: '1C',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 3,
-        },
-        {
-            id: 4,
-            externalId: '004',
-            floor: 3,
-            amountTarget: 8,
-            amountActual: 8,
-            isAvailable: true,
-            position: '3C',
-            compoundType: 'part' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 4,
-        },
-        {
-            id: 5,
-            externalId: '005',
-            floor: 3,
-            amountTarget: 2,
-            amountActual: 2,
-            isAvailable: true,
-            position: '3D',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 5,
-        },
-        {
-            id: 6,
-            externalId: '006',
-            floor: 3,
-            amountTarget: 5,
-            amountActual: 5,
-            isAvailable: true,
-            position: '3B',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 1,
-        },
-        {
-            id: 7,
-            externalId: '007',
-            floor: 2,
-            amountTarget: 5,
-            amountActual: 3,
-            isAvailable: true,
-            position: '2C',
-            compoundType: 'part' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 2,
-        },
-        {
-            id: 8,
-            externalId: '008',
-            floor: 1,
-            amountTarget: 10,
-            amountActual: 0,
-            isAvailable: false,
-            position: '1C',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 3,
-        },
-        {
-            id: 9,
-            externalId: '009',
-            floor: 3,
-            amountTarget: 8,
-            amountActual: 8,
-            isAvailable: true,
-            position: '3C',
-            compoundType: 'part' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 4,
-        },
-        {
-            id: 10,
-            externalId: '010',
-            floor: 3,
-            amountTarget: 2,
-            amountActual: 2,
-            isAvailable: true,
-            position: '3D',
-            compoundType: 'set' as const,
-            organisationalUnitId: 1,
-            itemDefinitionId: 5,
-        },
-    ];
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [pageSize] = useState<number>(50); // Items per page
+    const [totalItems, setTotalItems] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Use DB items if available, otherwise use hardcoded test data
-    const inventoryItems = inventoryItemsFromDB && inventoryItemsFromDB.length > 0 
-        ? inventoryItemsFromDB 
-        : hardcodedItems;
+    // Fetch items with pagination
+    useEffect(() => {
+        const fetchItems = async () => {
+            setIsLoading(true);
+            try {
+                const result = await inventoryApi.fetchItemsPaginatedWithFilter(
+                    { page: currentPage, pageSize },
+                    searchTerm,
+                    filters
+                );
+                setItems(result.data);
+                setTotalItems(result.pagination.totalItems);
+                setTotalPages(result.pagination.totalPages);
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        setSortOption(value);
-        // TODO: Implement sorting logic
+        fetchItems();
+    }, [currentPage, pageSize, searchTerm, filters]);
+
+    // Reset to page 1 when search term changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filters]);
+
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            if (sortDirection === 'asc') {
+                setSortDirection('desc');
+            } else {
+                setSortField(null);
+                setSortDirection('asc');
+            }
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
     };
 
-    const handleItemClick = (itemId: number) => {
-        navigate(`/itemDetails`, { state: { itemId } });
+    const getSortedItems = (itemsToSort: IItem[]) => {
+        if (!sortField) return itemsToSort;
+
+        const sorted = [...itemsToSort];
+        sorted.sort((a, b) => {
+            let aValue: any;
+            let bValue: any;
+
+            switch (sortField) {
+                case 'id':
+                    aValue = a.id;
+                    bValue = b.id;
+                    break;
+                case 'name':
+                    aValue = a.name;
+                    bValue = b.name;
+                    break;
+                case 'type':
+                    aValue = a.isSet ? 'Satz' : 'Teil';
+                    bValue = b.isSet ? 'Satz' : 'Teil';
+                    break;
+                case 'amountActual':
+                    aValue = a.amountActual ?? 0;
+                    bValue = b.amountActual ?? 0;
+                    break;
+                case 'availability':
+                    aValue = a.availability;
+                    bValue = b.availability;
+                    break;
+                case 'damageLevel':
+                    aValue = a.damageLevel;
+                    bValue = b.damageLevel;
+                    break;
+                case 'location':
+                    aValue = a.location;
+                    bValue = b.location;
+                    break;
+                case 'inventoryNumber':
+                    aValue = a.inventoryNumber ?? '';
+                    bValue = b.inventoryNumber ?? '';
+                    break;
+                case 'deviceNumber':
+                    aValue = a.deviceNumber ?? '';
+                    bValue = b.deviceNumber ?? '';
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                const comparison = aValue.localeCompare(bValue);
+                return sortDirection === 'asc' ? comparison : -comparison;
+            } else {
+                const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+                return sortDirection === 'asc' ? comparison : -comparison;
+            }
+        });
+
+        return sorted;
+    };
+
+    const sortedItems = getSortedItems(items);
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     return (
         <div>
-            <PageHeader title="Items Overview" />
+            <ItemFilter
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                sortField={sortField}
+                setSortField={setSortField}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                filters={filters}
+                setFilters={setFilters}
+            />
 
-            <ControlsWrapper>
-                <FilterBar>
-                    <SearchRow>
-                        <SearchInputWrapper>
-                            <Search size={18} color="#64748b" />
-                            <SearchInput placeholder="Search items..." />
-                        </SearchInputWrapper>
-                    </SearchRow>
+            {isLoading ? (
+                <LoadingContainer>
+                    <IconContainer icon={Hourglass} />
+                    <span>Lade Inventar...</span>
+                </LoadingContainer>
+            ) : (
+                <>
+                    <Table>
+                        <TableHeader>
+                            <HeaderCell onClick={() => handleSort('inventoryNumber')}>
+                                <HeaderContent>
+                                    <span>Inventar-Nr.</span>
+                                    <SortIndicator
+                                        active={sortField === 'inventoryNumber'}
+                                        sortDirection={sortDirection}
+                                    />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('name')}>
+                                <HeaderContent>
+                                    <span>Name</span>
+                                    <SortIndicator active={sortField === 'name'} sortDirection={sortDirection} />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('type')}>
+                                <HeaderContent>
+                                    <span>Typ</span>
+                                    <SortIndicator active={sortField === 'type'} sortDirection={sortDirection} />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('amountActual')}>
+                                <HeaderContent>
+                                    <span>Menge</span>
+                                    <SortIndicator
+                                        active={sortField === 'amountActual'}
+                                        sortDirection={sortDirection}
+                                    />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('damageLevel')}>
+                                <HeaderContent>
+                                    <span>Zustand</span>
+                                    <SortIndicator active={sortField === 'damageLevel'} sortDirection={sortDirection} />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('location')}>
+                                <HeaderContent>
+                                    <span>Ort</span>
+                                    <InfoIndicator>
+                                        <p>
+                                            <b>Lagerkennung:</b>{' '}
+                                        </p>
+                                        <p>[Ebene]-[Containertyp*][Container-Nr.].[Subcontainer-Nr.]-[Werkzeug-Nr.]</p>
+                                        <p>(*R=Rollcontainer, G=EU-Box)</p>
+                                    </InfoIndicator>
+                                    <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('id')}>
+                                <HeaderContent>
+                                    <span>ID</span>
+                                    <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
+                                </HeaderContent>
+                            </HeaderCell>
+                            <HeaderCell onClick={() => handleSort('deviceNumber')}>
+                                <HeaderContent>
+                                    <span>Geräte-Nr.</span>
+                                    <SortIndicator
+                                        active={sortField === 'deviceNumber'}
+                                        sortDirection={sortDirection}
+                                    />
+                                </HeaderContent>
+                            </HeaderCell>
+                        </TableHeader>
+                        {sortedItems.map((item) => {
+                            const damageLevel = DamageLevelStyles[item.damageLevel as DamageLevelType];
 
-                    <SortRow>
-                        <SortSelectWrapper>
-                            <SlidersHorizontal size={18} color="#64748b" />
-                            <SortSelect value={sortOption} onChange={handleSortChange}>
-                                <option value="item">Sort by Item #</option>
-                                <option value="status">Sort by Status</option>
-                                <option value="location">Sort by Location</option>
-                            </SortSelect>
-                        </SortSelectWrapper>
-                    </SortRow>
+                            return (
+                                <TableRow
+                                    key={item.id}
+                                    onClick={() => navigate(`/items/${item.id}`)}
+                                    $mobileBgColor={damageLevel.colorBg}
+                                    $mobileColor={damageLevel.color}
+                                >
+                                    <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
+                                    <TableCell id="name">{item.name ?? '-'}</TableCell>
+                                    <TableCell id="isSet">
+                                        <IconContainer icon={item.isSet ? Boxes : Box} />
+                                    </TableCell>
+                                    <CellAmount id="amounts" $hideOnMobile>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
+                                                {item.availability ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Tatsächliche Menge</span>}>
+                                                {item.amountActual ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                        <span>
+                                            <InfoInline infoComponent={<span>Zielmenge</span>}>
+                                                {item.amountTarget ?? '-'}
+                                            </InfoInline>
+                                        </span>
+                                    </CellAmount>
+                                    <TableCell id="damageLevel">
+                                        <StatusBadge damageLevelType={item.damageLevel} />
+                                    </TableCell>
+                                    <TableCell id="location">
+                                        {(() => {
+                                            const components = parseLocationStringRaw(item.location);
+                                            return (
+                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
+                                                    {Object.entries(components).map(([key, value]) => {
+                                                        return (
+                                                            <React.Fragment key={`${item.id}-${key}`}>
+                                                                {key === 'subcontainerNumber' && '.'}
+                                                                {key === 'toolNumber' && '-'}
+                                                                <InfoInline
+                                                                    infoComponent={
+                                                                        <span>
+                                                                            {mapLocationKey(key)}
+                                                                            {key === 'type' && ': '}{' '}
+                                                                            {key === 'type' &&
+                                                                                (value === 'R'
+                                                                                    ? 'Rollcontainer'
+                                                                                    : 'Box (EU-Palette)')}
+                                                                        </span>
+                                                                    }
+                                                                >
+                                                                    <span>{value}</span>
+                                                                </InfoInline>
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </TableCell>
+                                    <TableCell id="id" $hideOnMobile>
+                                        {item.id ?? '-'}
+                                    </TableCell>
+                                    <TableCell id="deviceNumber" $hideOnMobile>
+                                        {item.deviceNumber ?? '-'}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </Table>
 
-                    <ActionButtons>
-                        <PrimaryButton onClick={() => navigate('/itemAdding')}>
-                            <Plus size={14} />
-                            <span>Item</span>
-                        </PrimaryButton>
-                        <SecondaryButton>
-                            <Package size={14} />
-                            <span>Pack</span>
-                        </SecondaryButton>
-                    </ActionButtons>
-                </FilterBar>
-            </ControlsWrapper>
+                    <PaginationContainer>
+                        <PaginationInfo>
+                            Zeige {items.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} -{' '}
+                            {Math.min(currentPage * pageSize, totalItems)} von {totalItems} Gegenständen
+                        </PaginationInfo>
+                        <PaginationControls>
+                            <PaginationButton
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1 || isLoading}
+                                variant="outline-primary"
+                            >
+                                <IconContainer icon={ChevronLeft} />
+                            </PaginationButton>
 
-            {/* Responsive items list (cards on small, table on large) */}
-            <ItemsList items={inventoryItems} onItemClick={handleItemClick} />
+                            <PageNumbers>
+                                {currentPage > 3 && (
+                                    <>
+                                        <PageNumber
+                                            variant="outline-primary"
+                                            onClick={() => handlePageChange(1)}
+                                            $active={false}
+                                        >
+                                            1
+                                        </PageNumber>
+                                        {currentPage > 4 && <PageEllipsis>...</PageEllipsis>}
+                                    </>
+                                )}
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter((page) => page >= currentPage - 2 && page <= currentPage + 2)
+                                    .map((page) => (
+                                        <PageNumber
+                                            key={page}
+                                            onClick={() => handlePageChange(page)}
+                                            $active={page === currentPage}
+                                            variant={`${page === currentPage ? 'primary' : 'outline-primary'}`}
+                                        >
+                                            {page}
+                                        </PageNumber>
+                                    ))}
+
+                                {currentPage < totalPages - 2 && (
+                                    <>
+                                        {currentPage < totalPages - 3 && <PageEllipsis>...</PageEllipsis>}
+                                        <PageNumber
+                                            variant="outline-primary"
+                                            onClick={() => handlePageChange(totalPages)}
+                                            $active={false}
+                                        >
+                                            {totalPages}
+                                        </PageNumber>
+                                    </>
+                                )}
+                            </PageNumbers>
+
+                            <PaginationButton
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages || isLoading}
+                                variant="outline-primary"
+                            >
+                                <IconContainer icon={ChevronRight} />
+                            </PaginationButton>
+                        </PaginationControls>
+                    </PaginationContainer>
+                </>
+            )}
         </div>
     );
 };
+
+const LoadingContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 12px;
+    color: var(--color-font-secondary);
+`;
+
+const PaginationContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-top: 20px;
+    border-top: 1px solid var(--color-bg-accent);
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        flex-direction: column;
+        gap: 16px;
+    }
+`;
+
+const PaginationInfo = styled.div`
+    font-size: 14px;
+`;
+
+const PaginationControls = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+`;
+
+const PaginationButton = styled(Button)`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+`;
+
+const PageNumbers = styled.div`
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+`;
+
+const PageNumber = styled(Button)<{ $active: boolean }>`
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: ${(props) => (props.$active ? '600' : '400')};
+`;
+
+const PageEllipsis = styled.span`
+    padding: 0 4px;
+    color: var(--color-font-secondary);
+`;
+
+const TableCell = styled.div<{ $hideOnMobile?: boolean }>`
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 4px;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: ${(p) => (p.$hideOnMobile ? 'none' : 'flex')};
+    }
+`;
+
+const InfoInline = (props: { children: ReactNode | ReactNode[]; infoComponent: ReactNode | ReactNode[] }) => {
+    const { children, infoComponent } = props;
+
+    return (
+        <OverlayTrigger
+            placement="bottom"
+            overlay={
+                <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
+                    {infoComponent}
+                </Tooltip>
+            }
+            delay={{ show: 150, hide: 300 }}
+            trigger={['hover', 'focus', 'click']}
+        >
+            <span
+                style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <span>{children}</span>
+                <span
+                    style={{
+                        width: '100%',
+                        height: '0px',
+                        display: 'block',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        content: '',
+                        borderBottom: '2px dotted rgba(var(--color-primary-rgb), .2)',
+                    }}
+                />
+            </span>
+        </OverlayTrigger>
+    );
+};
+
+const InfoIndicator = (props: { children: ReactNode | ReactNode[] }) => {
+    const { children } = props;
+
+    return (
+        <OverlayTrigger
+            placement="bottom"
+            overlay={
+                <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
+                    {children}
+                </Tooltip>
+            }
+            delay={{ show: 150, hide: 300 }}
+        >
+            <span
+                className="info-icon"
+                style={{
+                    width: '1em',
+                    height: '1em',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Info />
+            </span>
+        </OverlayTrigger>
+    );
+};
+
+const SortIndicator = (props: { active: boolean; sortDirection: SortDirection }) => {
+    const { active, sortDirection } = props;
+
+    return (
+        <SortIndicatorWrapper $isActive={active}>
+            <IconContainer icon={!active ? ArrowDownAZ : sortDirection == 'asc' ? ArrowDownAZ : ArrowDownZA} />
+        </SortIndicatorWrapper>
+    );
+};
+
+const CellAmount = styled.div<{ $hideOnMobile?: boolean }>`
+    --flex-gap: 6px;
+    display: flex;
+    flex-direction: row;
+    gap: var(--flex-gap);
+
+    & > span:not(:last-child)::after {
+        position: relative;
+        display: block;
+        content: '/';
+        float: right;
+        margin-left: var(--flex-gap);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: ${(p) => (p.$hideOnMobile ? 'none' : 'flex')};
+    }
+`;
+
+const Table = styled.div`
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    border-radius: 8px;
+    overflow-x: auto;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: flex;
+        flex-direction: column;
+        max-width: 100%;
+        gap: 8px;
+        border-radius: 0;
+    }
+`;
+
+const TableRowBase = styled.div`
+    --border-color: var(--color-bg-accent);
+
+    display: contents;
+
+    & > * {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    & > *:first-child {
+        border-left: 1px solid var(--border-color);
+    }
+
+    & > *:last-child {
+        border-right: 1px solid var(--border-color);
+    }
+
+    max-width: 100%;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        & > * {
+            border: none !important;
+        }
+    }
+`;
+
+const TableHeader = styled(TableRowBase)`
+    & > * {
+        background-color: var(--border-color);
+        color: var(--color-font-secondary);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: none;
+    }
+`;
+
+const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string }>`
+    & > * {
+        background-color: white;
+    }
+
+    &:hover > * {
+        background-color: var(--color-bg-hover, #f8f9fa);
+        cursor: pointer;
+    }
+
+    & span.info-icon {
+        opacity: 0;
+    }
+
+    &:hover span.info-icon {
+        opacity: 1;
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            'inventoryNumber damageLevel'
+            'name name'
+            'location isSet';
+        gap: 12px;
+        padding: 16px;
+
+        background-color: ${(p) => p.$mobileBgColor} !important;
+        border: 1px solid ${(p) => p.$mobileColor} !important;
+        border-radius: 8px;
+
+        & > * {
+            background-color: transparent !important;
+            padding: 0 !important; /* Remove default padding */
+        }
+
+        & > #inventoryNumber {
+            grid-area: inventoryNumber;
+        }
+        & > #name {
+            grid-area: name;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        & > #damageLevel {
+            grid-area: damageLevel;
+            justify-self: end;
+
+            & > ${StatusBadgeWrapper} {
+                background-color: transparent;
+            }
+        }
+
+        & > #location {
+            grid-area: location;
+            font-size: 14px;
+            color: var(--color-font-secondary);
+        }
+
+        & > #isSet {
+            justify-self: end;
+            grid-area: isSet;
+            font-size: 14px;
+            color: var(--color-font-secondary);
+        }
+    }
+`;
+
+const HeaderCell = styled.div`
+    cursor: pointer;
+`;
+
+const HeaderContent = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+`;
+
+const SortIndicatorWrapper = styled.span<{ $isActive: boolean }>`
+    display: flex;
+    align-items: center;
+    transition: opacity 0.1s;
+
+    opacity: ${(props) => (props.$isActive ? '1' : '0')};
+
+    ${HeaderCell}:hover & {
+        opacity: ${(props) => (props.$isActive ? '1' : '0.5')} !important;
+    }
+`;
 
 export default ItemOverview;
