@@ -117,17 +117,14 @@ const AddEntityButtons = styled.div`
     }
 `;
 
-const PrimaryButton = styled.button`
+const AddButton = styled.button`
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 16px;
-    border: none;
-    background-color: #4a90e2;
-    color: white;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 46px;
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
@@ -143,32 +140,16 @@ const PrimaryButton = styled.button`
     }
 `;
 
-const SecondaryButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 16px;
+const PrimaryButton = styled(AddButton)`
+    border: none;
+    background-color: #4a90e2;
+    color: white;
+`;
+
+const SecondaryButton = styled(AddButton)`
     border: 1px solid #6b7a90;
     background-color: #f1f3f6;
     color: #6b7a90;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background-color: #e8ebef;
-        border-color: #5a6878;
-        color: #5a6878;
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
 `;
 
 const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
