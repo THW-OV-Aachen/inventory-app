@@ -15,7 +15,7 @@ const GlobalStyle = createGlobalStyle`
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: #f8f9fa;
-    color: #1f2937;
+    color: var(--color-font-primary);;
     min-height: 100dvh;
     min-height: 100vh;
     overflow-x: hidden;
@@ -32,7 +32,5 @@ const GlobalStyle = createGlobalStyle`
     color: #3b82f6;
   }
 `;
-
-
 
 export default GlobalStyle;

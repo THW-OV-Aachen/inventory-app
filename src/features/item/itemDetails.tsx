@@ -1,11 +1,11 @@
-import { CheckCircle2, AlertCircle, XCircle, Box, FileText, Layers, MapPin } from 'lucide-react';
+import { Box, FileText, Layers, MapPin } from 'lucide-react';
 import styled from 'styled-components';
-import { useState, useRef, useEffect } from 'react';
-import PageHeader from '../../layout/PageHeader';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../../db/db';
 import type { IItem, DamageLevelType } from '../../db/items';
-import { DamageLevelStyles } from '../../utils/StatusBadge';
+import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
+import { inventoryApi } from '../../app/api';
 
 const Container = styled.div`
     width: 100%;
@@ -32,8 +32,8 @@ const InfoCard = styled.div<{ $status?: DamageLevelType }>`
     margin-bottom: 16px;
     background-color: white;
     box-sizing: border-box;
-    border-left: 4px solid ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].color}`};
-    border: 1px solid ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].color}`};
+    border-left: 4px solid ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].colorBg}`};
+    border: 1px solid ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].colorBg}`};
     border-left-width: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 `;
@@ -70,18 +70,6 @@ const InfoValue = styled.div`
     gap: 6px;
 `;
 
-const StatusBadge = styled.span<{ $status?: DamageLevelType }>`
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    background-color: ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].colorBg}`};
-    color: ${(p) => `${DamageLevelStyles[p.$status ?? 'none'].color}`};
-`;
-
 const DetailsCard = styled.div`
     width: 100%;
     max-width: 100%;
@@ -103,7 +91,7 @@ const DetailsTextarea = styled.textarea`
     border-radius: 6px;
     border: 1px solid #e2e8f0;
     background-color: #f8fafc;
-    color: #1e293b;
+    color: var(--color-font-primary);
     resize: none;
     overflow: hidden;
     white-space: pre-wrap;
@@ -145,19 +133,30 @@ const Button = styled.button`
     }
 `;
 
-const getStatusIcon = (status?: string) => {
-    const iconSize = 14;
-    if (status === 'Good') return <CheckCircle2 size={iconSize} />;
-    if (status === 'Minor' || status === 'Soon') return <AlertCircle size={iconSize} />;
-    if (status === 'Damaged' || status === 'Out of order') return <XCircle size={iconSize} />;
-    return null;
-};
-
 const ItemDetails = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const [text, setText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const saveRemark = useCallback(
+        async (newText: string) => {
+            if (!itemId) return;
+            setIsSaving(true);
+            try {
+                await inventoryApi.updateItem(itemId, {
+                    remark: newText || '',
+                });
+            } catch (error) {
+                console.error('Failed to save remark:', error);
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [itemId]
+    );
 
     // Fetch the item from Dexie by ID
     useEffect(() => {
@@ -172,6 +171,19 @@ const ItemDetails = () => {
         fetchItem();
     }, [itemId]);
 
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newText = e.target.value;
+        setText(newText);
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            saveRemark(newText);
+        }, 3000);
+    };
+
     // Auto-grow textarea
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
@@ -184,6 +196,14 @@ const ItemDetails = () => {
         adjustTextareaHeight();
     }, [text]);
 
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
     };
@@ -191,10 +211,9 @@ const ItemDetails = () => {
     if (!item) return <p className="text-center mt-4">Loading item...</p>;
     return (
         <Container>
-            <PageHeader title="Item Details" />
             <Subtitle>
                 {item.isSet ? <Layers size={20} color="#64748b" /> : <Box size={20} color="#64748b" />}
-                {item.name} · Inv. Nr.: {item.inventoryNumber}
+                {item.name} · Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}
             </Subtitle>
 
             <InfoCard $status={item.damageLevel}>
@@ -203,12 +222,9 @@ const ItemDetails = () => {
                         <div style={{ flex: 1 }}>
                             <InfoLabel>Status</InfoLabel>
                             <InfoValue style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-                                <StatusBadge $status={item.damageLevel}>
-                                    {getStatusIcon(item.damageLevel)}
-                                    {item.damageLevel}
-                                </StatusBadge>
-                                <InfoValue style={{ fontSize: 12 }}>
-                                    Availability: {item.availability ? 'Available' : 'Unavailable'}
+                                <StatusBadge damageLevelType={item.damageLevel} />
+                                <InfoValue style={{ fontSize: 12, marginTop: '4px' }}>
+                                    Verfügbarkeit: {item.availability ? 'Nicht' : ''} Verfügbar
                                 </InfoValue>
                                 {!item.availability && (
                                     <span style={{ fontSize: 12, color: '#b91c1c', marginTop: 4 }}>Unavailable</span>
@@ -217,7 +233,7 @@ const ItemDetails = () => {
                         </div>
                         {item.location && (
                             <div style={{ flex: 1 }}>
-                                <InfoLabel>Location</InfoLabel>
+                                <InfoLabel>Ort</InfoLabel>
                                 <InfoValue>
                                     <MapPin size={14} />
                                     {item.location}
@@ -229,9 +245,9 @@ const ItemDetails = () => {
             </InfoCard>
 
             <DetailsCard>
-                <InfoLabel>Quantity</InfoLabel>
+                <InfoLabel>Menge</InfoLabel>
                 <InfoValue>
-                    Available: {item.availability} | Actual: {item.amountActual} | Required: {item.amountTarget}
+                    Verfügbar: {item.availability} | Vorhanden: {item.amountActual} | Ziel: {item.amountTarget}
                 </InfoValue>
             </DetailsCard>
 
@@ -242,20 +258,27 @@ const ItemDetails = () => {
             </DetailsCard> */}
 
             <DetailsCard>
-                <InfoLabel>Identification</InfoLabel>
-                <InfoValue>Inventory number: {item.inventoryNumber}</InfoValue>
-                <InfoValue>Device number: {item.deviceNumber}</InfoValue>
-                <InfoValue>Type: {item.isSet ? 'Set' : 'Single item'}</InfoValue>
+                <InfoLabel>Informationen</InfoLabel>
+                <InfoValue>Inventarnummer: {item.inventoryNumber}</InfoValue>
+                <InfoValue>Gerätenummer: {item.deviceNumber}</InfoValue>
+                <InfoValue>Typ: {item.isSet ? 'Set' : 'Single item'}</InfoValue>
             </DetailsCard>
 
             <DetailsCard>
-                <InfoLabel style={{ marginBottom: '12px' }}>Comments</InfoLabel>
-                <DetailsTextarea ref={textareaRef} value={text} readOnly onChange={(e) => setText(e.target.value)} />
+                <InfoLabel style={{ marginBottom: '12px' }}>
+                    Kommentare{' '}
+                    {isSaving && (
+                        <span style={{ color: 'var(--color-font-secondary)', fontSize: '12px' }}>
+                            Wird gespeichert...
+                        </span>
+                    )}
+                </InfoLabel>{' '}
+                <DetailsTextarea ref={textareaRef} value={text} onChange={handleTextChange} />
             </DetailsCard>
 
             <Button onClick={() => handleAdditionalDocs}>
                 <FileText size={14} />
-                Additional Docs
+                Weitere Dokumente
             </Button>
         </Container>
     );

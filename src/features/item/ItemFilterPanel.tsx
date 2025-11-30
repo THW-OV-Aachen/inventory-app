@@ -91,7 +91,7 @@ const SearchInputWrapper = styled.div`
         border: none;
         background: transparent;
         outline: none;
-        color: #1e293b;
+        color: var(--color-font-primary);
 
         font-size: 13px;
 

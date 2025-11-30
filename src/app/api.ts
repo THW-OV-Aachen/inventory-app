@@ -144,4 +144,19 @@ export const inventoryApi = {
             console.error('Failed to delete item: ', error);
         }
     },
+
+    async updateItem(id: string, updates: Partial<Omit<IItem, 'id'>>): Promise<void> {
+        try {
+            const existingItem = await db.items.get(id);
+            if (!existingItem) {
+                console.error(`Item with id "${id}" not found`);
+                throw new Error(`Item with id "${id}" not found`);
+            }
+
+            await db.items.update(id, updates);
+        } catch (error) {
+            console.error('Failed to update inventory item: ', error);
+            throw error;
+        }
+    },
 };

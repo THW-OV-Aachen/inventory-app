@@ -40,7 +40,7 @@ const SidebarHeaderWrapper = styled(SidebarSection)<{ $sidebarOpen?: boolean }>`
     padding: 12px;
     height: 56px;
     box-sizing: border-box;
-    color: var(--color-font-secondary);
+    color: var(--color-font-primary);
     position: relative;
     overflow: hidden;
 
@@ -166,8 +166,8 @@ const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
     align-items: center;
     gap: ${(p) => (p.$sidebarOpen ? '8px' : '0')};
     justify-content: ${(p) => (p.$sidebarOpen ? 'flex-start' : 'center')};
-    background: ${(p) => (p.$active ? 'rgba(var(--color-primary-rgb), .075)' : 'unset')};
-    color: ${(p) => (p.$active ? 'var(--color-primary)' : 'var(--color-font-secondary)')};
+    background: ${(p) => (p.$active ? 'rgba(var(--color-primary-rgb), .1)' : 'unset')};
+    color: ${(p) => (p.$active ? 'var(--color-font-primary)' : 'var(--color-font-secondary)')};
     font-weight: ${(p) => (p.$active ? 'bold' : 'normal')};
     padding: 12px;
     border-radius: 6px;

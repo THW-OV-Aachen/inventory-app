@@ -1,23 +1,33 @@
 import styled from 'styled-components';
 import type { DamageLevelType } from '../db/items';
 import DamageLevelTranslation from './damageLevels';
+import { CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
+import IconContainer from './IconContainer';
 
 export const DamageLevelStyles = {
     none: {
-        color: 'var(--color-success)',
-        colorBg: 'rgba(var(--color-success-rgb), .05)',
+        color: 'var(--color-success-text)',
+        colorBg: 'var(--color-success-bg)',
+        colorRGB: 'var(--color-success-text-rgb)',
+        icon: CheckCircle2,
     },
     minor: {
-        color: 'var(--color-warning)',
-        colorBg: 'rgba(var(--color-warning-rgb), .05)',
+        color: 'var(--color-warning-text)',
+        colorBg: 'var(--color-warning-bg)',
+        colorRGB: 'var(--color-warning-text-rgb)',
+        icon: AlertCircle,
     },
     major: {
-        color: 'var(--color-danger)',
-        colorBg: 'rgba(var(--color-danger-rgb), .05)',
+        color: 'var(--color-danger-text)',
+        colorBg: 'var(--color-danger-bg)',
+        colorRGB: 'var(--color-danger-text-rgb)',
+        icon: XCircle,
     },
     total: {
         color: 'var(--color-forbidden)',
-        colorBg: 'rgba(var(--color-forbidden-rgb), .05)',
+        colorBg: 'var(--color-forbidden-rgb)',
+        colorRGB: 'var(--color-forbidden-text-rgb)',
+        icon: XCircle,
     },
 };
 
@@ -28,13 +38,13 @@ const StatusBadge = (props: { damageLevelType: DamageLevelType }) => {
 
     return (
         <StatusBadgeWrapper $color={damageStyle.color} $bgColor={damageStyle.colorBg}>
-            {DamageLevelTranslation[damageLevelType] ?? '-'}
+            <IconContainer icon={damageStyle.icon} /> {DamageLevelTranslation[damageLevelType] ?? '-'}
         </StatusBadgeWrapper>
     );
 };
 
 export const StatusBadgeWrapper = styled.span<{ $color: string; $bgColor: string }>`
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
@@ -43,6 +53,10 @@ export const StatusBadgeWrapper = styled.span<{ $color: string; $bgColor: string
     font-weight: 600;
     background-color: ${(p) => p.$bgColor};
     color: ${(p) => p.$color};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        border-radius: 500px;
+    }
 `;
 
 export default StatusBadge;

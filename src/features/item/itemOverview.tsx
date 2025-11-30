@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass } from 'lucide-react';
+import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass, MapPin } from 'lucide-react';
 import type { DamageLevelType, IItem } from '../../db/items';
 import { ItemFilter, type SortDirection, type SortField } from './ItemFilterPanel';
 import { inventoryApi } from '../../app/api';
-import StatusBadge, { DamageLevelStyles, StatusBadgeWrapper } from '../../utils/StatusBadge';
+import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
 import IconContainer from '../../utils/IconContainer';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import React from 'react';
@@ -239,6 +239,7 @@ const ItemOverview = () => {
                                     onClick={() => navigate(`/items/${item.id}`)}
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
+                                    $mobileShadowColor={damageLevel.colorRGB}
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
@@ -266,6 +267,7 @@ const ItemOverview = () => {
                                         <StatusBadge damageLevelType={item.damageLevel} />
                                     </TableCell>
                                     <TableCell id="location">
+                                        <IconContainer icon={MapPin} />
                                         {(() => {
                                             const components = parseLocationStringRaw(item.location);
                                             return (
@@ -569,7 +571,7 @@ const Table = styled.div`
         display: flex;
         flex-direction: column;
         max-width: 100%;
-        gap: 8px;
+        gap: 16px;
         border-radius: 0;
     }
 `;
@@ -614,7 +616,7 @@ const TableHeader = styled(TableRowBase)`
     }
 `;
 
-const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string }>`
+const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string; $mobileShadowColor: string }>`
     & > * {
         background-color: white;
     }
@@ -642,9 +644,15 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         gap: 12px;
         padding: 16px;
 
-        background-color: ${(p) => p.$mobileBgColor} !important;
-        border: 1px solid ${(p) => p.$mobileColor} !important;
+        border: 1px solid ${(p) => p.$mobileBgColor} !important;
+        border-left: 4px solid ${(p) => p.$mobileBgColor} !important;
         border-radius: 8px;
+
+        box-shadow: 0 2px 6px rgba(${(p) => p.$mobileShadowColor}, 0.05);
+
+        & > #location svg {
+            display: none;
+        }
 
         & > * {
             background-color: transparent !important;
@@ -662,14 +670,19 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         & > #damageLevel {
             grid-area: damageLevel;
             justify-self: end;
-
-            & > ${StatusBadgeWrapper} {
-                background-color: transparent;
-            }
         }
 
         & > #location {
             grid-area: location;
+
+            & svg {
+                display: block;
+            }
+        }
+
+        & > #location,
+        & > #inventoryNumber,
+        & > #isSet {
             font-size: 14px;
             color: var(--color-font-secondary);
         }
@@ -677,8 +690,6 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         & > #isSet {
             justify-self: end;
             grid-area: isSet;
-            font-size: 14px;
-            color: var(--color-font-secondary);
         }
     }
 `;
