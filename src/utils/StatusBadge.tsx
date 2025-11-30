@@ -24,8 +24,8 @@ export const DamageLevelStyles = {
         icon: XCircle,
     },
     total: {
-        color: 'var(--color-forbidden)',
-        colorBg: 'var(--color-forbidden-rgb)',
+        color: 'var(--color-forbidden-text)',
+        colorBg: 'var(--color-forbidden-bg)',
         colorRGB: 'var(--color-forbidden-text-rgb)',
         icon: XCircle,
     },

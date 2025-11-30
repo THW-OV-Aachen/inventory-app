@@ -12,8 +12,9 @@ import ItemOverview from './features/item/itemOverview';
 import Guide from './features/guide/guide';
 import More from './features/more/More';
 
-import ItemAdding from './features/add/itemAdding';
 import ImportExportScreen from './features/importExport/ImportScreen';
+import AddItem from './features/item/AddItem';
+import ModifyItem from './features/item/ModifyItem';
 
 const AppRoutes = () => {
     return (
@@ -31,7 +32,8 @@ const AppRoutes = () => {
                 <Route path="more" element={<More />} />
 
                 <Route path="items" element={<ItemOverview />} />
-                <Route path="items/add" element={<ItemAdding />} />
+                <Route path="items/add" element={<AddItem />} />
+                <Route path="items/:itemId/modify" element={<ModifyItem />} />
                 <Route path="items/:itemId" element={<ItemDetails />} />
 
                 <Route path="import" element={<ImportExportScreen />} />
