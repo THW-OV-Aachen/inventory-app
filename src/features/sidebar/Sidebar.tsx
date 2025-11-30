@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Wrench, CircleQuestionMark, ToyBrick, Columns2, FolderSync } from 'lucide-react';
+import { Wrench, CircleQuestionMark, ToyBrick, Columns2, FolderSync } from 'lucide-react';
 import logo from '../../assets/favicon.svg';
 import IconContainer from '../../utils/IconContainer';
 
@@ -208,7 +208,6 @@ const Sidebar = () => {
     const location = useLocation();
 
     const links = [
-        { to: '/dashboard', label: 'Home', icon: Home },
         { to: '/maintenance', label: 'Wartungsübersicht', icon: Wrench },
         { to: '/items', label: 'Inventar', icon: ToyBrick },
     ];

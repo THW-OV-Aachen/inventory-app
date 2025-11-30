@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import App from './App';
 import PrivateOutlet from './features/auth/PrivateOutlet';
@@ -9,7 +9,6 @@ import ItemDetails from './features/item/itemDetails';
 
 import ItemOverview from './features/item/itemOverview';
 
-import Home from './features/home/home';
 import Guide from './features/guide/guide';
 import More from './features/more/More';
 
@@ -20,7 +19,7 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<App />}>
-                <Route index element={<Home />} />
+                <Route index element={<Navigate to="/items" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
 
                 <Route path="*" element={<PrivateOutlet />}>
