@@ -7,6 +7,7 @@ import type { IItem, DamageLevelType } from '../../db/items';
 const ItemPage = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
+    const [loading, setLoading] = useState(true);
     const [text, setText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -14,10 +15,20 @@ const ItemPage = () => {
     useEffect(() => {
         const fetchItem = async () => {
             if (!itemId) return;
-            const dbItem = await db.items.get(itemId);
-            if (dbItem) {
-                setItem(dbItem);
-                setText(dbItem.remark || '-No additional information.');
+            setLoading(true);
+            try {
+                const dbItem = await db.items.get(itemId);
+                if (dbItem) {
+                    setItem(dbItem);
+                    setText(dbItem.remark || '-No additional information.');
+                } else {
+                    setItem(null);
+                }
+            } catch (error) {
+                console.error('Failed to fetch item:', error);
+                setItem(null);
+            } finally {
+                setLoading(false);
             }
         };
         fetchItem();
@@ -39,7 +50,8 @@ const ItemPage = () => {
         alert('Additional Docs clicked!');
     };
 
-    if (!item) return <p className="text-center mt-4">Loading item...</p>;
+    if (loading) return <p className="text-center mt-4">Loading item...</p>;
+    if (!item) return <p className="text-center mt-4">Item not found.</p>;
 
     const itemReference = `Item Ref: ${item.inventoryNumber || item.id}`;
 
@@ -95,7 +107,6 @@ const ItemPage = () => {
                 ref={textareaRef}
                 className="form-control mb-3"
                 value={text}
-                readOnly
                 rows={3}
                 style={{ overflow: 'hidden', resize: 'none' }}
                 onChange={(e) => setText(e.target.value)}

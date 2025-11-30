@@ -6,11 +6,7 @@ const HeaderWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-
-
-
-  
+  padding: 16px 24px 8px 24px;
   background: transparent;
   border-bottom: 1px solid transparent;
 `;
@@ -22,6 +18,10 @@ const Breadcrumbs = styled.nav`
   gap: 6px;
   font-size: 14px;
   color: #64748b;
+
+  @media (max-width: 767px) {
+    display: none;
+  }
 `;
 
 const CrumbLink = styled(Link)`
@@ -35,10 +35,14 @@ const CrumbLink = styled(Link)`
 `;
 
 const PageTitle = styled.h2`
-  margin-top: 12px;
+  margin-top: 8px;
   font-size: 22px;
   color: #1e293b;  
   font-weight: 600;
+
+  @media (max-width: 1023px) {
+    display: none;
+  }
 `;
 
 const Actions = styled.div`
