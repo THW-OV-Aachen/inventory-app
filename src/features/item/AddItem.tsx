@@ -241,8 +241,11 @@ const AddItem = () => {
                                     <input
                                         type="number"
                                         className={`form-control ${touched.amountTarget && errors.amountTarget ? 'is-invalid' : ''}`}
-                                        value={formData.amountTarget ?? 0}
-                                        onChange={(e) => handleChange('amountTarget', Number(e.target.value))}
+                                        value={formData.amountTarget ?? ''}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            handleChange('amountTarget', v === '' ? undefined : Number(v));
+                                        }}
                                         onBlur={() => handleBlur('amountTarget')}
                                     />
                                     {touched.amountTarget && errors.amountTarget && (
@@ -257,8 +260,11 @@ const AddItem = () => {
                                     <input
                                         type="number"
                                         className={`form-control ${touched.amountActual && errors.amountActual ? 'is-invalid' : ''}`}
-                                        value={formData.amountActual ?? 0}
-                                        onChange={(e) => handleChange('amountActual', Number(e.target.value))}
+                                        value={formData.amountActual ?? ''}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            handleChange('amountActual', v === '' ? undefined : Number(v));
+                                        }}
                                         onBlur={() => handleBlur('amountActual')}
                                     />
                                     {touched.amountActual && errors.amountActual && (
@@ -273,8 +279,11 @@ const AddItem = () => {
                                     <input
                                         type="number"
                                         className={`form-control ${touched.availability && errors.availability ? 'is-invalid' : ''}`}
-                                        value={formData.availability ?? 0}
-                                        onChange={(e) => handleChange('availability', Number(e.target.value))}
+                                        value={formData.availability ?? ''}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            handleChange('availability', v === '' ? undefined : Number(v));
+                                        }}
                                         onBlur={() => handleBlur('availability')}
                                     />
                                     {touched.availability && errors.availability && (
@@ -293,6 +302,9 @@ const AddItem = () => {
                                         onChange={(e) => handleChange('location', e.target.value)}
                                         onBlur={() => handleBlur('location')}
                                     />
+                                    {touched.location && errors.location && (
+                                        <small className="text-danger d-block mt-1">{errors.location}</small>
+                                    )}
                                 </td>
                             </tr>
 
@@ -302,8 +314,11 @@ const AddItem = () => {
                                     <input
                                         type="number"
                                         className={`form-control ${touched.level && errors.level ? 'is-invalid' : ''}`}
-                                        value={formData.level ?? 0}
-                                        onChange={(e) => handleChange('level', Number(e.target.value))}
+                                        value={formData.level ?? ''}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            handleChange('level', v === '' ? undefined : Number(v));
+                                        }}
                                         onBlur={() => handleBlur('level')}
                                     />
                                 </td>
@@ -323,15 +338,20 @@ const AddItem = () => {
                             </tr>
 
                             <tr>
-                                <th>Inspektionsinterval (Monate):</th>
+                                <th>Inspektionsintervall (Monate):</th>
                                 <td>
                                     <input
                                         type="number"
-                                        className={`form-control ${touched.inspectionIntervalMonths && errors.inspectionIntervalMonths ? 'is-invalid' : ''}`}
-                                        value={formData.inspectionIntervalMonths ?? 0}
-                                        onChange={(e) =>
-                                            handleChange('inspectionIntervalMonths', Number(e.target.value))
-                                        }
+                                        className={`form-control ${
+                                            touched.inspectionIntervalMonths && errors.inspectionIntervalMonths
+                                                ? 'is-invalid'
+                                                : ''
+                                        }`}
+                                        value={formData.inspectionIntervalMonths ?? ''}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            handleChange('inspectionIntervalMonths', v === '' ? undefined : Number(v));
+                                        }}
                                         onBlur={() => handleBlur('inspectionIntervalMonths')}
                                     />
                                     {touched.inspectionIntervalMonths && errors.inspectionIntervalMonths && (
