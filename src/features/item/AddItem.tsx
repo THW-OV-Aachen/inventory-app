@@ -122,7 +122,7 @@ const AddItem = () => {
             };
 
             await db.items.add(cleanedItem);
-            navigate(`/items/${cleanedItem.id}`, { replace: true });
+            navigate(`/items/${cleanedItem.id}`);
         } catch (err) {
             console.error(err);
             alert('Fehler beim Speichern des Gegenstands.');

@@ -100,7 +100,7 @@ const ModifyItem = () => {
             };
 
             await inventoryApi.updateItem(item.id, updates);
-            navigate(`/items/${item.id}`, { replace: true });
+            navigate(`/items/${item.id}`);
         } catch (error) {
             if (error instanceof yup.ValidationError) {
                 const newErrors: Record<string, string> = {};

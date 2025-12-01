@@ -282,7 +282,7 @@ const ItemDetails = () => {
                 </Button>
                 <Button
                     onClick={() => {
-                        navigate(`/items/${item.id}/modify`, { replace: true });
+                        navigate(`/items/${item.id}/modify`);
                     }}
                 >
                     <IconContainer icon={Pen} /> Bearbeiten
