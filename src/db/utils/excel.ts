@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { type IItem } from '../items';
 import { inventoryApi } from '../../app/api';
+import DamageLevelTranslation from '../../utils/damageLevels';
 
 export async function exportExcel(items: IItem[]): Promise<Blob> {
     const workbook = new ExcelJS.Workbook();
@@ -16,16 +17,17 @@ export async function exportExcel(items: IItem[]): Promise<Blob> {
         'Ebene',
         'Ausstattung | Hersteller | Typ',
         'Sachnummer',
-        'Inventar Nr',
+        'Inventarnr.',
         'Gerätenr.',
         'Schadenszustand',
-        'Letzte Prüfung',
-        'Prüfintervall (Monate)',
+        'Letzte Inspektion',
+        'Inspektionsintervall (Monate)',
         'Bemerkung',
     ];
     sheet.addRow(headers);
 
     items.forEach((item) => {
+        const damageLevelTranslated = DamageLevelTranslation[item.damageLevel ?? ''] ?? item.damageLevel ?? '';
         sheet.addRow([
             'AC1N',
             item.isSet ? 'Satz' : 'Teil',
@@ -38,7 +40,7 @@ export async function exportExcel(items: IItem[]): Promise<Blob> {
             item.id,
             item.inventoryNumber ?? '',
             item.deviceNumber ?? '',
-            item.damageLevel,
+            damageLevelTranslated,
             item.lastInspection ?? '',
             item.inspectionIntervalMonths ?? '',
             item.remark ?? '',
