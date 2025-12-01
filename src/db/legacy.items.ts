@@ -39,7 +39,7 @@ export interface IDbInventoryItem {
     inventoryId?: string;
     deviceId?: string;
 
-    compoundType: CompoundType; // 'set' | 'part'
+    compoundType: CompoundType; // 'Satz' | 'Teil'
 
     organisationalUnitId: number;
     itemDefinitionId: number;

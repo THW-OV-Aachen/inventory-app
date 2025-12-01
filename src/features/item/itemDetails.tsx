@@ -132,6 +132,19 @@ const Button = styled.button`
     }
 `;
 
+function addMonths(date: Date, months: number): Date {
+    const d = new Date(date.getTime());
+    const day = d.getDate();
+
+    // set to first of month to avoid rollover issues, then advance months,
+    // then clamp day to the number of days in that month
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, daysInTargetMonth));
+    return d;
+}
+
 const ItemDetails = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
@@ -223,11 +236,10 @@ const ItemDetails = () => {
                             <InfoLabel>Status</InfoLabel>
                             <InfoValue style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
                                 <StatusBadge damageLevelType={item.damageLevel} />
-                                <InfoValue style={{ fontSize: 12, marginTop: '4px' }}>
-                                    Verfügbarkeit: {item.availability ? 'Nicht' : ''} Verfügbar
-                                </InfoValue>
                                 {!item.availability && (
-                                    <span style={{ fontSize: 12, color: '#b91c1c', marginTop: 4 }}>Unavailable</span>
+                                    <span style={{ fontSize: 12, color: '#b91c1c', marginTop: 4 }}>
+                                        Nicht vorhanden
+                                    </span>
                                 )}
                             </InfoValue>
                         </div>
@@ -236,7 +248,7 @@ const ItemDetails = () => {
                                 <InfoLabel>Ort</InfoLabel>
                                 <InfoValue>
                                     <MapPin size={14} />
-                                    {item.location}
+                                    {item.location + (item.level ? `, Ebene: ${item.level}` : '')}
                                 </InfoValue>
                             </div>
                         )}
@@ -251,17 +263,35 @@ const ItemDetails = () => {
                 </InfoValue>
             </DetailsCard>
 
-            {/* <DetailsCard>
-                <InfoLabel>Maintenance</InfoLabel>
-                <InfoValue>Last inspection: {item.lastInspection}</InfoValue>
-                <InfoValue>Interval: {item.inspectionIntervalDays} days</InfoValue>
-            </DetailsCard> */}
-
             <DetailsCard>
                 <InfoLabel>Informationen</InfoLabel>
                 <InfoValue>Inventarnummer: {item.inventoryNumber}</InfoValue>
                 <InfoValue>Gerätenummer: {item.deviceNumber}</InfoValue>
-                <InfoValue>Typ: {item.isSet ? 'Set' : 'Single item'}</InfoValue>
+                <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
+            </DetailsCard>
+
+            <DetailsCard>
+                <InfoLabel>Wartung</InfoLabel>
+                <InfoValue>
+                    Letzte Inspektion:{' '}
+                    {item.lastInspection
+                        ? Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+                              new Date(item.lastInspection)
+                          )
+                        : '-'}
+                </InfoValue>
+                <InfoValue>
+                    Inspektionsintervall:{' '}
+                    {item.inspectionIntervalMonths ? item.inspectionIntervalMonths + ' Monate' : '-'}
+                </InfoValue>
+                <InfoValue>
+                    Berechnete nächste Inspektion:{' '}
+                    {item.lastInspection && item.inspectionIntervalMonths
+                        ? Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+                              addMonths(new Date(item.lastInspection), item.inspectionIntervalMonths)
+                          )
+                        : '-'}
+                </InfoValue>
             </DetailsCard>
 
             <DetailsCard>

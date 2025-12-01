@@ -7,6 +7,8 @@ export const DamageLevelType = {
     TOTAL: 'total',
 } as const;
 
+export const LOCATION_PATTERN = /^(\d+)?-?([RG])?(\d+)?\.?(\d+)?-?(\d+)?$/;
+
 export type DamageLevelType = (typeof DamageLevelType)[keyof typeof DamageLevelType];
 
 export interface IItem {
@@ -31,11 +33,26 @@ export const ItemValidationSchema = yup.object().shape({
     name: yup.string().required('Name ist erforderlich.').min(1, 'Name darf nicht leer sein.'),
     inventoryNumber: yup.string().optional(),
     deviceNumber: yup.string().optional(),
-    location: yup.string().optional(),
+    location: yup
+        .string()
+        .optional()
+        .test(
+            'location-format',
+            'Erwartetes Format: [Etage]-[Typ][Container-Nr].[Subcontainer-Nr]-[Tool-Nr.] (z. B. 1-G2.3-4).',
+            (value: any) => value === undefined || value === '' || LOCATION_PATTERN.test(String(value))
+        ),
     remark: yup.string().optional(),
     amountTarget: yup.number().optional().min(0, 'Zielmenge darf nicht negativ sein.'),
     amountActual: yup.number().optional().min(0, 'Istmenge darf nicht negativ sein.'),
-    availability: yup.number().optional().min(0, 'Verfügbarkeit darf nicht negativ sein.'),
+    availability: yup
+        .number()
+        .optional()
+        .min(0, 'Verfügbarkeit darf nicht negativ sein.')
+        .when('amountActual', {
+            is: (val: any) => typeof val === 'number',
+            then: (schema: yup.NumberSchema) =>
+                schema.max(yup.ref('amountActual') as any, 'Verfügbarkeit darf nicht größer als Istmenge sein.'),
+        }),
     level: yup.number().optional(),
     inspectionIntervalMonths: yup.number().optional().min(0, 'Inspektionsinterval darf nicht negativ sein.'),
     isSet: yup.boolean(),
