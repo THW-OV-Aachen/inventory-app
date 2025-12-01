@@ -1,11 +1,12 @@
-import { Box, FileText, Layers, MapPin } from 'lucide-react';
+import { Box, FileText, Layers, MapPin, Pen } from 'lucide-react';
 import styled from 'styled-components';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../db/db';
 import type { IItem, DamageLevelType } from '../../db/items';
 import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
 import { inventoryApi } from '../../app/api';
+import IconContainer from '../../utils/IconContainer';
 
 const Container = styled.div`
     width: 100%;
@@ -121,8 +122,6 @@ const Button = styled.button`
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    width: 100%;
-
     &:hover {
         background-color: #3a7bc8;
         transform: translateY(-1px);
@@ -140,6 +139,7 @@ const ItemDetails = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isSaving, setIsSaving] = useState(false);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const navigate = useNavigate();
 
     const saveRemark = useCallback(
         async (newText: string) => {
@@ -165,7 +165,7 @@ const ItemDetails = () => {
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
                 setItem(dbItem);
-                setText(dbItem.remark || '-No additional information.');
+                setText(dbItem.remark || '');
             }
         };
         fetchItem();
@@ -275,13 +275,40 @@ const ItemDetails = () => {
                 </InfoLabel>{' '}
                 <DetailsTextarea ref={textareaRef} value={text} onChange={handleTextChange} />
             </DetailsCard>
-
-            <Button onClick={() => handleAdditionalDocs}>
-                <FileText size={14} />
-                Weitere Dokumente
-            </Button>
+            <ButtonContainer>
+                <Button onClick={() => handleAdditionalDocs}>
+                    <IconContainer icon={FileText} />
+                    Weitere Dokumente
+                </Button>
+                <Button
+                    onClick={() => {
+                        navigate(`/items/${item.id}/modify`, { replace: true });
+                    }}
+                >
+                    <IconContainer icon={Pen} /> Bearbeiten
+                </Button>
+            </ButtonContainer>
         </Container>
     );
 };
+
+const ButtonContainer = styled.div`
+    display: flex;
+    gap: 6px;
+    flex-direction: column;
+
+    & > ${Button} {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        justify-content: flex-end;
+
+        & > ${Button} {
+            width: unset;
+        }
+    }
+`;
 
 export default ItemDetails;
