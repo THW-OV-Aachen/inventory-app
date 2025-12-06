@@ -9,7 +9,10 @@ import { theme } from '../../styles/theme';
 import { Card, Button, Container, BackButton, Header, ControlsWrapper } from '../../styles/components';
 
 const StyledContainer = styled(Container)`
-    padding: ${theme.spacing.xl};
+    padding-top: 8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: ${theme.spacing.xl};
     max-width: 720px;
     margin: 0 auto;
 `;
@@ -97,6 +100,20 @@ const StyledSecondaryButton = styled(Button)`
     font-weight: ${theme.typography.fontWeight.medium};
 `;
 
+const StyledHeader = styled(Header)`
+    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
+`;
+
 const ImportExportScreen = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
@@ -151,11 +168,11 @@ const ImportExportScreen = () => {
 
     return (
         <StyledContainer>
-            <Header>
-                <BackButton onClick={() => navigate(-1)}>
+            <StyledHeader>
+                <StyledBackButton onClick={() => navigate(-1)}>
                     <ChevronLeft size={20} />
-                </BackButton>
-            </Header>
+                </StyledBackButton>
+            </StyledHeader>
             <ControlsWrapper>
                 <StyledCard>
                     <FileInputWrapper>

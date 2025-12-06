@@ -120,9 +120,9 @@ const ItemDetails = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <BackButton onClick={() => navigate(-1)}>
+                <StyledBackButton onClick={() => navigate(-1)}>
                     <ChevronLeft size={20} />
-                </BackButton>
+                </StyledBackButton>
                 <Title>
                     {item.isSet ? <Layers size={20} color={theme.colors.text.muted} /> : <Box size={20} color={theme.colors.text.muted} />}
                     {item.name}
@@ -234,8 +234,8 @@ export default ItemDetails;
 // ─── Styled Components ────────────────────────────────────
 const StyledContainer = styled(Container)`
     padding-top: 8px;
-    padding-left: ${theme.spacing.xl};
-    padding-right: ${theme.spacing.xl};
+    padding-left: 0;
+    padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
     @media (min-width: ${theme.breakpoints.lg}) {
         max-width: 1000px;
@@ -246,9 +246,15 @@ const StyledContainer = styled(Container)`
 const StyledHeader = styled(Header)`
     padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
     margin-bottom: 0;
+    margin-left: 0;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
 `;
 
 const Title = styled.h1`

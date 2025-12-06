@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Pen } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { inventoryApi } from '../../app/api';
@@ -25,8 +25,8 @@ import { theme } from '../../styles/theme';
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
-    padding-left: ${theme.spacing.xl};
-    padding-right: ${theme.spacing.xl};
+    padding-left: 0;
+    padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
     @media (min-width: ${theme.breakpoints.lg}) {
         max-width: 960px;
@@ -37,9 +37,15 @@ const StyledContainer = styled(Container)`
 const StyledHeader = styled(Header)`
     padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
     margin-bottom: 0;
+    margin-left: 0;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
 `;
 
 const Title = styled.h1`
@@ -47,6 +53,9 @@ const Title = styled.h1`
     margin: 0;
     color: ${theme.colors.text.primary};
     font-weight: ${theme.typography.fontWeight.medium};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
 `;
 
 const StyledContentWrapper = styled(ContentWrapper)`
@@ -205,10 +214,13 @@ const ModifyItem = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <BackButton onClick={() => navigate(-1)}>
+                <StyledBackButton onClick={() => navigate(-1)}>
                     <ChevronLeft size={20} />
-                </BackButton>
-                <Title>Bearbeiten: {item.name}</Title>
+                </StyledBackButton>
+                <Title>
+                    <Pen size={20} color={theme.colors.text.muted} />
+                    Bearbeiten: {item.name}
+                </Title>
             </StyledHeader>
             <StyledContentWrapper>
                 <Subtitle>{itemReference}</Subtitle>

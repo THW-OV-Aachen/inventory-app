@@ -9,6 +9,7 @@ import React from 'react';
 import { type FilterParams } from '../../app/api';
 import { Form } from 'react-bootstrap';
 import DamageLevelTranslation from '../../utils/damageLevels';
+import { theme } from '../../styles/theme';
 
 export type SortField =
     | 'id'
@@ -162,14 +163,14 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
 
     gap: 4px;
 
-    padding: 16px;
+    padding: ${theme.spacing.lg};
 
     border-radius: 6px;
 
     border: 1px solid var(--color-bg-accent);
     background-color: var(--color-bg);
 
-    margin-bottom: 16px;
+    margin-bottom: ${theme.spacing.lg};
 
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);

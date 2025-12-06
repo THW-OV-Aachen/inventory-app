@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Wrench } from 'lucide-react';
 import { inventoryApi } from '../../app/api';
 import type { IItem } from '../../db/items';
 import { theme } from '../../styles/theme';
@@ -58,10 +58,13 @@ const MaintenanceOverview = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <BackButton onClick={() => navigate(-1)}>
+                <StyledBackButton onClick={() => navigate(-1)}>
                     <ChevronLeft size={20} />
-                </BackButton>
-                <Title>Wartung</Title>
+                </StyledBackButton>
+                <Title>
+                    <Wrench size={20} color={theme.colors.text.muted} />
+                    Wartung
+                </Title>
             </StyledHeader>
 
             <StyledContentWrapper>
@@ -83,7 +86,7 @@ const MaintenanceOverview = () => {
                 <CardList>
                     {rows.length === 0 && <Empty>Keine Inventargegenstände gefunden.</Empty>}
                     {rows.map(({ item, themeStatus }) => (
-                        <ItemCard
+                        <StyledItemCard
                             key={item.id}
                             status={themeStatus}
                             onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
@@ -141,7 +144,7 @@ const MaintenanceOverview = () => {
                                     </DetailRow>
                                 </CardDetails>
                             )}
-                        </ItemCard>
+                        </StyledItemCard>
                     ))}
                 </CardList>
             </StyledContentWrapper>
@@ -154,8 +157,8 @@ export default MaintenanceOverview;
 // ─── Styled Components ────────────────────────────────────
 const StyledContainer = styled(Container)`
     padding-top: 8px;
-    padding-left: ${theme.spacing.xl};
-    padding-right: ${theme.spacing.xl};
+    padding-left: 0;
+    padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
     @media (min-width: ${theme.breakpoints.lg}) {
         max-width: 1000px;
@@ -166,9 +169,15 @@ const StyledContainer = styled(Container)`
 const StyledHeader = styled(Header)`
     padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
     margin-bottom: 0;
+    margin-left: 0;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
 `;
 
 const Title = styled.h1`
@@ -176,6 +185,9 @@ const Title = styled.h1`
     margin: 0;
     color: ${theme.colors.text.primary};
     font-weight: ${theme.typography.fontWeight.medium};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
 `;
 
 const StyledContentWrapper = styled(ContentWrapper)`
@@ -211,7 +223,11 @@ const LegendText = styled.span`
 const CardList = styled.div`
     display: flex;
     flex-direction: column;
-    gap: ${theme.spacing.md};
+    gap: 16px;
+`;
+
+const StyledItemCard = styled(ItemCard)`
+    margin-bottom: 0;
 `;
 
 const CardDetails = styled.div`

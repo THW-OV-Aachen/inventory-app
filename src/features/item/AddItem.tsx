@@ -24,7 +24,10 @@ import {
 import { theme } from '../../styles/theme';
 
 const StyledContainer = styled(Container)`
-    padding: ${theme.spacing.xl};
+    padding-top: 8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: ${theme.spacing.xl};
     @media (min-width: ${theme.breakpoints.lg}) {
         max-width: 960px;
         margin: 0 auto;
@@ -33,13 +36,27 @@ const StyledContainer = styled(Container)`
 
 const StyledHeader = styled(Header)`
     padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
-    margin-bottom: ${theme.spacing.xl};
+    margin-bottom: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
+`;
+
+const StyledContentWrapper = styled(ContentWrapper)`
+    padding: 0;
 `;
 
 const StyledCard = styled(Card)`
     padding: ${theme.spacing.xl};
     box-shadow: ${theme.shadows.sm};
     border-radius: ${theme.borderRadius.lg};
+    margin-top: 0;
 `;
 
 const StyledFormGroup = styled(FormGroup)`
@@ -196,11 +213,11 @@ const AddItem = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <BackButton onClick={() => navigate(-1)}>
+                <StyledBackButton onClick={() => navigate(-1)}>
                     <ChevronLeft size={20} />
-                </BackButton>
+                </StyledBackButton>
             </StyledHeader>
-            <ContentWrapper>
+            <StyledContentWrapper>
                 <StyledCard>
                     <StyledFormGroup>
                         <Label htmlFor="name">
@@ -433,7 +450,7 @@ const AddItem = () => {
                         </StyledButton>
                     </StyledButtonGroup>
                 </StyledCard>
-            </ContentWrapper>
+            </StyledContentWrapper>
         </StyledContainer>
     );
 };
