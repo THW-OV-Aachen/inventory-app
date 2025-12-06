@@ -15,12 +15,13 @@ import More from './features/more/More';
 import ImportExportScreen from './features/importExport/ImportScreen';
 import AddItem from './features/item/AddItem';
 import ModifyItem from './features/item/ModifyItem';
+import Home from './features/home/home';
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<App />}>
-                <Route index element={<Navigate to="/items" replace />} />
+                <Route index element={<Home />} />
                 <Route path="dashboard" element={<Dashboard />} />
 
                 <Route path="*" element={<PrivateOutlet />}>
