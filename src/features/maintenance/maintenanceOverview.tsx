@@ -1,11 +1,27 @@
 import { useState, useMemo } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Wrench } from 'lucide-react';
 import { inventoryApi } from '../../app/api';
-import type { IItem, DamageLevelType } from '../../db/items';
-import PageHeader from '../../layout/PageHeader';
+import type { IItem } from '../../db/items';
+import { theme } from '../../styles/theme';
+import {
+    Container,
+    Header,
+    BackButton,
+    ItemCard,
+    StatusBadge,
+    CardHeader,
+    CardHeaderLeft,
+    ItemTitle,
+    DataLabel,
+    DataValue,
+    ContentWrapper,
+} from '../../styles/components';
 
 // ─── Helpers ──────────────────────────────────────────────
 type MaintenanceStatus = 'GREEN' | 'YELLOW' | 'RED';
+type ThemeStatus = 'good' | 'warning' | 'error';
 
 const getMaintenanceStatus = (item: IItem): MaintenanceStatus => {
     if (item.amountActual === 0 || item.availability === 0) return 'RED';
@@ -15,167 +31,228 @@ const getMaintenanceStatus = (item: IItem): MaintenanceStatus => {
     return 'GREEN';
 };
 
-const colorFor = (status: MaintenanceStatus) => {
+const mapStatusToTheme = (status: MaintenanceStatus): ThemeStatus => {
     switch (status) {
         case 'GREEN':
-            return '#27ae60';
+            return 'good';
         case 'YELLOW':
-            return '#f39c12';
+            return 'warning';
         case 'RED':
-            return '#e46e61ff';
+            return 'error';
     }
 };
 
 // ─── Component ────────────────────────────────────────────
 const MaintenanceOverview = () => {
-    const items = inventoryApi.useItems(); // CALL the hook function
+    const navigate = useNavigate();
+    const items = inventoryApi.useItems();
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const rows = useMemo(() => {
         return items.map((item: IItem) => {
             const status = getMaintenanceStatus(item);
-            return { item, status, color: colorFor(status) };
+            return { item, status, themeStatus: mapStatusToTheme(status) };
         });
     }, [items]);
 
     return (
-        <div>
-            <PageHeader title="Maintenance Overview" />
+        <StyledContainer>
+            <StyledHeader>
+                <StyledBackButton onClick={() => navigate(-1)}>
+                    <ChevronLeft size={20} />
+                </StyledBackButton>
+                <Title>
+                    <Wrench size={20} color={theme.colors.text.muted} />
+                    Wartung
+                </Title>
+            </StyledHeader>
 
-            <Legend>
-                <LegendItem>
-                    <Badge bg={colorFor('GREEN')} /> OK (sufficient stock)
-                </LegendItem>
-                <LegendItem>
-                    <Badge bg={colorFor('YELLOW')} /> Low (below target)
-                </LegendItem>
-                <LegendItem>
-                    <Badge bg={colorFor('RED')} /> Critical / Unavailable
-                </LegendItem>
-            </Legend>
+            <StyledContentWrapper>
+                <Legend>
+                    <LegendItem>
+                        <StatusBadge status="good" />
+                        <LegendText>OK (ausreichender Bestand)</LegendText>
+                    </LegendItem>
+                    <LegendItem>
+                        <StatusBadge status="warning" />
+                        <LegendText>Niedrig (unter Ziel)</LegendText>
+                    </LegendItem>
+                    <LegendItem>
+                        <StatusBadge status="error" />
+                        <LegendText>Kritisch / Nicht verfügbar</LegendText>
+                    </LegendItem>
+                </Legend>
 
-            <CardList>
-                {rows.length === 0 && <Empty>No inventory items found.</Empty>}
-                {rows.map(({ item, color }) => (
-                    <Card
-                        key={item.id}
-                        color={color}
-                        expanded={expandedId === item.id}
-                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    >
-                        <CardHeader>
-                            {item.inventoryNumber || item.id}
-                            <span style={{ fontSize: '0.9em', color: '#555', marginLeft: '8px' }}>
-                                ({item.location})
-                            </span>
-                        </CardHeader>
+                <CardList>
+                    {rows.length === 0 && <Empty>Keine Inventargegenstände gefunden.</Empty>}
+                    {rows.map(({ item, themeStatus }) => (
+                        <StyledItemCard
+                            key={item.id}
+                            status={themeStatus}
+                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                        >
+                            <CardHeader>
+                                <CardHeaderLeft>
+                                    <ItemTitle>{item.inventoryNumber || item.id}</ItemTitle>
+                                    {item.location && <ItemSubtitle>({item.location})</ItemSubtitle>}
+                                </CardHeaderLeft>
+                            </CardHeader>
 
-                        {expandedId === item.id && (
-                            <CardDetails>
-                                <p>
-                                    <strong>Name:</strong> {item.name}
-                                </p>
-                                <p>
-                                    <strong>Device Number:</strong> {item.deviceNumber || '-'}
-                                </p>
-                                <p>
-                                    <strong>Is Set:</strong> {item.isSet ? 'Yes' : 'No'}
-                                </p>
-                                <p>
-                                    <strong>Actual / Target:</strong> {item.amountActual} / {item.amountTarget}
-                                </p>
-                                <p>
-                                    <strong>Availability:</strong> {item.availability}
-                                </p>
-                                <p>
-                                    <strong>Damage Level:</strong> {item.damageLevel}
-                                </p>
-                                <p>
-                                    <strong>Level:</strong> {item.level}
-                                </p>
-                                <p>
-                                    <strong>Last Inspection:</strong> {item.lastInspection || '-'}
-                                </p>
-                                <p>
-                                    <strong>Inspection Interval (months):</strong>{' '}
-                                    {item.inspectionIntervalMonths || '-'}
-                                </p>
-                                <p>
-                                    <strong>Remark:</strong> {item.remark || '-'}
-                                </p>
-                            </CardDetails>
-                        )}
-                    </Card>
-                ))}
-            </CardList>
-        </div>
+                            {expandedId === item.id && (
+                                <CardDetails>
+                                    <DetailRow>
+                                        <DataLabel>Name:</DataLabel>
+                                        <DataValue>{item.name}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Gerätenummer:</DataLabel>
+                                        <DataValue>{item.deviceNumber || '-'}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Ist Satz:</DataLabel>
+                                        <DataValue>{item.isSet ? 'Ja' : 'Nein'}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Ist / Ziel:</DataLabel>
+                                        <DataValue>
+                                            {item.amountActual} / {item.amountTarget}
+                                        </DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Verfügbarkeit:</DataLabel>
+                                        <DataValue>{item.availability}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Schaden:</DataLabel>
+                                        <DataValue>{item.damageLevel}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Ebene:</DataLabel>
+                                        <DataValue>{item.level}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Letzte Inspektion:</DataLabel>
+                                        <DataValue>{item.lastInspection || '-'}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Inspektionsintervall (Monate):</DataLabel>
+                                        <DataValue>{item.inspectionIntervalMonths || '-'}</DataValue>
+                                    </DetailRow>
+                                    <DetailRow>
+                                        <DataLabel>Kommentar:</DataLabel>
+                                        <DataValue>{item.remark || '-'}</DataValue>
+                                    </DetailRow>
+                                </CardDetails>
+                            )}
+                        </StyledItemCard>
+                    ))}
+                </CardList>
+            </StyledContentWrapper>
+        </StyledContainer>
     );
 };
 
 export default MaintenanceOverview;
 
-const Page = styled.div`
-    padding: 20px;
-    max-width: 1000px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
+// ─── Styled Components ────────────────────────────────────
+const StyledContainer = styled(Container)`
+    padding-top: 8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: ${theme.spacing.xl};
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+`;
+
+const StyledHeader = styled(Header)`
+    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
+`;
+
+const Title = styled.h1`
+    font-size: ${theme.typography.fontSize.lg};
+    margin: 0;
+    color: ${theme.colors.text.primary};
+    font-weight: ${theme.typography.fontWeight.medium};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+`;
+
+const StyledContentWrapper = styled(ContentWrapper)`
+    padding: 0;
+`;
+
+const ItemSubtitle = styled.div`
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.muted};
+    margin-top: ${theme.spacing.xs};
 `;
 
 const Legend = styled.div`
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing.lg};
     align-items: center;
+    flex-wrap: wrap;
 `;
 
 const LegendItem = styled.div`
     display: flex;
-    gap: 8px;
+    gap: ${theme.spacing.sm};
     align-items: center;
-    font-size: 14px;
+    font-size: ${theme.typography.fontSize.sm};
 `;
 
-const Badge = styled.span<{ bg: string }>`
-    width: 14px;
-    height: 14px;
-    display: inline-block;
-    border-radius: 3px;
-    background: ${({ bg }) => bg};
+const LegendText = styled.span`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.fontSize.sm};
 `;
 
 const CardList = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 `;
 
-const Card = styled.div<{ color: string; expanded: boolean }>`
-    background: ${({ color }) => color};
-    color: white;
-    border-radius: 10px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: ${({ expanded }) => (expanded ? '0 6px 12px rgba(0,0,0,0.25)' : '0 2px 4px rgba(0,0,0,0.1)')};
-    transform: ${({ expanded }) => (expanded ? 'scale(1.02)' : 'scale(1)')};
-`;
-
-const CardHeader = styled.h3`
-    margin: 0;
-    font-size: 18px;
+const StyledItemCard = styled(ItemCard)`
+    margin-bottom: 0;
 `;
 
 const CardDetails = styled.div`
-    margin-top: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1.4;
+    margin-top: ${theme.spacing.md};
+    padding: ${theme.spacing.md};
+    border-radius: ${theme.borderRadius.md};
+    background-color: ${theme.colors.background.light};
+    border-top: 1px solid ${theme.colors.border.default};
+`;
+
+const DetailRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: ${theme.spacing.sm};
+    gap: ${theme.spacing.md};
+
+    &:last-child {
+        margin-bottom: 0;
+    }
 `;
 
 const Empty = styled.div`
-    color: #7f8c8d;
+    color: ${theme.colors.text.muted};
     text-align: center;
-    padding: 30px;
+    padding: ${theme.spacing.xxl};
+    font-size: ${theme.typography.fontSize.base};
 `;

@@ -62,10 +62,10 @@ const BottomNav = () => {
     const navigate = useNavigate();
 
     const navItems = [
-        { path: '/', label: 'Home', icon: Home },
-        { path: '/itemOverview', label: 'Items', icon: Package },
-        { path: '/maintenance', label: 'Maintenance', icon: Wrench },
-        { path: '/more', label: 'More', icon: MoreHorizontal },
+        { path: '/', label: 'Start', icon: Home },
+        { path: '/items', label: 'Inventar', icon: Package },
+        { path: '/maintenance', label: 'Wartung', icon: Wrench },
+        { path: '/more', label: 'Mehr', icon: MoreHorizontal },
     ];
 
     const isActive = (path: string) => {
@@ -73,9 +73,12 @@ const BottomNav = () => {
             return location.pathname === '/';
         }
         if (path === '/more') {
-            return location.pathname === '/more' || 
-                   location.pathname === '/dashboard' || 
-                   location.pathname === '/guide';
+            return (
+                location.pathname === '/more' ||
+                location.pathname === '/dashboard' ||
+                location.pathname === '/guide' ||
+                location.pathname === '/import'
+            );
         }
         return location.pathname.startsWith(path);
     };

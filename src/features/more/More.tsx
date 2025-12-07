@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Eye, CircleQuestionMark } from 'lucide-react';
+import { Eye, CircleQuestionMark, FolderSync } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader';
 
 const MoreContainer = styled.div`
@@ -74,22 +74,22 @@ const More = () => {
 
     const sections = [
         {
-            path: '/dashboard',
-            title: 'Inventory Overview',
-            description: 'View and manage inventory',
-            icon: Eye,
+            path: '/import',
+            title: 'Import / Export',
+            description: 'Daten importieren und exportieren',
+            icon: FolderSync,
         },
         {
             path: '/guide',
-            title: 'Guide',
-            description: 'Help and documentation',
+            title: 'Anleitung',
+            description: 'Hilfe und Dokumentation',
             icon: CircleQuestionMark,
         },
     ];
 
     return (
         <div>
-            <PageHeader title="More" />
+            <PageHeader title="Mehr" />
             <MoreContainer>
                 <SectionList>
                     {sections.map((section) => {

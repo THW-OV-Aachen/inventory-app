@@ -1,10 +1,86 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import styled from 'styled-components';
+import { ChevronLeft } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import DamageLevelTranslation from '../../utils/damageLevels';
+import {
+    Container,
+    Card,
+    FormGroup,
+    Label,
+    Input,
+    Select,
+    Textarea,
+    Button,
+    ContentWrapper,
+    BackButton,
+    Header,
+    HelperText,
+    ButtonGroup,
+} from '../../styles/components';
+import { theme } from '../../styles/theme';
+
+const StyledContainer = styled(Container)`
+    padding-top: 8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: ${theme.spacing.xl};
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+`;
+
+const StyledHeader = styled(Header)`
+    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
+`;
+
+const StyledContentWrapper = styled(ContentWrapper)`
+    padding: 0;
+`;
+
+const StyledCard = styled(Card)`
+    padding: ${theme.spacing.xl};
+    box-shadow: ${theme.shadows.sm};
+    border-radius: ${theme.borderRadius.lg};
+    margin-top: 0;
+`;
+
+const StyledFormGroup = styled(FormGroup)`
+    margin-bottom: ${theme.spacing.lg};
+`;
+
+const StyledButtonGroup = styled(ButtonGroup)`
+    margin-top: ${theme.spacing.xl};
+    width: 100%;
+    flex-direction: row;
+    gap: ${theme.spacing.md};
+`;
+
+const StyledButton = styled(Button)`
+    height: 48px;
+    font-size: ${theme.typography.fontSize.base};
+    padding: 0 ${theme.spacing.xl};
+`;
+
+const ErrorText = styled.small`
+    color: ${theme.colors.status.error.dark};
+    display: block;
+    margin-top: ${theme.spacing.xs};
+`;
 
 const AddItem = () => {
     const navigate = useNavigate();
@@ -131,262 +207,251 @@ const AddItem = () => {
 
     const RequiredStar = () => <span style={{ color: 'red' }}> *</span>;
 
+    const renderError = (key: keyof IItem) =>
+        touched[key] && errors[key] ? <ErrorText>{errors[key]}</ErrorText> : null;
+
     return (
-        <div className="container-fluid py-4">
-            <h1 className="mb-4">Gegenstand hinzufügen</h1>
+        <StyledContainer>
+            <StyledHeader>
+                <StyledBackButton onClick={() => navigate(-1)}>
+                    <ChevronLeft size={20} />
+                </StyledBackButton>
+            </StyledHeader>
+            <StyledContentWrapper>
+                <StyledCard>
+                    <StyledFormGroup>
+                        <Label htmlFor="name">
+                            Name
+                            <RequiredStar />
+                        </Label>
+                        <Input
+                            id="name"
+                            name="name"
+                            type="text"
+                            placeholder="Name eingeben"
+                            value={formData.name ?? ''}
+                            onChange={(e) => handleChange('name', e.target.value)}
+                            onBlur={() => handleBlur('name')}
+                        />
+                        {renderError('name')}
+                    </StyledFormGroup>
 
-            <div className="card rounded px-2 mb-4">
-                <div className="table-responsive px-0">
-                    <table className="table table-borderless mb-0">
-                        <tbody>
-                            <tr>
-                                <th>
-                                    Name:
-                                    <RequiredStar />
-                                </th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${touched.name && errors.name ? 'is-invalid' : ''}`}
-                                        value={formData.name ?? ''}
-                                        onChange={(e) => handleChange('name', e.target.value)}
-                                        onBlur={() => handleBlur('name')}
-                                    />
-                                    {touched.name && errors.name && (
-                                        <small className="text-danger d-block mt-1">{errors.name}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="id">
+                            Identifikationsnummer
+                            <RequiredStar />
+                        </Label>
+                        <Input
+                            id="id"
+                            name="id"
+                            type="text"
+                            placeholder="ID eingeben"
+                            value={formData.id ?? ''}
+                            onChange={(e) => handleChange('id', e.target.value)}
+                            onBlur={() => handleBlur('id')}
+                        />
+                        {renderError('id')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th className="w-50">
-                                    Identifiktationsnummer:
-                                    <RequiredStar />
-                                </th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${touched.id && errors.id ? 'is-invalid' : ''}`}
-                                        value={formData.id ?? ''}
-                                        onChange={(e) => handleChange('id', e.target.value)}
-                                        onBlur={() => handleBlur('id')}
-                                    />
-                                    {touched.id && errors.id && (
-                                        <small className="text-danger d-block mt-1">{errors.id}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="inventoryNumber">Inventarnummer</Label>
+                        <Input
+                            id="inventoryNumber"
+                            name="inventoryNumber"
+                            type="text"
+                            placeholder="Inventarnummer eingeben"
+                            value={formData.inventoryNumber ?? ''}
+                            onChange={(e) => handleChange('inventoryNumber', e.target.value)}
+                            onBlur={() => handleBlur('inventoryNumber')}
+                        />
+                        {renderError('inventoryNumber')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Inventarnummer:</th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${touched.inventoryNumber && errors.inventoryNumber ? 'is-invalid' : ''}`}
-                                        value={formData.inventoryNumber ?? ''}
-                                        onChange={(e) => handleChange('inventoryNumber', e.target.value)}
-                                        onBlur={() => handleBlur('inventoryNumber')}
-                                    />
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="deviceNumber">Gerätenummer</Label>
+                        <Input
+                            id="deviceNumber"
+                            name="deviceNumber"
+                            type="text"
+                            placeholder="Gerätenummer eingeben"
+                            value={formData.deviceNumber ?? ''}
+                            onChange={(e) => handleChange('deviceNumber', e.target.value)}
+                            onBlur={() => handleBlur('deviceNumber')}
+                        />
+                        {renderError('deviceNumber')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Gerätenummer:</th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${touched.deviceNumber && errors.deviceNumber ? 'is-invalid' : ''}`}
-                                        value={formData.deviceNumber ?? ''}
-                                        onChange={(e) => handleChange('deviceNumber', e.target.value)}
-                                        onBlur={() => handleBlur('deviceNumber')}
-                                    />
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="damageLevel">Schaden</Label>
+                        <Select
+                            id="damageLevel"
+                            name="damageLevel"
+                            value={formData.damageLevel ?? 'none'}
+                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
+                            onBlur={() => handleBlur('damageLevel')}
+                        >
+                            <option value="none">{DamageLevelTranslation.none}</option>
+                            <option value="minor">{DamageLevelTranslation.minor}</option>
+                            <option value="major">{DamageLevelTranslation.major}</option>
+                            <option value="total">{DamageLevelTranslation.total}</option>
+                        </Select>
+                        {renderError('damageLevel')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Schaden:</th>
-                                <td>
-                                    <select
-                                        className={`form-control ${touched.damageLevel && errors.damageLevel ? 'is-invalid' : ''}`}
-                                        value={formData.damageLevel ?? 'none'}
-                                        onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
-                                        onBlur={() => handleBlur('damageLevel')}
-                                    >
-                                        <option value="none">{DamageLevelTranslation.none}</option>
-                                        <option value="minor">{DamageLevelTranslation.minor}</option>
-                                        <option value="major">{DamageLevelTranslation.major}</option>
-                                        <option value="total">{DamageLevelTranslation.total}</option>
-                                    </select>
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="isSet">Typ</Label>
+                        <Select
+                            id="isSet"
+                            name="isSet"
+                            value={formData.isSet ? 'yes' : 'no'}
+                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
+                            onBlur={() => handleBlur('isSet')}
+                        >
+                            <option value="yes">Satz</option>
+                            <option value="no">(Einzelnes) Teil</option>
+                        </Select>
+                        {renderError('isSet')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Typ:</th>
-                                <td>
-                                    <select
-                                        className={`form-control ${touched.isSet && errors.isSet ? 'is-invalid' : ''}`}
-                                        value={formData.isSet ? 'yes' : 'no'}
-                                        onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
-                                        onBlur={() => handleBlur('isSet')}
-                                    >
-                                        <option value="yes">Satz</option>
-                                        <option value="no">(Einzelnes) Teil</option>
-                                    </select>
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="amountTarget">Zielmenge</Label>
+                        <Input
+                            id="amountTarget"
+                            name="amountTarget"
+                            type="number"
+                            placeholder="Zielmenge eingeben"
+                            value={formData.amountTarget ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                handleChange('amountTarget', v === '' ? undefined : Number(v));
+                            }}
+                            onBlur={() => handleBlur('amountTarget')}
+                        />
+                        {renderError('amountTarget')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Zielmenge:</th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        className={`form-control ${touched.amountTarget && errors.amountTarget ? 'is-invalid' : ''}`}
-                                        value={formData.amountTarget ?? ''}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            handleChange('amountTarget', v === '' ? undefined : Number(v));
-                                        }}
-                                        onBlur={() => handleBlur('amountTarget')}
-                                    />
-                                    {touched.amountTarget && errors.amountTarget && (
-                                        <small className="text-danger d-block mt-1">{errors.amountTarget}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="amountActual">Istmenge</Label>
+                        <Input
+                            id="amountActual"
+                            name="amountActual"
+                            type="number"
+                            placeholder="Istmenge eingeben"
+                            value={formData.amountActual ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                handleChange('amountActual', v === '' ? undefined : Number(v));
+                            }}
+                            onBlur={() => handleBlur('amountActual')}
+                        />
+                        {renderError('amountActual')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Istmenge:</th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        className={`form-control ${touched.amountActual && errors.amountActual ? 'is-invalid' : ''}`}
-                                        value={formData.amountActual ?? ''}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            handleChange('amountActual', v === '' ? undefined : Number(v));
-                                        }}
-                                        onBlur={() => handleBlur('amountActual')}
-                                    />
-                                    {touched.amountActual && errors.amountActual && (
-                                        <small className="text-danger d-block mt-1">{errors.amountActual}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="availability">Verfügbarkeit</Label>
+                        <Input
+                            id="availability"
+                            name="availability"
+                            type="number"
+                            placeholder="Verfügbarkeit eingeben"
+                            value={formData.availability ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                handleChange('availability', v === '' ? undefined : Number(v));
+                            }}
+                            onBlur={() => handleBlur('availability')}
+                        />
+                        {renderError('availability')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Verfügbarkeit:</th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        className={`form-control ${touched.availability && errors.availability ? 'is-invalid' : ''}`}
-                                        value={formData.availability ?? ''}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            handleChange('availability', v === '' ? undefined : Number(v));
-                                        }}
-                                        onBlur={() => handleBlur('availability')}
-                                    />
-                                    {touched.availability && errors.availability && (
-                                        <small className="text-danger d-block mt-1">{errors.availability}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="location">Ort</Label>
+                        <Input
+                            id="location"
+                            name="location"
+                            type="text"
+                            placeholder="Ort eingeben"
+                            value={formData.location ?? ''}
+                            onChange={(e) => handleChange('location', e.target.value)}
+                            onBlur={() => handleBlur('location')}
+                        />
+                        {renderError('location')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Ort:</th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${touched.location && errors.location ? 'is-invalid' : ''}`}
-                                        value={formData.location ?? ''}
-                                        onChange={(e) => handleChange('location', e.target.value)}
-                                        onBlur={() => handleBlur('location')}
-                                    />
-                                    {touched.location && errors.location && (
-                                        <small className="text-danger d-block mt-1">{errors.location}</small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="level">Ebene</Label>
+                        <Input
+                            id="level"
+                            name="level"
+                            type="number"
+                            placeholder="Ebene eingeben"
+                            value={formData.level ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                handleChange('level', v === '' ? undefined : Number(v));
+                            }}
+                            onBlur={() => handleBlur('level')}
+                        />
+                        {renderError('level')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Ebene:</th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        className={`form-control ${touched.level && errors.level ? 'is-invalid' : ''}`}
-                                        value={formData.level ?? ''}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            handleChange('level', v === '' ? undefined : Number(v));
-                                        }}
-                                        onBlur={() => handleBlur('level')}
-                                    />
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="lastInspection">Letzte Inspektion</Label>
+                        <Input
+                            id="lastInspection"
+                            name="lastInspection"
+                            type="date"
+                            value={formData.lastInspection ?? ''}
+                            onChange={(e) => handleChange('lastInspection', e.target.value)}
+                            onBlur={() => handleBlur('lastInspection')}
+                        />
+                        {renderError('lastInspection')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Letzte Inspektion:</th>
-                                <td>
-                                    <input
-                                        type="date"
-                                        className={`form-control ${touched.lastInspection && errors.lastInspection ? 'is-invalid' : ''}`}
-                                        value={formData.lastInspection ?? ''}
-                                        onChange={(e) => handleChange('lastInspection', e.target.value)}
-                                        onBlur={() => handleBlur('lastInspection')}
-                                    />
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="inspectionIntervalMonths">Inspektionsintervall (Monate)</Label>
+                        <Input
+                            id="inspectionIntervalMonths"
+                            name="inspectionIntervalMonths"
+                            type="number"
+                            placeholder="Intervall in Monaten"
+                            value={formData.inspectionIntervalMonths ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                handleChange('inspectionIntervalMonths', v === '' ? undefined : Number(v));
+                            }}
+                            onBlur={() => handleBlur('inspectionIntervalMonths')}
+                        />
+                        {renderError('inspectionIntervalMonths')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Inspektionsintervall (Monate):</th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        className={`form-control ${
-                                            touched.inspectionIntervalMonths && errors.inspectionIntervalMonths
-                                                ? 'is-invalid'
-                                                : ''
-                                        }`}
-                                        value={formData.inspectionIntervalMonths ?? ''}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            handleChange('inspectionIntervalMonths', v === '' ? undefined : Number(v));
-                                        }}
-                                        onBlur={() => handleBlur('inspectionIntervalMonths')}
-                                    />
-                                    {touched.inspectionIntervalMonths && errors.inspectionIntervalMonths && (
-                                        <small className="text-danger d-block mt-1">
-                                            {errors.inspectionIntervalMonths}
-                                        </small>
-                                    )}
-                                </td>
-                            </tr>
+                    <StyledFormGroup>
+                        <Label htmlFor="remark">Kommentar</Label>
+                        <Textarea
+                            id="remark"
+                            name="remark"
+                            ref={textareaRef}
+                            rows={3}
+                            placeholder="Kommentar eingeben"
+                            value={formData.remark ?? ''}
+                            onChange={(e) => handleChange('remark', e.target.value)}
+                            onBlur={() => handleBlur('remark')}
+                            style={{ resize: 'none' }}
+                        />
+                        {renderError('remark')}
+                    </StyledFormGroup>
 
-                            <tr>
-                                <th>Kommentar:</th>
-                                <td>
-                                    <textarea
-                                        ref={textareaRef}
-                                        className={`form-control ${touched.remark && errors.remark ? 'is-invalid' : ''}`}
-                                        value={formData.remark ?? ''}
-                                        rows={3}
-                                        style={{ resize: 'none' }}
-                                        onChange={(e) => handleChange('remark', e.target.value)}
-                                        onBlur={() => handleBlur('remark')}
-                                    />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div className="mb-4">
-                <button className="btn btn-success w-100" onClick={handleSave}>
-                    Hinzufügen
-                </button>
-            </div>
-        </div>
+                    <StyledButtonGroup>
+                        <StyledButton variant="primary" onClick={handleSave}>
+                            Hinzufügen
+                        </StyledButton>
+                        <StyledButton variant="ghost" onClick={() => navigate(-1)}>
+                            Abbrechen
+                        </StyledButton>
+                    </StyledButtonGroup>
+                </StyledCard>
+            </StyledContentWrapper>
+        </StyledContainer>
     );
 };
 
