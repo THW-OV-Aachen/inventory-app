@@ -137,7 +137,7 @@ const LinkList = styled(SidebarSection)`
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: row;
         padding: 0;
-        gap: 16px;
+        gap: 32px;
 
         justify-content: safe center;
         overflow-x: auto;

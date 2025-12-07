@@ -5,7 +5,6 @@ import 'bootstrap/dist/css/bootstrap.min.css'; //bootstrap
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 import Sidebar from './features/sidebar/Sidebar';
-import BottomNav from './layout/BottomNav';
 
 const LayoutWrapper = styled.div`
     position: relative;
@@ -45,7 +44,6 @@ const MainLayout = () => {
             <ContentArea>
                 <Outlet />
             </ContentArea>
-            <BottomNav />
         </LayoutWrapper>
     );
 };
