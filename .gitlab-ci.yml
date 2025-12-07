@@ -16,7 +16,6 @@ build:
     artifacts:
         paths:
             - dist
-        expire_in: 1 day
 
 pages:
     stage: deploy
@@ -30,4 +29,3 @@ pages:
             - public
     only:
         - main
-        - auto-deploy
