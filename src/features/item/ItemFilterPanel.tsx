@@ -6,22 +6,19 @@ import styled from 'styled-components';
 import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import React from 'react';
-import { type FilterParams } from '../../app/api';
 import { Form } from 'react-bootstrap';
 import DamageLevelTranslation from '../../utils/damageLevels';
 import { theme } from '../../styles/theme';
-
-export type SortField =
-    | 'id'
-    | 'name'
-    | 'type'
-    | 'amountActual'
-    | 'availability'
-    | 'damageLevel'
-    | 'location'
-    | 'inventoryNumber'
-    | 'deviceNumber';
-export type SortDirection = 'asc' | 'desc';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
+import {
+    clearFilters,
+    setSearchTerm,
+    setSortDirection,
+    setSortField,
+    updateFilter,
+} from '../../store/slices/searchSlice';
+import type { SortField } from '../../app/api';
 
 const sortFieldLabels: Record<string, string> = {
     inventoryNumber: 'Inventar-Nr.',
@@ -30,32 +27,12 @@ const sortFieldLabels: Record<string, string> = {
     location: 'Ort',
 };
 
-export const ItemFilter = (props: {
-    searchTerm: string;
-    setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-    sortField: SortField | null;
-    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
-    sortDirection: SortDirection;
-    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
-    filters: FilterParams;
-    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
-}) => {
+export const ItemFilter = () => {
     const navigate = useNavigate();
-    const { searchTerm, setSearchTerm, sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } =
-        props;
 
     return (
         <ItemFilterWrapper>
-            <ItemFilterSearchbar
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                sortField={sortField}
-                setSortField={setSortField}
-                sortDirection={sortDirection}
-                setSortDirection={setSortDirection}
-                filters={filters}
-                setFilters={setFilters}
-            />
+            <ItemFilterSearchbar />
             <AddEntityButtons>
                 <PrimaryButton onClick={() => navigate('/items/add')}>
                     <IconContainer icon={Plus} />
@@ -183,18 +160,14 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     }
 `;
 
-const ItemSortButton = (props: {
-    sortField: SortField | null;
-    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
-    sortDirection: SortDirection;
-    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
-    filters: FilterParams;
-    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
-}) => {
-    const { sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } = props;
+const ItemSortButton = () => {
+    const dispatch = useDispatch();
+    const searchState = useSelector((state: RootState) => state.search);
+    const { sortField, sortDirection, filters } = searchState;
+
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [localLocation, setLocalLocation] = useState(filters.location || '');
+    const [localLocation, setLocalLocation] = useState(filters?.location || '');
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -214,8 +187,8 @@ const ItemSortButton = (props: {
     }, [isOpen]);
 
     useEffect(() => {
-        setLocalLocation(filters.location || '');
-    }, [filters.location]);
+        setLocalLocation(filters?.location || '');
+    }, [filters?.location]);
 
     useEffect(() => {
         return () => {
@@ -227,10 +200,10 @@ const ItemSortButton = (props: {
 
     const handleFieldSelect = (field: SortField) => {
         if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+            dispatch(setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc'));
         } else {
-            setSortField(field);
-            setSortDirection('asc');
+            dispatch(setSortField(field));
+            dispatch(setSortDirection('asc'));
         }
     };
 
@@ -243,10 +216,7 @@ const ItemSortButton = (props: {
         }
 
         debounceTimerRef.current = setTimeout(() => {
-            setFilters((prev) => ({
-                ...prev,
-                location: value || undefined,
-            }));
+            dispatch(updateFilter({ location: value || '' }));
         }, 300);
     };
 
@@ -272,8 +242,8 @@ const ItemSortButton = (props: {
                             <span>Sortieren nach</span>
                             <ClearButton
                                 onClick={() => {
-                                    setSortField(null);
-                                    setSortDirection('asc');
+                                    dispatch(setSortField(null));
+                                    dispatch(setSortDirection('asc'));
                                 }}
                                 isVisible={sortField !== null}
                             />
@@ -300,9 +270,11 @@ const ItemSortButton = (props: {
                         <DropdownHeader>
                             <span>Filtern nach</span>
                             <ClearButton
-                                onClick={() => setFilters({})}
-                                isVisible={[filters.damageLevel, filters.type, filters.location].some(
-                                    (e) => e !== null && e !== undefined
+                                onClick={() => {
+                                    dispatch(clearFilters());
+                                }}
+                                isVisible={[filters?.damageLevel, filters?.type, filters?.location].some(
+                                    (e) => e !== null && e !== undefined && e !== ''
                                 )}
                             />
                         </DropdownHeader>
@@ -310,14 +282,11 @@ const ItemSortButton = (props: {
                             <FilterOptionLabel>
                                 <span>Zustand</span>
                                 <Form.Select
-                                    value={filters.damageLevel || ''}
+                                    value={filters?.damageLevel || ''}
                                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                         const damageLevelFilter =
                                             e.target.value === '' ? null : (e.target.value as DamageLevelType);
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            damageLevel: damageLevelFilter,
-                                        }));
+                                        dispatch(updateFilter({ damageLevel: damageLevelFilter }));
                                     }}
                                 >
                                     <option value="">Alle</option>
@@ -331,14 +300,11 @@ const ItemSortButton = (props: {
                             <FilterOptionLabel>
                                 <span>Typ</span>
                                 <Form.Select
-                                    value={filters.type || ''}
+                                    value={filters?.type || ''}
                                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                         const typeFilter =
                                             e.target.value === '' ? null : (e.target.value as 'isSet' | 'isPart');
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            type: typeFilter,
-                                        }));
+                                        dispatch(updateFilter({ type: typeFilter }));
                                     }}
                                 >
                                     <option value="">Alle</option>
@@ -479,18 +445,10 @@ const SortOptionLabel = styled.div`
     gap: 8px;
 `;
 
-const ItemFilterSearchbar = (props: {
-    searchTerm: string;
-    setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-    sortField: SortField | null;
-    setSortField: React.Dispatch<React.SetStateAction<SortField | null>>;
-    sortDirection: SortDirection;
-    setSortDirection: React.Dispatch<React.SetStateAction<SortDirection>>;
-    filters: FilterParams;
-    setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
-}) => {
-    const { searchTerm, setSearchTerm, sortField, setSortField, sortDirection, setSortDirection, filters, setFilters } =
-        props;
+const ItemFilterSearchbar = () => {
+    const dispatch = useDispatch();
+    const searchState = useSelector((state: RootState) => state.search);
+    const { query: searchTerm } = searchState;
 
     return (
         <SearchInputWrapper>
@@ -499,17 +457,10 @@ const ItemFilterSearchbar = (props: {
                 className="form-control"
                 type="text"
                 placeholder="Suche nach ID, Name, Ort, Inventar- oder Gerätenummer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchTerm || ''}
+                onChange={(e) => dispatch(setSearchTerm(e.target.value))}
             />
-            <ItemSortButton
-                sortField={sortField}
-                setSortField={setSortField}
-                sortDirection={sortDirection}
-                setSortDirection={setSortDirection}
-                filters={filters}
-                setFilters={setFilters}
-            />
+            <ItemSortButton />
         </SearchInputWrapper>
     );
 };
