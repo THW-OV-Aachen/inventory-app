@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../db/db';
-import type { IItem, DamageLevelType } from '../../db/items';
+import type { IItem } from '../../db/items';
 import StatusBadge from '../../utils/StatusBadge';
 import { inventoryApi } from '../../app/api';
 import IconContainer from '../../utils/IconContainer';
@@ -17,7 +17,6 @@ import {
     Textarea,
     Button,
     Label,
-    DataLabel,
     DataValue,
     ContentWrapper,
 } from '../../styles/components';
@@ -124,7 +123,11 @@ const ItemDetails = () => {
                     <ChevronLeft size={20} />
                 </StyledBackButton>
                 <Title>
-                    {item.isSet ? <Layers size={20} color={theme.colors.text.muted} /> : <Box size={20} color={theme.colors.text.muted} />}
+                    {item.isSet ? (
+                        <Layers size={20} color={theme.colors.text.muted} />
+                    ) : (
+                        <Box size={20} color={theme.colors.text.muted} />
+                    )}
                     {item.name}
                 </Title>
             </StyledHeader>
@@ -139,17 +142,6 @@ const ItemDetails = () => {
                                 <InfoLabel>Status</InfoLabel>
                                 <InfoValue style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
                                     <StatusBadge damageLevelType={item.damageLevel} />
-                                    {!item.availability && (
-                                        <span
-                                            style={{
-                                                fontSize: theme.typography.fontSize.xs,
-                                                color: theme.colors.status.error.dark,
-                                                marginTop: 4,
-                                            }}
-                                        >
-                                            Nicht vorhanden
-                                        </span>
-                                    )}
                                 </InfoValue>
                             </div>
                             {item.location && (
@@ -184,9 +176,11 @@ const ItemDetails = () => {
                     <InfoValue>
                         Letzte Inspektion:{' '}
                         {item.lastInspection
-                            ? Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
-                                  new Date(item.lastInspection)
-                              )
+                            ? Intl.DateTimeFormat('de-DE', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                              }).format(new Date(item.lastInspection))
                             : '-'}
                     </InfoValue>
                     <InfoValue>
@@ -196,9 +190,11 @@ const ItemDetails = () => {
                     <InfoValue>
                         Berechnete nächste Inspektion:{' '}
                         {item.lastInspection && item.inspectionIntervalMonths
-                            ? Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
-                                  addMonths(new Date(item.lastInspection), item.inspectionIntervalMonths)
-                              )
+                            ? Intl.DateTimeFormat('de-DE', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                              }).format(addMonths(new Date(item.lastInspection), item.inspectionIntervalMonths))
                             : '-'}
                     </InfoValue>
                 </StyledDetailsCard>
@@ -207,7 +203,9 @@ const ItemDetails = () => {
                     <InfoLabel style={{ marginBottom: theme.spacing.md }}>
                         Kommentare{' '}
                         {isSaving && (
-                            <span style={{ color: theme.colors.text.secondary, fontSize: theme.typography.fontSize.xs }}>
+                            <span
+                                style={{ color: theme.colors.text.secondary, fontSize: theme.typography.fontSize.xs }}
+                            >
                                 Wird gespeichert...
                             </span>
                         )}
