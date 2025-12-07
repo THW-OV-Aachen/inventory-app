@@ -12,6 +12,10 @@ export interface FilterParams {
     type?: 'isSet' | 'isPart' | null;
     location?: string | null;
 }
+
+interface DamageOrFilter {
+    damageLevel?: DamageLevelType[] | null;
+}
 export interface PaginatedResult<T> {
     data: T[];
     pagination: {
@@ -167,6 +171,50 @@ export const inventoryApi = {
             console.error('Failed to clear items', err);
             throw err;
         }
+    },
+
+    async countWithFilter(filters?: DamageOrFilter): Promise<{
+        totalCount: number;
+        firstThreeEntries: IItem[];
+    }> {
+        try {
+            const hasFilters = filters && filters.damageLevel && filters.damageLevel.length > 0;
+
+            if (!hasFilters) {
+                // Fast path: no filtering needed
+                const totalCount = await db.items.count();
+                const firstThreeEntries = await db.items.orderBy('id').limit(3).toArray();
+
+                return { totalCount, firstThreeEntries };
+            }
+
+            // Filtering path: must fetch all, filter in-memory
+            const allItems = await db.items.orderBy('id').toArray();
+
+            const filteredItems = allItems.filter((item) => {
+                const matchesDamageLevel =
+                    !filters?.damageLevel?.length || filters.damageLevel.includes(item.damageLevel);
+
+                return matchesDamageLevel;
+            });
+
+            return {
+                totalCount: filteredItems.length,
+                firstThreeEntries: filteredItems.slice(0, 3),
+            };
+        } catch (error) {
+            console.error('Failed to count items with filter: ', error);
+            throw error;
+        }
+    },
+
+    useCountWithFilter(filters?: DamageOrFilter) {
+        const result: { totalCount: number; firstThreeEntries: IItem[] } | undefined = useLiveQuery(
+            () => this.countWithFilter(filters),
+            [filters?.damageLevel]
+        );
+
+        return result ?? { totalCount: 0, firstThreeEntries: [] };
     },
 };
 

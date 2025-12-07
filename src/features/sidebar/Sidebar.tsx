@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { Wrench, CircleQuestionMark, ToyBrick, Columns2, FolderSync } from 'lucide-react';
+import { Columns2 } from 'lucide-react';
 import logo from '../../assets/favicon.svg';
 import IconContainer from '../../utils/IconContainer';
+import { navItems } from './routes';
+import { theme } from '../../styles/theme';
 
 const SidebarSection = styled.div`
     padding-left: 8px;
@@ -13,12 +15,13 @@ const SidebarSection = styled.div`
 const SidebarWrapper = styled.aside<{ $open: boolean }>`
     display: flex;
     flex-direction: column;
-    background-color: var(--color-bg-accent);
+    background-color: ${theme.colors.background.white};
     font-size: 16px;
     min-width: ${(p) => (p.$open ? '320px' : '0px')};
     height: 100vh;
 
     z-index: 1000;
+    border-right: 1px solid ${theme.colors.border.light};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         height: unset;
@@ -27,7 +30,8 @@ const SidebarWrapper = styled.aside<{ $open: boolean }>`
         position: absolute;
         bottom: 0;
 
-        box-shadow: 0 -4px 12px rgba(var(--color-font-primary-rgb), 0.1);
+        box-shadow: 0 -4px 12px rgba(var(--color-font-primary-rgb), 0.05);
+        border: none;
     }
 `;
 
@@ -40,7 +44,7 @@ const SidebarHeaderWrapper = styled(SidebarSection)<{ $sidebarOpen?: boolean }>`
     padding: 12px;
     height: 56px;
     box-sizing: border-box;
-    color: var(--color-font-primary);
+    color: #64748b;
     position: relative;
     overflow: hidden;
 
@@ -152,22 +156,14 @@ const LinkList = styled(SidebarSection)`
     }
 `;
 
-const LinkSpacer = styled.div`
-    flex: 1;
-
-    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        display: none;
-    }
-`;
-
 const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: ${(p) => (p.$sidebarOpen ? '8px' : '0')};
     justify-content: ${(p) => (p.$sidebarOpen ? 'flex-start' : 'center')};
-    background: ${(p) => (p.$active ? 'rgba(var(--color-primary-rgb), .1)' : 'unset')};
-    color: ${(p) => (p.$active ? 'var(--color-font-primary)' : 'var(--color-font-secondary)')};
+    background: ${(p) => (p.$active ? '#e4edf7' : 'unset')};
+    color: ${({ $active }) => ($active ? '#4A90E2' : '#64748b')};
     font-weight: ${(p) => (p.$active ? 'bold' : 'normal')};
     padding: 12px;
     border-radius: 6px;
@@ -207,41 +203,18 @@ const Sidebar = () => {
     const [open, setOpen] = useState(false);
     const location = useLocation();
 
-    const links = [
-        { to: '/maintenance', label: 'Wartungsübersicht', icon: Wrench },
-        { to: '/items', label: 'Inventar', icon: ToyBrick },
-    ];
-
-    const bottomLinks = [
-        { to: '/guide', label: 'Guide', icon: CircleQuestionMark },
-        { to: '/import', label: 'Import/ Export', icon: FolderSync },
-    ];
-
     return (
         <>
             <SidebarWrapper $open={open}>
                 <SidebarHeader open={open} setOpen={setOpen} />
                 <SectionLine />
                 <LinkList>
-                    {links.map((link) => (
+                    {navItems.map((link) => (
                         <NavLink
-                            key={link.to}
-                            to={link.to}
+                            key={link.path}
+                            to={link.path}
                             $sidebarOpen={open}
-                            $active={location.pathname === link.to}
-                            onClick={() => setOpen(false)}
-                        >
-                            <IconContainer icon={link.icon} />
-                            <span>{link.label}</span>
-                        </NavLink>
-                    ))}
-                    <LinkSpacer />
-                    {bottomLinks.map((link) => (
-                        <NavLink
-                            key={link.to}
-                            to={link.to}
-                            $sidebarOpen={open}
-                            $active={location.pathname === link.to}
+                            $active={location.pathname === link.path}
                             onClick={() => setOpen(false)}
                         >
                             <IconContainer icon={link.icon} />

@@ -31,23 +31,24 @@ export const DamageLevelStyles = {
     },
 };
 
-const StatusBadge = (props: { damageLevelType: DamageLevelType }) => {
+const StatusBadge = (props: { damageLevelType: DamageLevelType; omitText?: boolean }) => {
     const { damageLevelType } = props;
 
     const damageStyle = DamageLevelStyles[damageLevelType];
 
     return (
-        <StatusBadgeWrapper $color={damageStyle.color} $bgColor={damageStyle.colorBg}>
-            <IconContainer icon={damageStyle.icon} /> {DamageLevelTranslation[damageLevelType] ?? '-'}
+        <StatusBadgeWrapper $color={damageStyle.color} $bgColor={damageStyle.colorBg} $omitText={props.omitText}>
+            <IconContainer icon={damageStyle.icon} />{' '}
+            {props.omitText ? '' : (DamageLevelTranslation[damageLevelType] ?? '-')}
         </StatusBadgeWrapper>
     );
 };
 
-export const StatusBadgeWrapper = styled.span<{ $color: string; $bgColor: string }>`
+export const StatusBadgeWrapper = styled.span<{ $color: string; $bgColor: string; $omitText?: boolean }>`
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 10px;
+    padding: 4px ${(p) => (p.$omitText ? '' : '10px')};
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
