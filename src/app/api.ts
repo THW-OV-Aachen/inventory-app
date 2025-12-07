@@ -160,3 +160,16 @@ export const inventoryApi = {
         }
     },
 };
+
+export type SortField =
+    | 'id'
+    | 'name'
+    | 'type'
+    | 'amountActual'
+    | 'availability'
+    | 'damageLevel'
+    | 'location'
+    | 'inventoryNumber'
+    | 'deviceNumber';
+
+export type SortDirection = 'asc' | 'desc';

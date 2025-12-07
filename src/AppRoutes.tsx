@@ -1,9 +1,7 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import App from './App';
-import PrivateOutlet from './features/auth/PrivateOutlet';
 import Dashboard from './features/dashboard/Dashboard';
-import InventoryOverview from './features/inventory/InventoryOverview';
 import MaintenanceOverview from './features/maintenance/maintenanceOverview';
 import ItemDetails from './features/item/itemDetails';
 
@@ -23,10 +21,6 @@ const AppRoutes = () => {
             <Route path="/" element={<App />}>
                 <Route index element={<Home />} />
                 <Route path="dashboard" element={<Dashboard />} />
-
-                <Route path="*" element={<PrivateOutlet />}>
-                    <Route path="inventory" element={<InventoryOverview />} />
-                </Route>
 
                 <Route path="maintenance" element={<MaintenanceOverview />} />
                 <Route path="guide" element={<Guide />} />

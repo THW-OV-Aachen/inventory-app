@@ -3,26 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass, MapPin } from 'lucide-react';
 import type { DamageLevelType, IItem } from '../../db/items';
-import { ItemFilter, type SortDirection, type SortField } from './ItemFilterPanel';
-import { inventoryApi } from '../../app/api';
+import { ItemFilter } from './ItemFilterPanel';
+import { inventoryApi, type SortDirection, type SortField } from '../../app/api';
 import StatusBadge, { DamageLevelStyles } from '../../utils/StatusBadge';
 import IconContainer from '../../utils/IconContainer';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import React from 'react';
 import { parseLocationStringRaw, mapLocationKey } from '../../utils/locationString';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
+import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
 
 const ItemOverview = () => {
     const navigate = useNavigate();
-    const [items, setItems] = useState<IItem[]>([]);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [sortField, setSortField] = useState<SortField | null>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const dispatch = useDispatch();
 
-    const [filters, setFilters] = useState<{
-        damageLevel?: DamageLevelType | null;
-        type?: 'isSet' | 'isPart' | null;
-        location?: string | null;
-    }>({});
+    const searchState = useSelector((state: RootState) => state.search);
+    const { query: searchTerm, sortField, sortDirection, filters } = searchState;
+
+    const [items, setItems] = useState<IItem[]>([]);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -38,8 +37,8 @@ const ItemOverview = () => {
             try {
                 const result = await inventoryApi.fetchItemsPaginatedWithFilter(
                     { page: currentPage, pageSize },
-                    searchTerm,
-                    filters
+                    searchTerm || '',
+                    filters || {}
                 );
                 setItems(result.data);
                 setTotalItems(result.pagination.totalItems);
@@ -62,14 +61,14 @@ const ItemOverview = () => {
     const handleSort = (field: SortField) => {
         if (sortField === field) {
             if (sortDirection === 'asc') {
-                setSortDirection('desc');
+                dispatch(setSortDirection('desc'));
             } else {
-                setSortField(null);
-                setSortDirection('asc');
+                dispatch(setSortField(null));
+                dispatch(setSortDirection('asc'));
             }
         } else {
-            setSortField(field);
-            setSortDirection('asc');
+            dispatch(setSortField(field));
+            dispatch(setSortDirection('asc'));
         }
     };
 
@@ -145,16 +144,7 @@ const ItemOverview = () => {
 
     return (
         <div>
-            <ItemFilter
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                sortField={sortField}
-                setSortField={setSortField}
-                sortDirection={sortDirection}
-                setSortDirection={setSortDirection}
-                filters={filters}
-                setFilters={setFilters}
-            />
+            <ItemFilter />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -532,12 +522,14 @@ const InfoIndicator = (props: { children: ReactNode | ReactNode[] }) => {
     );
 };
 
-const SortIndicator = (props: { active: boolean; sortDirection: SortDirection }) => {
+const SortIndicator = (props: { active: boolean; sortDirection?: SortDirection }) => {
     const { active, sortDirection } = props;
 
     return (
         <SortIndicatorWrapper $isActive={active}>
-            <IconContainer icon={!active ? ArrowDownAZ : sortDirection == 'asc' ? ArrowDownAZ : ArrowDownZA} />
+            <IconContainer
+                icon={!active || !sortDirection ? ArrowDownAZ : sortDirection == 'asc' ? ArrowDownAZ : ArrowDownZA}
+            />
         </SortIndicatorWrapper>
     );
 };
