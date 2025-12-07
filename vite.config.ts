@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+    base: '/',
     plugins: [
         react(),
         VitePWA({
@@ -26,7 +27,7 @@ export default defineConfig({
             },
             manifest: {
                 name: 'THW Aachen - Inventarplaner',
-                short_name: 'THW Inventory',
+                short_name: 'THWac',
                 description: 'Inventarplaner für das THW Aachen',
                 theme_color: '#003399',
                 background_color: '#ffffff',
@@ -36,23 +37,23 @@ export default defineConfig({
                 start_url: '/',
                 icons: [
                     {
-                        src: 'pwa-64x64.png',
+                        src: '/pwa-64x64.png',
                         sizes: '64x64',
                         type: 'image/png',
                     },
                     {
-                        src: 'pwa-192x192.png',
+                        src: '/pwa-192x192.png',
                         sizes: '192x192',
                         type: 'image/png',
                     },
                     {
-                        src: 'pwa-512x512.png',
+                        src: '/pwa-512x512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any',
                     },
                     {
-                        src: 'pwa-512x512.png',
+                        src: '/pwa-512x512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'maskable',
