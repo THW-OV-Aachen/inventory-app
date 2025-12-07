@@ -159,6 +159,15 @@ export const inventoryApi = {
             throw error;
         }
     },
+
+    async clearAll(): Promise<void> {
+        try {
+            await db.items.clear();
+        } catch (err) {
+            console.error('Failed to clear items', err);
+            throw err;
+        }
+    },
 };
 
 export type SortField =

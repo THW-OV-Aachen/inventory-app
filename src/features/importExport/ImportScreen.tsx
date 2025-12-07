@@ -1,12 +1,12 @@
-// src/features/importExport/ImportExport.tsx
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exportExcel, importExcel } from '../../db/utils/excel';
 import { inventoryApi } from '../../app/api';
 import styled from 'styled-components';
-import { Upload, Download, ChevronLeft } from 'lucide-react';
+import { Upload, Download, ChevronLeft, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/theme';
 import { Card, Button, Container, BackButton, Header, ControlsWrapper } from '../../styles/components';
+import IconContainer from '../../utils/IconContainer';
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
@@ -113,12 +113,48 @@ const StyledBackButton = styled(BackButton)`
     padding-left: 0;
     margin-left: 0;
 `;
+const ModalOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+`;
+
+const ModalTitle = styled.h3`
+    margin: 0 0 10px 0;
+`;
+
+const ModalText = styled.p`
+    margin: 0 0 16px 0;
+`;
+
+const ModalButtons = styled.div`
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+`;
 
 const ImportExportScreen = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [importProgress, setImportProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const inventoryItems = inventoryApi.useItems(); // fetch current items
@@ -136,15 +172,51 @@ const ImportExportScreen = () => {
             alert('Select a file first.');
             return;
         }
+
+        if ((inventoryItems?.length ?? 0) > 0) {
+            setPendingFile(file);
+            setShowConfirm(true);
+            return;
+        }
+        await performImport(file, /* extend */ true);
+    };
+
+    const performImport = async (f: File, extend: boolean) => {
         setImporting(true);
+        setImportProgress(0);
+        setShowConfirm(false);
+
+        const handleProgress = (percentage: number) => {
+            setImportProgress(percentage);
+        };
         try {
-            await importExcel(file);
-            alert('Import finished!');
+            if (!extend) {
+                await inventoryApi.clearAll();
+            }
+            await importExcel(f, handleProgress);
+
+            setSuccessMessage('Daten erfolgreich importiert!');
+            setFile(null);
         } catch (err) {
             alert('Import failed: ' + (err as Error).message);
         } finally {
             setImporting(false);
+            setPendingFile(null);
+            setShowConfirm(false);
         }
+    };
+
+    const handleConfirmChoice = async (choice: 'extend' | 'overwrite' | 'cancel') => {
+        if (choice === 'cancel') {
+            setShowConfirm(false);
+            setPendingFile(null);
+            return;
+        }
+        if (!pendingFile) {
+            setShowConfirm(false);
+            return;
+        }
+        await performImport(pendingFile, choice === 'extend');
     };
 
     const handleExportClick = async () => {
@@ -159,6 +231,8 @@ const ImportExportScreen = () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+
+            setSuccessMessage('Daten erfolgreich exportiert!');
         } catch (err) {
             alert('Export failed: ' + (err as Error).message);
         } finally {
@@ -191,7 +265,11 @@ const ImportExportScreen = () => {
                         </FileInputButton>
                     </FileInputWrapper>
                     <StyledButtonGroup>
-                        <StyledPrimaryButton variant="primary" onClick={handleImportClick} disabled={importing || !file}>
+                        <StyledPrimaryButton
+                            variant="primary"
+                            onClick={handleImportClick}
+                            disabled={importing || !file}
+                        >
                             <Upload size={14} />
                             <span>{importing ? 'Import läuft…' : 'Importieren'}</span>
                         </StyledPrimaryButton>
@@ -201,9 +279,103 @@ const ImportExportScreen = () => {
                         </StyledSecondaryButton>
                     </StyledButtonGroup>
                 </StyledCard>
+                {(importing || successMessage) && (
+                    <SuccessWrapper
+                        $withLeftBorder={!!successMessage}
+                        $leftBorderColor="#10b981"
+                        $isProgress={importing}
+                    >
+                        {importing ? (
+                            <>
+                                <ProgressLabel>
+                                    Importiere... <strong>{importProgress}%</strong>
+                                </ProgressLabel>
+                                <ProgressBar value={importProgress} max={100} />
+                            </>
+                        ) : (
+                            <>
+                                <IconContainer icon={CheckCircle} />
+                                <span>{successMessage}</span>
+                            </>
+                        )}
+                    </SuccessWrapper>
+                )}
+                {showConfirm && (
+                    <ModalOverlay>
+                        <ModalBox role="dialog" aria-modal="true" aria-labelledby="import-confirm-title">
+                            <ModalTitle id="import-confirm-title">Die Datenbank enthält bereits Elemente</ModalTitle>
+                            <ModalText>
+                                Die aktuelle Datenbank enthält bereits Einträge. Möchten Sie die vorhandenen Daten
+                                erweitern (aktuelle Einträge beibehalten und neue hinzufügen) oder die Datenbank
+                                überschreiben (vorhandene Einträge löschen und nur die neuen importieren)?
+                            </ModalText>
+                            <ModalButtons>
+                                <StyledPrimaryButton onClick={() => handleConfirmChoice('extend')}>
+                                    Erweitern
+                                </StyledPrimaryButton>
+                                <StyledSecondaryButton onClick={() => handleConfirmChoice('overwrite')}>
+                                    Überschreiben
+                                </StyledSecondaryButton>
+                                <StyledSecondaryButton variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
+                                    Abbrechen
+                                </StyledSecondaryButton>
+                            </ModalButtons>
+                        </ModalBox>
+                    </ModalOverlay>
+                )}
             </ControlsWrapper>
         </StyledContainer>
     );
 };
+const SuccessWrapper = styled(Card)<{ $isProgress: boolean }>`
+    margin-top: 8px;
+
+    font-size: ${theme.typography.fontSize.sm};
+
+    display: ${({ $isProgress }) => ($isProgress ? 'flex' : 'flex')};
+    flex-direction: ${({ $isProgress }) => ($isProgress ? 'column' : 'row')};
+    gap: ${({ $isProgress }) => ($isProgress ? theme.spacing.md : '8px')};
+    color: #64748b;
+    align-items: ${({ $isProgress }) => ($isProgress ? 'stretch' : 'center')};
+
+    padding: ${({ $isProgress }) => ($isProgress ? '8px 12px' : '12px')};
+`;
+
+const ProgressLabel = styled.p`
+    margin: 0;
+    font-size: ${theme.typography.fontSize.sm};
+    font-weight: ${theme.typography.fontWeight.medium};
+    color: ${theme.colors.text.secondary};
+    letter-spacing: ${theme.typography.letterSpacing.tight};
+`;
+
+const ProgressBar = styled.progress`
+    width: 100%;
+    height: 8px;
+    border: none;
+    border-radius: ${theme.borderRadius.full};
+    background-color: ${theme.colors.background.gray};
+    overflow: hidden;
+    appearance: none;
+    -webkit-appearance: none;
+
+    &::-webkit-progress-bar {
+        background-color: ${theme.colors.background.gray};
+        border-radius: ${theme.borderRadius.full};
+        box-shadow: ${theme.shadows.sm};
+    }
+
+    &::-webkit-progress-value {
+        background: linear-gradient(90deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+        border-radius: ${theme.borderRadius.full};
+        transition: ${theme.transitions.default};
+    }
+
+    &::-moz-progress-bar {
+        background: linear-gradient(90deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+        border-radius: ${theme.borderRadius.full};
+        transition: ${theme.transitions.default};
+    }
+`;
 
 export default ImportExportScreen;
