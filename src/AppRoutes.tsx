@@ -1,0 +1,45 @@
+import { Route, Routes } from 'react-router-dom';
+
+import App from './App';
+import Dashboard from './features/dashboard/Dashboard';
+import MaintenanceOverview from './features/maintenance/maintenanceOverview';
+import ItemDetails from './features/item/itemDetails';
+
+import ItemOverview from './features/item/itemOverview';
+
+import Guide from './features/guide/guide';
+import More from './features/more/More';
+
+import ImportExportScreen from './features/importExport/ImportScreen';
+import AddItem from './features/item/AddItem';
+import ModifyItem from './features/item/ModifyItem';
+import Home from './features/home/home';
+
+import PackingPlan from './features/pack/packingPlan';
+import PackingPlanOverview from './features/pack/packingplanOverview';
+
+const AppRoutes = () => {
+    return (
+        <Routes>
+            <Route path="/" element={<App />}>
+                <Route index element={<Home />} />
+                <Route path="dashboard" element={<Dashboard />} />
+
+                <Route path="maintenance" element={<MaintenanceOverview />} />
+                <Route path="guide" element={<Guide />} />
+                <Route path="more" element={<More />} />
+
+                <Route path="items" element={<ItemOverview />} />
+                <Route path="items/add" element={<AddItem />} />
+                <Route path="items/:itemId/modify" element={<ModifyItem />} />
+                <Route path="items/:itemId" element={<ItemDetails />} />
+
+                <Route path="import" element={<ImportExportScreen />} />
+
+                <Route path="PackingPlan" element={<PackingPlan />} />
+                <Route path="packingplanOverview" element={<PackingPlanOverview />} />
+            </Route>
+        </Routes>
+    );
+};
+export default AppRoutes;
