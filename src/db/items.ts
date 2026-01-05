@@ -1,3 +1,4 @@
+import type { unstable_InstrumentRequestHandlerFunction } from 'react-router';
 import * as yup from 'yup';
 
 export const DamageLevelType = {
@@ -12,7 +13,8 @@ export const LOCATION_PATTERN = /^(\d+)?-?([RG])?(\d+)?\.?(\d+)?-?(\d+)?$/;
 export type DamageLevelType = (typeof DamageLevelType)[keyof typeof DamageLevelType];
 
 export interface IItem {
-    id: string;
+    id: number;
+    itemId: string;
     inventoryNumber?: string;
     deviceNumber?: string;
     name: string;
@@ -29,7 +31,7 @@ export interface IItem {
 }
 
 export const ItemValidationSchema = yup.object().shape({
-    id: yup.string().required('ID ist erforderlich.').min(1, 'ID darf nicht leer sein.'),
+    itemId: yup.string().required('ID ist erforderlich.').min(1, 'ID darf nicht leer sein.'),
     name: yup.string().required('Name ist erforderlich.').min(1, 'Name darf nicht leer sein.'),
     inventoryNumber: yup.string().optional(),
     deviceNumber: yup.string().optional(),

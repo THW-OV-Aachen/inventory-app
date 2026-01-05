@@ -36,7 +36,7 @@ function addMonths(date: Date, months: number): Date {
 }
 
 const ItemDetails = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const [text, setText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +46,7 @@ const ItemDetails = () => {
 
     const saveRemark = useCallback(
         async (newText: string) => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             setIsSaving(true);
             try {
@@ -58,12 +59,13 @@ const ItemDetails = () => {
                 setIsSaving(false);
             }
         },
-        [itemId]
+        [id]
     );
 
     // Fetch the item from Dexie by ID
     useEffect(() => {
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
@@ -72,7 +74,7 @@ const ItemDetails = () => {
             }
         };
         fetchItem();
-    }, [itemId]);
+    }, [id]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newText = e.target.value;

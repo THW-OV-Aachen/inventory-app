@@ -99,7 +99,7 @@ const ErrorText = styled.small`
 `;
 
 const ModifyItem = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const [formData, setFormData] = useState<Partial<IItem>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -109,6 +109,7 @@ const ModifyItem = () => {
 
     useEffect(() => {
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
@@ -117,7 +118,7 @@ const ModifyItem = () => {
             }
         };
         fetchItem();
-    }, [itemId]);
+    }, [id]);
 
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
