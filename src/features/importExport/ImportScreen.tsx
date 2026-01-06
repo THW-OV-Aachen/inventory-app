@@ -146,12 +146,27 @@ const ModalButtons = styled.div`
     justify-content: flex-end;
 `;
 
+const ConfirmationInput = styled.input`
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+`;
+
+const WarningText = styled.p`
+    color: #f00;
+    font-weight: bold;
+`;
+
 const ImportExportScreen = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showOverwriteConfirmation, setShowOverwriteConfirmation] = useState(false);
+    const [overwriteConfirmationInput, setOverwriteConfirmationInput] = useState('');
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [importProgress, setImportProgress] = useState(0);
@@ -181,7 +196,7 @@ const ImportExportScreen = () => {
         await performImport(file, /* extend */ true);
     };
 
-    const performImport = async (f: File, extend: boolean) => {
+    const performImport = async (f: File, extend: boolean, overwriteConfirmed: boolean = false) => {
         setImporting(true);
         setImportProgress(0);
         setShowConfirm(false);
@@ -191,6 +206,10 @@ const ImportExportScreen = () => {
         };
         try {
             if (!extend) {
+                if (!overwriteConfirmed) {
+                    setShowOverwriteConfirmation(true);
+                    return;
+                }
                 await inventoryApi.clearAll();
             }
             await importExcel(f, handleProgress);
@@ -220,7 +239,20 @@ const ImportExportScreen = () => {
             setShowConfirm(false);
             return;
         }
-        await performImport(pendingFile, choice === 'extend');
+
+        if (choice === 'overwrite') {
+            setShowOverwriteConfirmation(true);
+        } else {
+            await performImport(pendingFile, true);
+        }
+    };
+
+    const handleOverwriteConfirmation = async () => {
+        if (overwriteConfirmationInput === 'überschreiben') {
+            performImport(pendingFile!, false, true);
+            setShowOverwriteConfirmation(false);
+            setOverwriteConfirmationInput('');
+        }
     };
 
     const handleExportClick = async () => {
@@ -321,6 +353,44 @@ const ImportExportScreen = () => {
                                     Überschreiben
                                 </StyledSecondaryButton>
                                 <StyledSecondaryButton variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
+                                    Abbrechen
+                                </StyledSecondaryButton>
+                            </ModalButtons>
+                        </ModalBox>
+                    </ModalOverlay>
+                )}
+                {showOverwriteConfirmation && (
+                    <ModalOverlay>
+                        <ModalBox role="dialog" aria-modal="true" aria-labelledby="overwrite-confirm-title">
+                            <ModalTitle id="overwrite-confirm-title">Datenbanküberschreiben bestätigen</ModalTitle>
+                            <ModalText>
+                                <WarningText>
+                                    WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Exportiere die
+                                    Datenbank, um sie zu speichern.
+                                </WarningText>
+                                Bitte geben Sie "überschreiben" ein, um zu bestätigen, dass Sie die vorhandene Datenbank
+                                löschen und durch die neuen Daten ersetzen möchten.
+                            </ModalText>
+                            <ConfirmationInput
+                                type="text"
+                                value={overwriteConfirmationInput}
+                                onChange={(e) => setOverwriteConfirmationInput(e.target.value)}
+                                placeholder='Geben Sie "überschreiben" ein'
+                            />
+                            <ModalButtons>
+                                <StyledPrimaryButton
+                                    onClick={handleOverwriteConfirmation}
+                                    disabled={overwriteConfirmationInput !== 'überschreiben'}
+                                >
+                                    Bestätigen
+                                </StyledPrimaryButton>
+                                <StyledSecondaryButton
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setShowOverwriteConfirmation(false);
+                                        setOverwriteConfirmationInput('');
+                                    }}
+                                >
                                     Abbrechen
                                 </StyledSecondaryButton>
                             </ModalButtons>
