@@ -150,14 +150,6 @@ const AddItem = () => {
 
         try {
             await ItemValidationSchema.validate(formData, { abortEarly: false });
-
-            const existing = await db.items.get(formData.id!);
-            if (existing) {
-                setErrors((prev) => ({ ...prev, id: 'Ein Gegenstand mit dieser ID existiert bereits!' }));
-                alert('Ein Gegenstand mit dieser ID existiert bereits!');
-                return;
-            }
-
             setErrors({});
             await saveItem();
         } catch (error) {
@@ -236,20 +228,20 @@ const AddItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="id">
-                            Identifikationsnummer
+                        <Label htmlFor="itemId">
+                            Sachnummer
                             <RequiredStar />
                         </Label>
                         <Input
-                            id="id"
-                            name="id"
+                            id="itemId"
+                            name="itemId"
                             type="text"
                             placeholder="ID eingeben"
-                            value={formData.id ?? ''}
-                            onChange={(e) => handleChange('id', e.target.value)}
-                            onBlur={() => handleBlur('id')}
+                            value={formData.itemId ?? ''}
+                            onChange={(e) => handleChange('itemId', e.target.value)}
+                            onBlur={() => handleBlur('itemId')}
                         />
-                        {renderError('id')}
+                        {renderError('itemId')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
