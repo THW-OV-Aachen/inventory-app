@@ -173,6 +173,7 @@ const ModifyItem = () => {
             if (!item) return;
 
             const updates: Partial<Omit<IItem, 'id'>> = {
+                itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
                 amountTarget: formData.amountTarget ?? 0,
