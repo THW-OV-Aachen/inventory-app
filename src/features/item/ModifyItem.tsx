@@ -189,7 +189,7 @@ const ModifyItem = () => {
             };
 
             await inventoryApi.updateItem(item.id, updates);
-            navigate(`/items/${item.id}`);
+            navigate(-1);
         } catch (error) {
             if (error instanceof yup.ValidationError) {
                 const newErrors: Record<string, string> = {};
