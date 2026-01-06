@@ -197,6 +197,10 @@ const ImportExportScreen = () => {
 
             setSuccessMessage('Daten erfolgreich importiert!');
             setFile(null);
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         } catch (err) {
             alert('Import failed: ' + (err as Error).message);
         } finally {
