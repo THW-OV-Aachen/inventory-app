@@ -189,7 +189,7 @@ const AddItem = () => {
             };
 
             const newItemId = await db.items.add(cleanedItem as IItem);
-            navigate(`/items/${newItemId}`);
+            navigate(`/items/${newItemId}`, { replace: true });
         } catch (err) {
             console.error(err);
             alert('Fehler beim Speichern des Gegenstands.');
