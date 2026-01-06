@@ -1,7 +1,10 @@
 import Dexie, { type Table } from 'dexie';
 import type { IItem } from './items';
+import type { ILabel } from './labels';
+
 export class InventoryDb extends Dexie {
     public items!: Table<IItem, string>;
+    public labels!: Table<ILabel, string>;
 
     constructor() {
         super('InventoryDb');
@@ -22,7 +25,9 @@ export class InventoryDb extends Dexie {
                 'location',
                 'level',
                 'remark',
+                'labels',
             ].join(','),
+            labels: ['++id', 'name', 'color'].join(','),
         });
     }
 }

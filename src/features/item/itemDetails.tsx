@@ -169,6 +169,20 @@ const ItemDetails = () => {
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
+                    <InfoValue>
+                        Labels:{' '}
+                        {item.labels && item.labels.length > 0 ? (
+                            <LabelContainer>
+                                {item.labels.map((label) => (
+                                    <LabelBadge key={label.id} color={label.color}>
+                                        {label.name}
+                                    </LabelBadge>
+                                ))}
+                            </LabelContainer>
+                        ) : (
+                            '-'
+                        )}
+                    </InfoValue>
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
@@ -338,4 +352,17 @@ const ButtonContainer = styled.div`
             width: unset;
         }
     }
+`;
+
+const LabelContainer = styled.div`
+    display: flex;
+    gap: ${theme.spacing.xs};
+`;
+
+const LabelBadge = styled.span`
+    background-color: ${(props) => props.color || theme.colors.primary.main};
+    color: white;
+    padding: 2px 8px;
+    border-radius: ${theme.borderRadius.full};
+    font-size: ${theme.typography.fontSize.xs};
 `;

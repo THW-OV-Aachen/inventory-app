@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
 import { ChevronLeft, Pen } from 'lucide-react';
+import CreatableSelect from 'react-select/creatable';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
+import { type ILabel } from '../../db/labels';
 import { inventoryApi } from '../../app/api';
 import DamageLevelTranslation from '../../utils/damageLevels';
 import {
@@ -104,6 +106,9 @@ const ModifyItem = () => {
     const [formData, setFormData] = useState<Partial<IItem>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [labels, setLabels] = useState<ILabel[]>([]);
+    const [selectedLabels, setSelectedLabels] = useState<{ label: string; value: string }[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const navigate = useNavigate();
 
@@ -114,9 +119,17 @@ const ModifyItem = () => {
             if (dbItem) {
                 setItem(dbItem);
                 setFormData(dbItem);
+                if (dbItem.labels) {
+                    setSelectedLabels(dbItem.labels.map((l) => ({ value: l.id, label: l.name })));
+                }
             }
         };
+        const fetchLabels = async () => {
+            const allLabels = await db.labels.toArray();
+            setLabels(allLabels);
+        };
         fetchItem();
+        fetchLabels();
     }, [itemId]);
 
     const adjustTextareaHeight = () => {
@@ -131,7 +144,7 @@ const ModifyItem = () => {
 
     const itemReference = `Inventarnummer: ${item.inventoryNumber || '-'}`;
 
-    const validateField = async (key: keyof IItem, value: any) => {
+    const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
             setErrors((prev) => {
@@ -149,7 +162,7 @@ const ModifyItem = () => {
         }
     };
 
-    const handleChange = (key: keyof IItem, value: any) => {
+    const handleChange = (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
         if (touched[key]) {
             validateField(key, value);
@@ -159,6 +172,19 @@ const ModifyItem = () => {
     const handleBlur = (key: keyof IItem) => {
         setTouched((prev) => ({ ...prev, [key]: true }));
         validateField(key, formData[key]);
+    };
+
+    const handleCreateLabel = async (inputValue: string) => {
+        setIsLoading(true);
+        const newLabel: ILabel = {
+            id: crypto.randomUUID(),
+            name: inputValue,
+            color: '#000000',
+        };
+        await db.labels.add(newLabel);
+        setLabels((prev) => [...prev, newLabel]);
+        setSelectedLabels((prev) => [...prev, { value: newLabel.id, label: newLabel.name }]);
+        setIsLoading(false);
     };
 
     const handleSave = async () => {
@@ -186,6 +212,7 @@ const ModifyItem = () => {
                 inspectionIntervalMonths: formData.inspectionIntervalMonths ?? 0,
                 location: formData.location?.trim() || '',
                 remark: formData.remark?.trim() || '',
+                labels: selectedLabels.map((l) => labels.find((la) => la.id === l.value)!),
             };
 
             await inventoryApi.updateItem(item.id, updates);
@@ -257,6 +284,20 @@ const ModifyItem = () => {
                             onBlur={() => handleBlur('id')}
                         />
                         {renderError('id')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
+                        <Label htmlFor="labels">Labels</Label>
+                        <CreatableSelect
+                            isMulti
+                            isClearable
+                            isDisabled={isLoading}
+                            isLoading={isLoading}
+                            onChange={(newValue) => setSelectedLabels(newValue as { label: string; value: string }[])}
+                            onCreateOption={handleCreateLabel}
+                            options={labels.map((l) => ({ value: l.id, label: l.name }))}
+                            value={selectedLabels}
+                        />
                     </StyledFormGroup>
 
                     <StyledFormGroup>

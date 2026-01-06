@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
 import { ChevronLeft } from 'lucide-react';
+import CreatableSelect from 'react-select/creatable';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
+import { type ILabel } from '../../db/labels';
 import DamageLevelTranslation from '../../utils/damageLevels';
 import {
     Container,
@@ -18,7 +20,6 @@ import {
     ContentWrapper,
     BackButton,
     Header,
-    HelperText,
     ButtonGroup,
 } from '../../styles/components';
 import { theme } from '../../styles/theme';
@@ -101,10 +102,22 @@ const AddItem = () => {
         location: '',
         level: 0,
         remark: '',
+        labels: [],
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [labels, setLabels] = useState<ILabel[]>([]);
+    const [selectedLabels, setSelectedLabels] = useState<{ label: string; value: string }[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchLabels = async () => {
+            const allLabels = await db.labels.toArray();
+            setLabels(allLabels);
+        };
+        fetchLabels();
+    }, []);
 
     // Auto-grow textarea
     const adjustTextareaHeight = () => {
@@ -115,7 +128,7 @@ const AddItem = () => {
     };
     useEffect(() => adjustTextareaHeight(), [formData.remark]);
 
-    const validateField = async (key: keyof IItem, value: any) => {
+    const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
             setErrors((prev) => {
@@ -133,7 +146,7 @@ const AddItem = () => {
         }
     };
 
-    const handleChange = (key: keyof IItem, value: any) => {
+    const handleChange = (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
         if (touched[key]) {
             validateField(key, value);
@@ -143,6 +156,19 @@ const AddItem = () => {
     const handleBlur = (key: keyof IItem) => {
         setTouched((prev) => ({ ...prev, [key]: true }));
         validateField(key, formData[key]);
+    };
+
+    const handleCreateLabel = async (inputValue: string) => {
+        setIsLoading(true);
+        const newLabel: ILabel = {
+            id: crypto.randomUUID(),
+            name: inputValue,
+            color: '#000000',
+        };
+        await db.labels.add(newLabel);
+        setLabels((prev) => [...prev, newLabel]);
+        setSelectedLabels((prev) => [...prev, { value: newLabel.id, label: newLabel.name }]);
+        setIsLoading(false);
     };
 
     const handleSave = async () => {
@@ -195,6 +221,7 @@ const AddItem = () => {
                 inspectionIntervalMonths: formData.inspectionIntervalMonths ?? 0,
                 location: formData.location?.trim() || '',
                 remark: formData.remark?.trim() || '',
+                labels: selectedLabels.map((l) => labels.find((la) => la.id === l.value)!),
             };
 
             await db.items.add(cleanedItem);
@@ -251,6 +278,22 @@ const AddItem = () => {
                             onBlur={() => handleBlur('id')}
                         />
                         {renderError('id')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
+                        <Label htmlFor="labels">Labels</Label>
+                        <CreatableSelect
+                            isMulti
+                            isClearable
+                            isDisabled={isLoading}
+                            isLoading={isLoading}
+                            onChange={(newValue: { label: string; value: string }[] | null) =>
+                                setSelectedLabels(newValue as { label: string; value: string }[])
+                            }
+                            onCreateOption={handleCreateLabel}
+                            options={labels.map((l) => ({ value: l.id, label: l.name }))}
+                            value={selectedLabels}
+                        />
                     </StyledFormGroup>
 
                     <StyledFormGroup>
