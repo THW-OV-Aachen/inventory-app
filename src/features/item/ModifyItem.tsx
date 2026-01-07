@@ -167,6 +167,7 @@ const CreateLabelContainer = styled.div`
 
 const ColorInput = styled(Input)`
     width: 48px;
+    aspect-ratio: 1;
     padding: 0;
     border-radius: 50%;
     height: 38px;
