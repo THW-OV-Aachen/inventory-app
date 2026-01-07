@@ -146,6 +146,23 @@ const CreateLabelContainer = styled.div`
     gap: ${theme.spacing.sm};
     padding-top: ${theme.spacing.sm};
     border-top: 1px solid ${theme.colors.border.light};
+    align-items: center;
+`;
+
+const ColorInput = styled(Input)`
+    width: 48px;
+    padding: 0;
+    border-radius: 50%;
+    height: 38px;
+    border: none;
+    cursor: pointer;
+    &::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    &::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+    }
 `;
 
 const AddItem = () => {
@@ -244,7 +261,7 @@ const AddItem = () => {
         const newLabel: ILabel = {
             id: crypto.randomUUID(),
             name: newLabelName.trim(),
-            color: '#000000', // Default color, maybe let user choose later
+            color: theme.colors.primary,
         };
         await db.labels.add(newLabel);
         setLabels((prev) => [...prev, newLabel]);
@@ -398,15 +415,16 @@ const AddItem = () => {
                                         ))}
                                     </CheckboxContainer>
                                     <CreateLabelContainer>
+                                        <ColorInput type="color" value={theme.colors.primary} />
                                         <Input
                                             type="text"
                                             placeholder="Neues Label erstellen"
                                             value={newLabelName}
                                             onChange={(e) => setNewLabelName(e.target.value)}
                                         />
-                                        <Button type="button" onClick={handleCreateLabel}>
+                                        <StyledButton variant="primary" onClick={handleCreateLabel}>
                                             Erstellen
-                                        </Button>
+                                        </StyledButton>
                                     </CreateLabelContainer>
                                 </DropdownMenu>
                             )}
@@ -616,4 +634,3 @@ const AddItem = () => {
 };
 
 export default AddItem;
-

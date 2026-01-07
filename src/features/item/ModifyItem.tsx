@@ -162,6 +162,23 @@ const CreateLabelContainer = styled.div`
     gap: ${theme.spacing.sm};
     padding-top: ${theme.spacing.sm};
     border-top: 1px solid ${theme.colors.border.light};
+    align-items: center;
+`;
+
+const ColorInput = styled(Input)`
+    width: 48px;
+    padding: 0;
+    border-radius: 50%;
+    height: 38px;
+    border: none;
+    cursor: pointer;
+    &::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    &::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+    }
 `;
 
 const ModifyItem = () => {
@@ -174,6 +191,7 @@ const ModifyItem = () => {
     const [selectedLabels, setSelectedLabels] = useState<ILabel[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
+    const [newLabelColor, setNewLabelColor] = useState(theme.colors.primary);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -259,7 +277,7 @@ const ModifyItem = () => {
         const newLabel: ILabel = {
             id: crypto.randomUUID(),
             name: newLabelName.trim(),
-            color: '#000000',
+            color: newLabelColor,
         };
         await db.labels.add(newLabel);
         setLabels((prev) => [...prev, newLabel]);
@@ -379,7 +397,7 @@ const ModifyItem = () => {
                     <StyledFormGroup>
                         <Label htmlFor="labels">Labels</Label>
                         <DropdownContainer ref={dropdownRef}>
-                            <DropdownButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                            <DropdownButton type="button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                                 <span>
                                     {selectedLabels.length > 0
                                         ? selectedLabels.map((l) => l.name).join(', ')
@@ -403,13 +421,16 @@ const ModifyItem = () => {
                                         ))}
                                     </CheckboxContainer>
                                     <CreateLabelContainer>
+                                        <ColorInput type="color" value={newLabelColor} />
                                         <Input
                                             type="text"
                                             placeholder="Neues Label erstellen"
                                             value={newLabelName}
                                             onChange={(e) => setNewLabelName(e.target.value)}
                                         />
-                                        <Button onClick={handleCreateLabel}>Erstellen</Button>
+                                        <StyledButton variant="primary" onClick={handleCreateLabel}>
+                                            Erstellen
+                                        </StyledButton>
                                     </CreateLabelContainer>
                                 </DropdownMenu>
                             )}
