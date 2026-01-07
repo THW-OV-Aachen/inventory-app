@@ -194,6 +194,7 @@ const AddItem = () => {
     const [selectedLabels, setSelectedLabels] = useState<ILabel[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
+    const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
 
     useEffect(() => {
         const fetchLabels = async () => {
@@ -261,7 +262,7 @@ const AddItem = () => {
         const newLabel: ILabel = {
             id: crypto.randomUUID(),
             name: newLabelName.trim(),
-            color: theme.colors.primary,
+            color: newLabelColor,
         };
         await db.labels.add(newLabel);
         setLabels((prev) => [...prev, newLabel]);
@@ -415,7 +416,11 @@ const AddItem = () => {
                                         ))}
                                     </CheckboxContainer>
                                     <CreateLabelContainer>
-                                        <ColorInput type="color" value={theme.colors.primary} />
+                                        <ColorInput
+                                            type="color"
+                                            value={newLabelColor}
+                                            onChange={(e) => setNewLabelColor(e.target.value)}
+                                        />
                                         <Input
                                             type="text"
                                             placeholder="Neues Label erstellen"

@@ -191,6 +191,7 @@ const ModifyItem = () => {
     const [selectedLabels, setSelectedLabels] = useState<ILabel[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
+    const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -276,7 +277,7 @@ const ModifyItem = () => {
         const newLabel: ILabel = {
             id: crypto.randomUUID(),
             name: newLabelName.trim(),
-            color: theme.colors.primary,
+            color: newLabelColor,
         };
         await db.labels.add(newLabel);
         setLabels((prev) => [...prev, newLabel]);
@@ -420,7 +421,11 @@ const ModifyItem = () => {
                                         ))}
                                     </CheckboxContainer>
                                     <CreateLabelContainer>
-                                        <ColorInput type="color" value={theme.colors.primary} />
+                                        <ColorInput
+                                            type="color"
+                                            value={newLabelColor}
+                                            onChange={(e) => setNewLabelColor(e.target.value)}
+                                        />
                                         <Input
                                             type="text"
                                             placeholder="Neues Label erstellen"
