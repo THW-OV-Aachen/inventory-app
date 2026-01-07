@@ -2,8 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { ChevronLeft, Pen } from 'lucide-react';
-import CreatableSelect from 'react-select/creatable';
+import { ChevronLeft, Pen, ChevronDown } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { type ILabel } from '../../db/labels';
@@ -100,6 +99,71 @@ const ErrorText = styled.small`
     margin-top: ${theme.spacing.xs};
 `;
 
+const DropdownContainer = styled.div`
+    position: relative;
+`;
+
+const DropdownButton = styled.button`
+    width: 100%;
+    padding: ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.base};
+    border-radius: ${theme.borderRadius.md};
+    border: 1px solid ${theme.colors.border.default};
+    background-color: ${theme.colors.background.light};
+    color: ${theme.colors.text.primary};
+    font-family: ${theme.typography.fontFamily};
+    box-sizing: border-box;
+    transition: ${theme.transitions.default};
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &:focus {
+        outline: none;
+        border-color: ${theme.colors.primary};
+        background-color: ${theme.colors.background.white};
+        box-shadow: 0 0 0 3px ${theme.colors.primaryLight};
+    }
+`;
+
+const DropdownMenu = styled.div`
+    position: absolute;
+    width: 100%;
+    border: 1px solid ${theme.colors.border.default};
+    border-radius: ${theme.borderRadius.md};
+    background-color: ${theme.colors.background.white};
+    box-shadow: ${theme.shadows.md};
+    margin-top: ${theme.spacing.sm};
+    z-index: 10;
+    padding: ${theme.spacing.sm};
+`;
+
+const CheckboxContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    max-height: 150px;
+    overflow-y: auto;
+`;
+
+const CheckboxLabel = styled.label`
+    display: flex;
+    align-items: center;
+    padding: ${theme.spacing.sm};
+    cursor: pointer;
+
+    &:hover {
+        background-color: ${theme.colors.background.light};
+    }
+`;
+
+const CreateLabelContainer = styled.div`
+    display: flex;
+    gap: ${theme.spacing.sm};
+    padding-top: ${theme.spacing.sm};
+    border-top: 1px solid ${theme.colors.border.light};
+`;
+
 const ModifyItem = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
@@ -107,9 +171,11 @@ const ModifyItem = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [labels, setLabels] = useState<ILabel[]>([]);
-    const [selectedLabels, setSelectedLabels] = useState<{ label: string; value: string }[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [selectedLabels, setSelectedLabels] = useState<ILabel[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [newLabelName, setNewLabelName] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -120,7 +186,7 @@ const ModifyItem = () => {
                 setItem(dbItem);
                 setFormData(dbItem);
                 if (dbItem.labels) {
-                    setSelectedLabels(dbItem.labels.map((l) => ({ value: l.id, label: l.name })));
+                    setSelectedLabels(dbItem.labels);
                 }
             }
         };
@@ -131,6 +197,19 @@ const ModifyItem = () => {
         fetchItem();
         fetchLabels();
     }, [itemId]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
@@ -174,17 +253,28 @@ const ModifyItem = () => {
         validateField(key, formData[key]);
     };
 
-    const handleCreateLabel = async (inputValue: string) => {
-        setIsLoading(true);
+    const handleCreateLabel = async () => {
+        if (!newLabelName.trim()) return;
+
         const newLabel: ILabel = {
             id: crypto.randomUUID(),
-            name: inputValue,
+            name: newLabelName.trim(),
             color: '#000000',
         };
         await db.labels.add(newLabel);
         setLabels((prev) => [...prev, newLabel]);
-        setSelectedLabels((prev) => [...prev, { value: newLabel.id, label: newLabel.name }]);
-        setIsLoading(false);
+        setSelectedLabels((prev) => [...prev, newLabel]);
+        setNewLabelName('');
+    };
+
+    const handleLabelSelection = (label: ILabel) => {
+        setSelectedLabels((prev) => {
+            if (prev.find((l) => l.id === label.id)) {
+                return prev.filter((l) => l.id !== label.id);
+            } else {
+                return [...prev, label];
+            }
+        });
     };
 
     const handleSave = async () => {
@@ -212,7 +302,7 @@ const ModifyItem = () => {
                 inspectionIntervalMonths: formData.inspectionIntervalMonths ?? 0,
                 location: formData.location?.trim() || '',
                 remark: formData.remark?.trim() || '',
-                labels: selectedLabels.map((l) => labels.find((la) => la.id === l.value)!),
+                labels: selectedLabels,
             };
 
             await inventoryApi.updateItem(item.id, updates);
@@ -288,16 +378,42 @@ const ModifyItem = () => {
 
                     <StyledFormGroup>
                         <Label htmlFor="labels">Labels</Label>
-                        <CreatableSelect
-                            isMulti
-                            isClearable
-                            isDisabled={isLoading}
-                            isLoading={isLoading}
-                            onChange={(newValue) => setSelectedLabels(newValue as { label: string; value: string }[])}
-                            onCreateOption={handleCreateLabel}
-                            options={labels.map((l) => ({ value: l.id, label: l.name }))}
-                            value={selectedLabels}
-                        />
+                        <DropdownContainer ref={dropdownRef}>
+                            <DropdownButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                                <span>
+                                    {selectedLabels.length > 0
+                                        ? selectedLabels.map((l) => l.name).join(', ')
+                                        : 'Labels auswählen'}
+                                </span>
+                                <ChevronDown size={16} />
+                            </DropdownButton>
+                            {isDropdownOpen && (
+                                <DropdownMenu>
+                                    <CheckboxContainer>
+                                        {labels.map((label) => (
+                                            <CheckboxLabel key={label.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLabels.some((l) => l.id === label.id)}
+                                                    onChange={() => handleLabelSelection(label)}
+                                                    style={{ marginRight: '8px' }}
+                                                />
+                                                {label.name}
+                                            </CheckboxLabel>
+                                        ))}
+                                    </CheckboxContainer>
+                                    <CreateLabelContainer>
+                                        <Input
+                                            type="text"
+                                            placeholder="Neues Label erstellen"
+                                            value={newLabelName}
+                                            onChange={(e) => setNewLabelName(e.target.value)}
+                                        />
+                                        <Button onClick={handleCreateLabel}>Erstellen</Button>
+                                    </CreateLabelContainer>
+                                </DropdownMenu>
+                            )}
+                        </DropdownContainer>
                     </StyledFormGroup>
 
                     <StyledFormGroup>
