@@ -101,7 +101,14 @@ const CreateLabelContainer = styled.div`
     gap: ${theme.spacing.sm};
     padding-top: ${theme.spacing.sm};
     border-top: 1px solid ${theme.colors.border.light};
+    padding-bottom: ${theme.spacing.sm};
+    padding-left: ${theme.spacing.sm};
+    padding-right: ${theme.spacing.sm};
     align-items: center;
+    position: sticky;
+    bottom: 0;
+    background-color: ${theme.colors.background.white};
+    z-index: 1;
 `;
 
 const ColorInput = styled(Input)`
