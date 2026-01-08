@@ -162,6 +162,14 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     }
 `;
 
+const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const LabelSelector = () => {
     const dispatch = useDispatch();
     const filters = useSelector((state: RootState) => state.search.filters);
@@ -246,7 +254,7 @@ const LabelSelector = () => {
                         }
 
                         return label ? (
-                            <LabelBadge key={labelId} onClick={() => removeLabel(labelId)}>
+                            <LabelBadge key={labelId} onClick={() => removeLabel(labelId)} color={label.color}>
                                 {label.name} <IconContainer icon={X} />
                             </LabelBadge>
                         ) : null;
@@ -280,17 +288,18 @@ const SelectedLabels = styled.div`
     margin-top: 8px;
 `;
 
-const LabelBadge = styled.div`
+const LabelBadge = styled.div<{ color: string }>`
     display: inline-flex;
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    background: #e3f2fd;
-    border-radius: 12px;
+    background: ${(props) => hexToRgba(props.color, 0.2)};
+    border: 1px solid ${(props) => props.color};
+    border-radius: 20px;
     font-size: 12px;
     cursor: pointer;
     &:hover {
-        background: #bbdefb;
+        background: ${(props) => hexToRgba(props.color, 0.4)};
     }
 `;
 
