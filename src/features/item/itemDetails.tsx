@@ -166,12 +166,15 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
-                    <InfoLabel>Informationen</InfoLabel>
+                    <InfoLabel>Weitere Informationen</InfoLabel>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
+                </StyledDetailsCard>
+
+                <StyledDetailsCard>
+                    <InfoLabel>Labels</InfoLabel>
                     <InfoValue>
-                        Labels:{' '}
                         {item.labels && item.labels.length > 0 ? (
                             <LabelContainer>
                                 {item.labels.map((label) => (
@@ -187,7 +190,7 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
-                    <InfoLabel>Wartung</InfoLabel>
+                    <InfoLabel>Wartungsinformationen</InfoLabel>
                     <InfoValue>
                         Letzte Inspektion:{' '}
                         {item.lastInspection
@@ -358,4 +361,5 @@ const ButtonContainer = styled.div`
 const LabelContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.xs};
+    flex-wrap: wrap;
 `;
