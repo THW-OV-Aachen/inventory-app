@@ -77,7 +77,12 @@ export const inventoryApi = {
         const offset = (page - 1) * pageSize;
 
         try {
-            const hasFilters = filters && (filters.damageLevel || filters.type || filters.location);
+            const hasFilters =
+                filters &&
+                (filters.damageLevel ||
+                    filters.type ||
+                    filters.location ||
+                    (filters.labels && filters.labels.length > 0));
 
             if (!searchTerm && !hasFilters) {
                 return await this.fetchItemsPaginated(params);
@@ -103,7 +108,12 @@ export const inventoryApi = {
                 const matchesLocation =
                     !filters?.location || item.location.toLowerCase().includes(filters.location.toLowerCase());
 
-                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation;
+                const matchesLabels =
+                    !filters?.labels ||
+                    !filters.labels.length ||
+                    filters.labels.every((labelId) => item.labels?.some((itemLabel) => itemLabel.id === labelId));
+
+                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation && matchesLabels;
             });
 
             const totalItems = filteredItems.length;
