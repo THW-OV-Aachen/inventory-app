@@ -179,6 +179,22 @@ const LabelSelector = () => {
         fetchLabels();
     }, []);
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
+
     const filteredLabels = allLabels.filter((label) => label.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     function handleLabelClick(id: string): void {
@@ -192,14 +208,34 @@ const LabelSelector = () => {
     }
 
     return (
-        <LabelSelectorWrapper ref={dropdownRef}>
-            <LabelSearchInput
-                type="text"
-                placeholder="Labels suchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setIsOpen(true)}
-            />
+        <LabelSelectorWrapper>
+            <DropdownContainer ref={dropdownRef}>
+                <LabelSearchInput
+                    type="text"
+                    placeholder="Labels suchen..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsOpen(true)}
+                />
+                {isOpen && (
+                    <LabelDropdown>
+                        {filteredLabels.length > 0 ? (
+                            filteredLabels.map((label) => (
+                                <LabelOption
+                                    key={label.id}
+                                    onClick={() => handleLabelClick(label.id)}
+                                    $isSelected={selectedLabels.includes(label.id)}
+                                >
+                                    {label.name}
+                                    {selectedLabels.includes(label.id) && <IconContainer icon={Check} />}
+                                </LabelOption>
+                            ))
+                        ) : (
+                            <NoLabels>Keine Labels gefunden</NoLabels>
+                        )}
+                    </LabelDropdown>
+                )}
+            </DropdownContainer>
             {selectedLabels.length > 0 && (
                 <SelectedLabels>
                     {selectedLabels.map((labelId) => {
@@ -217,27 +253,13 @@ const LabelSelector = () => {
                     })}
                 </SelectedLabels>
             )}
-            {isOpen && (
-                <LabelDropdown>
-                    {filteredLabels.length > 0 ? (
-                        filteredLabels.map((label) => (
-                            <LabelOption
-                                key={label.id}
-                                onClick={() => handleLabelClick(label.id)}
-                                $isSelected={selectedLabels.includes(label.id)}
-                            >
-                                {label.name}
-                                {selectedLabels.includes(label.id) && <IconContainer icon={Check} />}
-                            </LabelOption>
-                        ))
-                    ) : (
-                        <NoLabels>Keine Labels gefunden</NoLabels>
-                    )}
-                </LabelDropdown>
-            )}
         </LabelSelectorWrapper>
     );
 };
+
+const DropdownContainer = styled.div`
+    position: relative;
+`;
 
 const LabelSelectorWrapper = styled.div`
     position: relative;
