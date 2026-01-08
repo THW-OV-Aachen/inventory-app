@@ -1,29 +1,6 @@
 import styled from 'styled-components';
 import { theme } from './theme';
 
-export const LabelChip = styled.span<{ $backgroundColor: string }>`
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: ${theme.borderRadius.full};
-    font-size: ${theme.typography.fontSize.xs};
-    font-weight: ${theme.typography.fontWeight.medium};
-    background-color: #aeb4bbff;
-    color: white;
-`;
-
-export const LabelDropdownItem = styled.div<{ $isSelected: boolean }>`
-    display: flex;
-    align-items: center;
-    padding: ${theme.spacing.sm};
-    cursor: pointer;
-    border-radius: ${theme.borderRadius.md};
-    background-color: ${({ $isSelected }) => ($isSelected ? theme.colors.background.gray : 'transparent')};
-
-    &:hover {
-        background-color: ${theme.colors.background.light};
-    }
-`;
-
 // Card component
 export const Card = styled.div<{ $withLeftBorder?: boolean; $leftBorderColor?: string }>`
     background: ${theme.colors.background.white};

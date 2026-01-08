@@ -149,6 +149,9 @@ const CreateLabelContainer = styled.div`
     gap: ${theme.spacing.sm};
     padding-top: ${theme.spacing.sm};
     border-top: 1px solid ${theme.colors.border.light};
+    padding-bottom: ${theme.spacing.sm};
+    padding-left: ${theme.spacing.sm};
+    padding-right: ${theme.spacing.sm};
     align-items: center;
     position: sticky;
     bottom: 0;
@@ -408,24 +411,23 @@ const ModifyItem = () => {
                                 onFocus={() => setIsDropdownOpen(true)}
                             />
                             {isDropdownOpen && (
-                                <DropdownMenu>
-                                    <LabelDropdown>
-                                        {filteredLabels.length > 0 ? (
-                                            filteredLabels.map((label) => (
-                                                <LabelOption
-                                                    key={label.id}
-                                                    onClick={() => handleLabelClick(label.id)}
-                                                    $isSelected={selectedLabels.includes(label)}
-                                                    color={label.color}
-                                                >
-                                                    {label.name}
-                                                    {selectedLabels.includes(label) && <IconContainer icon={Check} />}
-                                                </LabelOption>
-                                            ))
-                                        ) : (
-                                            <NoLabels>Keine Labels gefunden</NoLabels>
-                                        )}
-                                    </LabelDropdown>
+                                <LabelDropdown>
+                                    {filteredLabels.length > 0 ? (
+                                        filteredLabels.map((label) => (
+                                            <LabelOption
+                                                key={label.id}
+                                                onClick={() => handleLabelClick(label.id)}
+                                                $isSelected={selectedLabels.includes(label)}
+                                                color={label.color}
+                                            >
+                                                {label.name}
+                                                {selectedLabels.includes(label) && <IconContainer icon={Check} />}
+                                            </LabelOption>
+                                        ))
+                                    ) : (
+                                        <NoLabels>Keine Labels gefunden</NoLabels>
+                                    )}
+
                                     <CreateLabelContainer>
                                         <ColorInput
                                             type="color"
@@ -442,7 +444,7 @@ const ModifyItem = () => {
                                             Erstellen
                                         </StyledButton>
                                     </CreateLabelContainer>
-                                </DropdownMenu>
+                                </LabelDropdown>
                             )}
                         </DropdownContainer>
                         {selectedLabels.length > 0 && (

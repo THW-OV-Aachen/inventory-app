@@ -21,6 +21,7 @@ import {
     ContentWrapper,
 } from '../../styles/components';
 import { mapStatusToTheme, mapDamageLevelToStatus } from '../../styles/utils';
+import { LabelBadge } from '../../utils/LabelBadge';
 
 function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
@@ -357,12 +358,4 @@ const ButtonContainer = styled.div`
 const LabelContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.xs};
-`;
-
-const LabelBadge = styled.span`
-    background-color: ${(props) => props.color || theme.colors.primary.main};
-    color: white;
-    padding: 2px 8px;
-    border-radius: ${theme.borderRadius.full};
-    font-size: ${theme.typography.fontSize.xs};
 `;
