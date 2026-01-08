@@ -293,13 +293,18 @@ const LabelBadge = styled.div<{ color: string }>`
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    background: ${(props) => hexToRgba(props.color, 0.2)};
-    border: 1px solid ${(props) => props.color};
+    background: ${(props) => hexToRgba(props.color, 0.25)};
     border-radius: 20px;
     font-size: 12px;
     cursor: pointer;
-    &:hover {
-        background: ${(props) => hexToRgba(props.color, 0.4)};
+
+    &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background-color: ${(props) => props.color};
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 `;
 
