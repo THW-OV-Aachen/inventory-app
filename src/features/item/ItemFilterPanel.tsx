@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package, Filter } from 'lucide-react';
+import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import React from 'react';
 import { Form } from 'react-bootstrap';
@@ -233,6 +233,7 @@ const LabelSelector = () => {
                                     key={label.id}
                                     onClick={() => handleLabelClick(label.id)}
                                     $isSelected={selectedLabels.includes(label.id)}
+                                    color={label.color}
                                 >
                                     {label.name}
                                     {selectedLabels.includes(label.id) && <IconContainer icon={Check} />}
@@ -322,15 +323,29 @@ const LabelDropdown = styled.div`
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
-const LabelOption = styled.div<{ $isSelected: boolean }>`
+const LabelOption = styled.div<{ $isSelected: boolean; color: string }>`
     padding: 8px;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     background: ${(props) => (props.$isSelected ? '#f0f8ff' : 'transparent')};
     &:hover {
-        background: #f5f5f5;
+        background: var(--color-bg-accent);
+    }
+
+    &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background-color: ${(props) => props.color};
+        border-radius: 50%;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
+    & > :last-child {
+        margin-left: auto;
     }
 `;
 
