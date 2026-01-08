@@ -384,11 +384,11 @@ const ModifyItem = () => {
                                             <LabelOption
                                                 key={label.id}
                                                 onClick={() => handleLabelClick(label.id)}
-                                                $isSelected={selectedLabels.includes(label)}
+                                                $isSelected={selectedLabels.some((l) => l.id === label.id)}
                                                 color={label.color}
                                             >
                                                 {label.name}
-                                                {selectedLabels.includes(label) && <IconContainer icon={Check} />}
+                                                {selectedLabels.some((l) => l.id === label.id) && <IconContainer icon={Check} />}
                                             </LabelOption>
                                         ))
                                     ) : (
@@ -416,23 +416,17 @@ const ModifyItem = () => {
                         </DropdownContainer>
                         {selectedLabels.length > 0 && (
                             <SelectedLabels>
-                                {selectedLabels.map((label) => {
-                                    const foundLabel = allLabels.find((l) => l === label);
-                                    function removeLabel(labelId: string): void {
-                                        const newSelectedLabels = selectedLabels.filter((l) => l.id !== labelId);
-                                        setSelectedLabels(newSelectedLabels);
-                                    }
-
-                                    return foundLabel ? (
-                                        <LabelBadge
-                                            key={foundLabel.id}
-                                            onClick={() => removeLabel(foundLabel.id)}
-                                            color={foundLabel.color}
-                                        >
-                                            {foundLabel.name} <IconContainer icon={X} />
-                                        </LabelBadge>
-                                    ) : null;
-                                })}
+                                {selectedLabels.map((label) => (
+                                    <LabelBadge
+                                        key={label.id}
+                                        onClick={() =>
+                                            setSelectedLabels((prev) => prev.filter((l) => l.id !== label.id))
+                                        }
+                                        color={label.color}
+                                    >
+                                        {label.name} <IconContainer icon={X} />
+                                    </LabelBadge>
+                                ))}
                             </SelectedLabels>
                         )}
                     </StyledFormGroup>
