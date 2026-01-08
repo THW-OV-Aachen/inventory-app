@@ -1,6 +1,7 @@
 import { DamageLevelType, type IItem } from '../db/items';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
+import type { ILabel } from '../db/labels';
 
 export type Scope = 'user' | 'editor' | 'admin';
 export interface PaginationParams {
@@ -11,6 +12,7 @@ export interface FilterParams {
     damageLevel?: DamageLevelType | null;
     type?: 'isSet' | 'isPart' | null;
     location?: string | null;
+    labels?: string[] | null;
 }
 
 interface DamageOrFilter {
@@ -215,6 +217,18 @@ export const inventoryApi = {
         );
 
         return result ?? { totalCount: 0, firstThreeEntries: [] };
+    },
+};
+
+export const labelsApi = {
+    async getAllLabels(): Promise<ILabel[]> {
+        try {
+            const labels = await db.labels.orderBy('id').toArray();
+            return labels;
+        } catch (error) {
+            console.error('Failed to fetch all labels: ', error);
+            throw error;
+        }
     },
 };
 

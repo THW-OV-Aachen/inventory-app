@@ -18,6 +18,7 @@ const initialState: SearchParams = {
         damageLevel: null,
         type: null,
         location: '',
+        labels: [],
     },
 };
 
@@ -60,6 +61,7 @@ export const searchSlice = createSlice({
                 damageLevel: null,
                 type: null,
                 location: '',
+                labels: [],
             };
         },
 
@@ -68,6 +70,7 @@ export const searchSlice = createSlice({
                 damageLevel: null,
                 type: null,
                 location: '',
+                labels: [],
             };
         },
     },

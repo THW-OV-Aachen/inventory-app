@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package } from 'lucide-react';
+import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package, Filter } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import React from 'react';
 import { Form } from 'react-bootstrap';
@@ -19,6 +19,8 @@ import {
     updateFilter,
 } from '../../store/slices/searchSlice';
 import type { SortField } from '../../app/api';
+import type { ILabel } from '../../db/labels';
+import { labelsApi } from '../../app/api';
 
 const sortFieldLabels: Record<string, string> = {
     inventoryNumber: 'Inventar-Nr.',
@@ -160,6 +162,148 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     }
 `;
 
+const LabelSelector = () => {
+    const dispatch = useDispatch();
+    const filters = useSelector((state: RootState) => state.search.filters);
+    const selectedLabels = filters?.labels || [];
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [allLabels, setAllLabels] = useState<ILabel[]>([]);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const fetchLabels = async () => {
+            const labels = await labelsApi.getAllLabels();
+            setAllLabels(labels);
+        };
+        fetchLabels();
+    }, []);
+
+    const filteredLabels = allLabels.filter((label) => label.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    function handleLabelClick(id: string): void {
+        let newSelectedLabels: string[] = [];
+        if (selectedLabels.includes(id)) {
+            newSelectedLabels = selectedLabels.filter((labelId) => labelId !== id);
+        } else {
+            newSelectedLabels = [...selectedLabels, id];
+        }
+        dispatch(updateFilter({ labels: newSelectedLabels }));
+    }
+
+    return (
+        <LabelSelectorWrapper ref={dropdownRef}>
+            <LabelSearchInput
+                type="text"
+                placeholder="Labels suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setIsOpen(true)}
+            />
+            {selectedLabels.length > 0 && (
+                <SelectedLabels>
+                    {selectedLabels.map((labelId) => {
+                        const label = allLabels.find((l) => l.id === labelId);
+                        function removeLabel(labelId: string): void {
+                            const newSelectedLabels = selectedLabels.filter((id) => id !== labelId);
+                            dispatch(updateFilter({ labels: newSelectedLabels }));
+                        }
+
+                        return label ? (
+                            <LabelBadge key={labelId} onClick={() => removeLabel(labelId)}>
+                                {label.name} <IconContainer icon={X} />
+                            </LabelBadge>
+                        ) : null;
+                    })}
+                </SelectedLabels>
+            )}
+            {isOpen && (
+                <LabelDropdown>
+                    {filteredLabels.length > 0 ? (
+                        filteredLabels.map((label) => (
+                            <LabelOption
+                                key={label.id}
+                                onClick={() => handleLabelClick(label.id)}
+                                $isSelected={selectedLabels.includes(label.id)}
+                            >
+                                {label.name}
+                                {selectedLabels.includes(label.id) && <IconContainer icon={Check} />}
+                            </LabelOption>
+                        ))
+                    ) : (
+                        <NoLabels>Keine Labels gefunden</NoLabels>
+                    )}
+                </LabelDropdown>
+            )}
+        </LabelSelectorWrapper>
+    );
+};
+
+const LabelSelectorWrapper = styled.div`
+    position: relative;
+`;
+
+const LabelSearchInput = styled.input`
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+`;
+
+const SelectedLabels = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+`;
+
+const LabelBadge = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #e3f2fd;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    &:hover {
+        background: #bbdefb;
+    }
+`;
+
+const LabelDropdown = styled.div`
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const LabelOption = styled.div<{ $isSelected: boolean }>`
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: ${(props) => (props.$isSelected ? '#f0f8ff' : 'transparent')};
+    &:hover {
+        background: #f5f5f5;
+    }
+`;
+
+const NoLabels = styled.div`
+    padding: 8px;
+    color: #999;
+    text-align: center;
+`;
+
 const ItemSortButton = () => {
     const dispatch = useDispatch();
     const searchState = useSelector((state: RootState) => state.search);
@@ -168,7 +312,7 @@ const ItemSortButton = () => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [localLocation, setLocalLocation] = useState(filters?.location || '');
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -311,6 +455,10 @@ const ItemSortButton = () => {
                                     <option value="isSet">Satz</option>
                                     <option value="isPart">Teil</option>
                                 </Form.Select>
+                            </FilterOptionLabel>
+                            <FilterOptionLabel>
+                                <span>Labels</span>
+                                <LabelSelector />
                             </FilterOptionLabel>
                             <FilterOptionLabel>
                                 <span>Ort</span>
