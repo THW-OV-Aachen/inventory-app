@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { ChevronLeft, ChevronDown } from 'lucide-react';
+import { Check, ChevronLeft, X } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { type ILabel } from '../../db/labels';
@@ -21,7 +21,17 @@ import {
     Header,
     ButtonGroup,
 } from '../../styles/components';
+import {
+    LabelSearchInput,
+    LabelDropdown,
+    LabelOption,
+    LabelBadge,
+    NoLabels,
+    SelectedLabels,
+} from '../../utils/LabelBadge';
 import { theme } from '../../styles/theme';
+import IconContainer from '../../utils/IconContainer';
+import { labelsApi } from '../../app/api';
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
@@ -86,61 +96,6 @@ const DropdownContainer = styled.div`
     position: relative;
 `;
 
-const DropdownButton = styled.button`
-    width: 100%;
-    padding: ${theme.spacing.md};
-    font-size: ${theme.typography.fontSize.base};
-    border-radius: ${theme.borderRadius.md};
-    border: 1px solid ${theme.colors.border.default};
-    background-color: ${theme.colors.background.light};
-    color: ${theme.colors.text.primary};
-    font-family: ${theme.typography.fontFamily};
-    box-sizing: border-box;
-    transition: ${theme.transitions.default};
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: left;
-
-    &:focus {
-        outline: none;
-        border-color: ${theme.colors.primary};
-        background-color: ${theme.colors.background.white};
-        box-shadow: 0 0 0 3px ${theme.colors.primaryLight};
-    }
-`;
-
-const DropdownMenu = styled.div`
-    position: absolute;
-    width: 100%;
-    border: 1px solid ${theme.colors.border.default};
-    border-radius: ${theme.borderRadius.md};
-    background-color: ${theme.colors.background.white};
-    box-shadow: ${theme.shadows.md};
-    margin-top: ${theme.spacing.sm};
-    z-index: 10;
-    padding: ${theme.spacing.sm};
-`;
-
-const CheckboxContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    max-height: 150px;
-    overflow-y: auto;
-`;
-
-const CheckboxLabel = styled.label`
-    display: flex;
-    align-items: center;
-    padding: ${theme.spacing.sm};
-    cursor: pointer;
-
-    &:hover {
-        background-color: ${theme.colors.background.light};
-    }
-`;
-
 const CreateLabelContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
@@ -191,16 +146,17 @@ const AddItem = () => {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [labels, setLabels] = useState<ILabel[]>([]);
+    const [allLabels, setAllLabels] = useState<ILabel[]>([]);
     const [selectedLabels, setSelectedLabels] = useState<ILabel[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const [newLabelName, setNewLabelName] = useState('');
     const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
 
     useEffect(() => {
         const fetchLabels = async () => {
-            const allLabels = await db.labels.toArray();
-            setLabels(allLabels);
+            const allLabels = await labelsApi.getAllLabels();
+            setAllLabels(allLabels);
         };
         fetchLabels();
     }, []);
@@ -266,7 +222,7 @@ const AddItem = () => {
             color: newLabelColor,
         };
         await db.labels.add(newLabel);
-        setLabels((prev) => [...prev, newLabel]);
+        setAllLabels((prev) => [...prev, newLabel]);
         setSelectedLabels((prev) => [...prev, newLabel]);
         setNewLabelName('');
     };
@@ -347,6 +303,15 @@ const AddItem = () => {
     const renderError = (key: keyof IItem) =>
         touched[key] && errors[key] ? <ErrorText>{errors[key]}</ErrorText> : null;
 
+    const filteredLabels = allLabels.filter((label) => label.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    function handleLabelClick(id: string): void {
+        const label = allLabels.find((l) => l.id === id);
+        if (label) {
+            handleLabelSelection(label);
+        }
+    }
+
     return (
         <StyledContainer>
             <StyledHeader>
@@ -393,29 +358,31 @@ const AddItem = () => {
                     <StyledFormGroup>
                         <Label htmlFor="labels">Labels</Label>
                         <DropdownContainer ref={dropdownRef}>
-                            <DropdownButton type="button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                                <span>
-                                    {selectedLabels.length > 0
-                                        ? selectedLabels.map((l) => l.name).join(', ')
-                                        : 'Labels auswählen'}
-                                </span>
-                                <ChevronDown size={16} />
-                            </DropdownButton>
+                            <LabelSearchInput
+                                type="text"
+                                placeholder="Labels suchen..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onFocus={() => setIsDropdownOpen(true)}
+                            />
                             {isDropdownOpen && (
-                                <DropdownMenu>
-                                    <CheckboxContainer>
-                                        {labels.map((label) => (
-                                            <CheckboxLabel key={label.id}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedLabels.some((l) => l.id === label.id)}
-                                                    onChange={() => handleLabelSelection(label)}
-                                                    style={{ marginRight: '8px' }}
-                                                />
+                                <LabelDropdown>
+                                    {filteredLabels.length > 0 ? (
+                                        filteredLabels.map((label) => (
+                                            <LabelOption
+                                                key={label.id}
+                                                onClick={() => handleLabelClick(label.id)}
+                                                $isSelected={selectedLabels.includes(label)}
+                                                color={label.color}
+                                            >
                                                 {label.name}
-                                            </CheckboxLabel>
-                                        ))}
-                                    </CheckboxContainer>
+                                                {selectedLabels.includes(label) && <IconContainer icon={Check} />}
+                                            </LabelOption>
+                                        ))
+                                    ) : (
+                                        <NoLabels>Keine Labels gefunden</NoLabels>
+                                    )}
+
                                     <CreateLabelContainer>
                                         <ColorInput
                                             type="color"
@@ -432,9 +399,30 @@ const AddItem = () => {
                                             Erstellen
                                         </StyledButton>
                                     </CreateLabelContainer>
-                                </DropdownMenu>
+                                </LabelDropdown>
                             )}
                         </DropdownContainer>
+                        {selectedLabels.length > 0 && (
+                            <SelectedLabels>
+                                {selectedLabels.map((label) => {
+                                    const foundLabel = allLabels.find((l) => l === label);
+                                    function removeLabel(labelId: string): void {
+                                        const newSelectedLabels = selectedLabels.filter((l) => l.id !== labelId);
+                                        setSelectedLabels(newSelectedLabels);
+                                    }
+
+                                    return foundLabel ? (
+                                        <LabelBadge
+                                            key={foundLabel.id}
+                                            onClick={() => removeLabel(foundLabel.id)}
+                                            color={foundLabel.color}
+                                        >
+                                            {foundLabel.name} <IconContainer icon={X} />
+                                        </LabelBadge>
+                                    ) : null;
+                                })}
+                            </SelectedLabels>
+                        )}
                     </StyledFormGroup>
 
                     <StyledFormGroup>

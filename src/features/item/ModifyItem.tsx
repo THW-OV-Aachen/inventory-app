@@ -32,8 +32,6 @@ import {
 } from '../../utils/LabelBadge';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
-import { useDispatch } from 'react-redux';
-import { updateFilter } from '../../store/slices/searchSlice';
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
@@ -114,36 +112,6 @@ const DropdownContainer = styled.div`
     position: relative;
 `;
 
-const DropdownMenu = styled.div`
-    position: absolute;
-    width: 100%;
-    border: 1px solid ${theme.colors.border.default};
-    border-radius: ${theme.borderRadius.md};
-    background-color: ${theme.colors.background.white};
-    box-shadow: ${theme.shadows.md};
-    margin-top: ${theme.spacing.sm};
-    z-index: 10;
-    padding: ${theme.spacing.sm};
-`;
-
-const CheckboxContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    max-height: 150px;
-    overflow-y: auto;
-`;
-
-const CheckboxLabel = styled.label`
-    display: flex;
-    align-items: center;
-    padding: ${theme.spacing.sm};
-    cursor: pointer;
-
-    &:hover {
-        background-color: ${theme.colors.background.light};
-    }
-`;
-
 const CreateLabelContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
@@ -190,7 +158,6 @@ const ModifyItem = () => {
     const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     useEffect(() => {
