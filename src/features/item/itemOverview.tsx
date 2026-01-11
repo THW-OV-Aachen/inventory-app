@@ -657,15 +657,24 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         grid-template-areas:
             'inventoryNumber damageLevel'
             'name name'
-            'location isSet'
-            'deviceNumber deviceNumber'; // Add this line
-
+            'location isSet';
         gap: 12px;
         padding: 16px;
+
         border: 1px solid ${(p) => p.$mobileBgColor} !important;
         border-left: 4px solid ${(p) => p.$mobileBgColor} !important;
         border-radius: 8px;
+
         box-shadow: 0 2px 6px rgba(${(p) => p.$mobileShadowColor}, 0.05);
+
+        & > #location svg {
+            display: none;
+        }
+
+        & > * {
+            background-color: transparent !important;
+            padding: 0 !important; /* Remove default padding */
+        }
 
         & > #inventoryNumber {
             grid-area: inventoryNumber;
@@ -679,26 +688,25 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
             grid-area: damageLevel;
             justify-self: end;
         }
+
         & > #location {
             grid-area: location;
+
             & svg {
                 display: block;
             }
         }
-        & > #deviceNumber {
-            grid-area: deviceNumber; // Add grid-area for deviceNumber
-            justify-self: start; // Optional: align checkbox at the start
-            display: flex;
-            align-items: center;
-        }
 
-        & > #deviceNumber input[type='checkbox'] {
-            display: block; // Ensure the checkbox is visible
+        & > #location,
+        & > #inventoryNumber,
+        & > #isSet {
+            font-size: 14px;
+            color: var(--color-font-secondary);
         }
 
         & > #isSet {
-            grid-area: isSet;
             justify-self: end;
+            grid-area: isSet;
         }
     }
 `;
