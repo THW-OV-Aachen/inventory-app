@@ -14,6 +14,9 @@ import ImportExportScreen from './features/importExport/ImportScreen';
 import AddItem from './features/item/AddItem';
 import ModifyItem from './features/item/ModifyItem';
 import Home from './features/home/home';
+import PackingPlanOverview from './features/packingPlan/PackingPlanOverview';
+import CreatePackingPlan from './features/packingPlan/CreatePackingPlan';
+import PackingPlanDetails from './features/packingPlan/PackingPlanDetails';
 
 import PackingPlan from './features/pack/packingPlan';
 import PackingPlanOverview from './features/pack/packingplanOverview';
@@ -33,6 +36,10 @@ const AppRoutes = () => {
                 <Route path="items/add" element={<AddItem />} />
                 <Route path="items/:itemId/modify" element={<ModifyItem />} />
                 <Route path="items/:itemId" element={<ItemDetails />} />
+
+                <Route path="packing-plans" element={<PackingPlanOverview />} />
+                <Route path="packing-plans/create" element={<CreatePackingPlan />} />
+                <Route path="packing-plans/:planId" element={<PackingPlanDetails />} />
 
                 <Route path="import" element={<ImportExportScreen />} />
 
