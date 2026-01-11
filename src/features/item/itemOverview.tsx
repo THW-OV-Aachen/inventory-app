@@ -14,9 +14,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
 
+import { usePackMode } from './usePackMode';
+
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    const packModeState = usePackMode();
+    const { packMode, selectedItemIds, toggleItem } = packModeState;
 
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
@@ -144,7 +149,7 @@ const ItemOverview = () => {
 
     return (
         <div>
-            <ItemFilter />
+            <ItemFilter packModeState={packModeState} />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -212,7 +217,7 @@ const ItemOverview = () => {
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('deviceNumber')}>
                                 <HeaderContent>
-                                    <span>Geräte-Nr.</span>
+                                    <span>{packMode ? 'Pack' : 'Geräte-Nr.'}</span>
                                     <SortIndicator
                                         active={sortField === 'deviceNumber'}
                                         sortDirection={sortDirection}
@@ -226,10 +231,17 @@ const ItemOverview = () => {
                             return (
                                 <TableRow
                                     key={item.id}
-                                    onClick={() => navigate(`/items/${item.id}`)}
+                                    onClick={() => {
+                                        if (packMode) {
+                                            toggleItem(item.id.toString()); // make sure id is string
+                                        } else {
+                                            navigate(`/items/${item.id}`);
+                                        }
+                                    }}
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
                                     $mobileShadowColor={damageLevel.colorRGB}
+                                    className={selectedItemIds.has(item.id.toString()) ? 'selected' : ''} // ✅
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
@@ -292,7 +304,16 @@ const ItemOverview = () => {
                                         {item.id ?? '-'}
                                     </TableCell>
                                     <TableCell id="deviceNumber" $hideOnMobile>
-                                        {item.deviceNumber ?? '-'}
+                                        {packMode ? (
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItemIds.has(item.id.toString())}
+                                                onChange={() => toggleItem(item.id.toString())}
+                                                onClick={(e) => e.stopPropagation()} // prevent row click
+                                            />
+                                        ) : (
+                                            (item.deviceNumber ?? '-')
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             );
@@ -616,6 +637,10 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
     &:hover > * {
         background-color: var(--color-bg-hover, #f8f9fa);
         cursor: pointer;
+    }
+
+    &.selected > * {
+        background-color: var(--color-primary-light);
     }
 
     & span.info-icon {
