@@ -38,7 +38,7 @@ export const ItemFilter = () => {
                     <IconContainer icon={Plus} />
                     <span>Item</span>
                 </PrimaryButton>
-                <SecondaryButton>
+                <SecondaryButton onClick={() => navigate('/packing-plans')}>
                     <IconContainer icon={Package} />
                     <span>Pack</span>
                 </SecondaryButton>
