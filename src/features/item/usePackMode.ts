@@ -4,25 +4,67 @@ import { useState } from 'react';
 export const usePackMode = () => {
     const [packMode, setPackMode] = useState(false);
     const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set()); // use string
+    const [qtyByItemId, setQtyByItemId] = useState<Record<string, number>>({});
+    const [planName, setPlanName] = useState('');
 
     const togglePackMode = () => {
-        setPackMode((prev) => !prev);
-        setSelectedItemIds(new Set());
+        setPackMode((prev) => {
+            if (prev) {
+                // Exiting pack mode - reset state
+                setSelectedItemIds(new Set());
+                setQtyByItemId({});
+                setPlanName('');
+            } else {
+                // Entering pack mode - set default plan name
+                setPlanName(`Packing plan - ${new Date().toLocaleDateString()}`);
+            }
+            return !prev;
+        });
     };
 
     const toggleItem = (id: string) => {
         setSelectedItemIds((prev) => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) {
+                next.delete(id);
+                // Remove quantity when unchecking
+                setQtyByItemId((prevQty) => {
+                    const nextQty = { ...prevQty };
+                    delete nextQty[id];
+                    return nextQty;
+                });
+            } else {
+                next.add(id);
+                // Set default quantity to 1 when checking
+                setQtyByItemId((prevQty) => ({
+                    ...prevQty,
+                    [id]: prevQty[id] || 1,
+                }));
+            }
             return next;
         });
+    };
+
+    const setQuantity = (id: string, quantity: number) => {
+        setQtyByItemId((prev) => ({
+            ...prev,
+            [id]: quantity,
+        }));
     };
 
     return {
         packMode,
         selectedItemIds,
+        qtyByItemId,
+        planName,
+        setPlanName,
         togglePackMode,
         toggleItem,
-        clear: () => setSelectedItemIds(new Set()),
+        setQuantity,
+        clear: () => {
+            setSelectedItemIds(new Set());
+            setQtyByItemId({});
+            setPlanName(`Packing plan - ${new Date().toLocaleDateString()}`);
+        },
     };
 };

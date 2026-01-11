@@ -1,7 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass, MapPin } from 'lucide-react';
+import {
+    Info,
+    ArrowDownAZ,
+    ArrowDownZA,
+    Box,
+    Boxes,
+    ChevronLeft,
+    ChevronRight,
+    Hourglass,
+    MapPin,
+} from 'lucide-react';
 import type { DamageLevelType, IItem } from '../../db/items';
 import { ItemFilter } from './ItemFilterPanel';
 import { inventoryApi, type SortDirection, type SortField } from '../../app/api';
@@ -13,15 +23,19 @@ import { parseLocationStringRaw, mapLocationKey } from '../../utils/locationStri
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
+import { db } from '../../db/db';
+import type { IPackingPlan, IPackingPlanItem } from '../../db/packingPlans';
+import { EmergencyScenarioType } from '../../db/packingPlans';
 
 import { usePackMode } from './usePackMode';
+import QuantitySpinner from '../../components/QuantitySpinner';
 
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const packModeState = usePackMode();
-    const { packMode, selectedItemIds, toggleItem } = packModeState;
+    const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
 
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
@@ -140,6 +154,28 @@ const ItemOverview = () => {
 
     const sortedItems = getSortedItems(items);
 
+    const createId = (prefix = 'id'): string => {
+        // `crypto.randomUUID()` is not always available (e.g. http:// on LAN IPs).
+        // Use it when present, otherwise fall back to a reasonably-unique string.
+        const c = globalThis.crypto as Crypto | undefined;
+        if (c && 'randomUUID' in c && typeof (c as any).randomUUID === 'function') {
+            return (c as any).randomUUID();
+        }
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    };
+
+    const getEffectiveAvailability = (item: IItem): number => {
+        // Older DB rows / imports may not have `availability` populated.
+        // In that case we fall back to `amountActual` to avoid "everything disabled" in pack mode.
+        const availability = Number(item.availability);
+        if (Number.isFinite(availability)) return availability;
+
+        const amountActual = Number(item.amountActual);
+        if (Number.isFinite(amountActual)) return amountActual;
+
+        return 0;
+    };
+
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
@@ -147,9 +183,60 @@ const ItemOverview = () => {
         }
     };
 
+    const handleSavePackingPlan = async () => {
+        if (selectedItemIds.size === 0) {
+            alert('Please select at least one item to pack.');
+            return;
+        }
+
+        if (!planName.trim()) {
+            alert('Please enter a plan name.');
+            return;
+        }
+
+        try {
+            // Create IPackingPlan
+            const now = new Date().toISOString();
+            const packingPlan: IPackingPlan = {
+                id: createId('plan'),
+                name: planName.trim(),
+                scenarioType: EmergencyScenarioType.CUSTOM,
+                description: '',
+                createdAt: now,
+                updatedAt: now,
+            };
+
+            // Insert packing plan
+            await db.packingPlans.add(packingPlan);
+
+            // Create IPackingPlanItem[] for selected items
+            const packingPlanItems: IPackingPlanItem[] = Array.from(selectedItemIds).map((itemId, index) => ({
+                id: createId('planItem'),
+                packingPlanId: packingPlan.id,
+                itemId: itemId,
+                requiredQuantity: qtyByItemId[itemId] || 1,
+                notes: '',
+                order: index,
+            }));
+
+            // Bulk insert packing plan items
+            await db.packingPlanItems.bulkAdd(packingPlanItems);
+
+            // Reset pack mode
+            packModeState.togglePackMode();
+
+            // Show success message and optionally navigate
+            alert('Packing plan saved successfully!');
+            navigate(`/packing-plans/${packingPlan.id}`);
+        } catch (error) {
+            console.error('Error saving packing plan:', error);
+            alert('Failed to save packing plan. Please try again.');
+        }
+    };
+
     return (
         <div>
-            <ItemFilter packModeState={packModeState} />
+            <ItemFilter packModeState={packModeState} onSavePackingPlan={handleSavePackingPlan} />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -227,31 +314,51 @@ const ItemOverview = () => {
                         </TableHeader>
                         {sortedItems.map((item) => {
                             const damageLevel = DamageLevelStyles[item.damageLevel as DamageLevelType];
+                            const itemId = item.id.toString();
+                            const availability = getEffectiveAvailability(item);
+                            const hasExplicitAvailability = Number.isFinite(Number(item.availability));
+                            const isSelected = selectedItemIds.has(itemId);
+                            const maxQty =
+                                Number.isFinite(availability) && availability > 0 ? availability : undefined;
+                            const onRowClick = () => {
+                                if (packMode) {
+                                    toggleItem(itemId);
+                                } else {
+                                    navigate(`/items/${itemId}`);
+                                }
+                            };
 
                             return (
                                 <TableRow
                                     key={item.id}
-                                    onClick={() => {
-                                        if (packMode) {
-                                            toggleItem(item.id.toString()); // make sure id is string
-                                        } else {
-                                            navigate(`/items/${item.id}`);
+                                    onClick={onRowClick}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={packMode ? isSelected : undefined}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            onRowClick();
                                         }
                                     }}
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
                                     $mobileShadowColor={damageLevel.colorRGB}
-                                    className={selectedItemIds.has(item.id.toString()) ? 'selected' : ''} // ✅
+                                    className={isSelected ? 'selected' : ''} // ✅
                                 >
-                                    <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
-                                    <TableCell id="name">{item.name ?? '-'}</TableCell>
+                                    <TableCell id="inventoryNumber">
+                                        {item.inventoryNumber ?? '-'}
+                                    </TableCell>
+                                    <TableCell id="name">
+                                        {item.name ?? '-'}
+                                    </TableCell>
                                     <TableCell id="isSet">
                                         <IconContainer icon={item.isSet ? Boxes : Box} />
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
                                             <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
-                                                {item.availability ?? '-'}
+                                                {hasExplicitAvailability ? item.availability : availability}
                                             </InfoInline>
                                         </span>
                                         <span>
@@ -305,16 +412,45 @@ const ItemOverview = () => {
                                     </TableCell>
                                     <TableCell id="deviceNumber" $hideOnMobile>
                                         {packMode ? (
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedItemIds.has(item.id.toString())}
-                                                onChange={() => toggleItem(item.id.toString())}
-                                                onClick={(e) => e.stopPropagation()} // prevent row click
-                                            />
+                                            <PackModeCell>
+                                                <CheckboxInput
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleItem(itemId)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <QuantitySpinner
+                                                    value={qtyByItemId[itemId] || 1}
+                                                    min={1}
+                                                    max={maxQty}
+                                                    disabled={!isSelected}
+                                                    onChange={(v) => setQuantity(itemId, v)}
+                                                    ariaLabel="Required quantity"
+                                                />
+                                            </PackModeCell>
                                         ) : (
                                             (item.deviceNumber ?? '-')
                                         )}
                                     </TableCell>
+                                    {packMode && (
+                                        <PackControlsCell id="packControls">
+                                            <PackControlsLabel>
+                                                <span>Pack</span>
+                                                <span style={{ opacity: 0.75 }}>Tap card to {isSelected ? 'unselect' : 'select'}</span>
+                                            </PackControlsLabel>
+                                            <PackControlsRight>
+                                                {isSelected && <SelectedBadge>Selected</SelectedBadge>}
+                                                <QuantitySpinner
+                                                    value={qtyByItemId[itemId] || 1}
+                                                    min={1}
+                                                    max={maxQty}
+                                                    disabled={!isSelected}
+                                                    onChange={(v) => setQuantity(itemId, v)}
+                                                    ariaLabel="Required quantity"
+                                                />
+                                            </PackControlsRight>
+                                        </PackControlsCell>
+                                    )}
                                 </TableRow>
                             );
                         })}
@@ -657,7 +793,8 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         grid-template-areas:
             'inventoryNumber damageLevel'
             'name name'
-            'location isSet';
+            'location isSet'
+            'packControls packControls';
         gap: 12px;
         padding: 16px;
 
@@ -666,6 +803,12 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         border-radius: 8px;
 
         box-shadow: 0 2px 6px rgba(${(p) => p.$mobileShadowColor}, 0.05);
+
+        &.selected {
+            border: 2px solid var(--color-primary) !important;
+            border-left: 4px solid var(--color-primary) !important;
+            background-color: rgba(var(--color-primary-rgb), 0.06);
+        }
 
         & > #location svg {
             display: none;
@@ -708,6 +851,10 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
             justify-self: end;
             grid-area: isSet;
         }
+
+        & > #packControls {
+            grid-area: packControls;
+        }
     }
 `;
 
@@ -731,6 +878,64 @@ const SortIndicatorWrapper = styled.span<{ $isActive: boolean }>`
 
     ${HeaderCell}:hover & {
         opacity: ${(props) => (props.$isActive ? '1' : '0.5')} !important;
+    }
+`;
+
+const PackModeCell = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const PackControlsCell = styled(TableCell)`
+    /* Only show mobile pack controls on phones */
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--color-bg-accent);
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: flex;
+    }
+`;
+
+const PackControlsLabel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--color-font-secondary);
+`;
+
+const PackControlsRight = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const SelectedBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: rgba(var(--color-primary-rgb), 0.12);
+`;
+
+const CheckboxInput = styled.input`
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
     }
 `;
 

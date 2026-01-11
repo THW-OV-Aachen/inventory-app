@@ -19,7 +19,6 @@ import CreatePackingPlan from './features/packingPlan/CreatePackingPlan';
 import PackingPlanDetails from './features/packingPlan/PackingPlanDetails';
 
 import PackingPlan from './features/pack/packingPlan';
-import PackingPlanOverview from './features/pack/packingplanOverview';
 
 const AppRoutes = () => {
     return (
@@ -44,7 +43,6 @@ const AppRoutes = () => {
                 <Route path="import" element={<ImportExportScreen />} />
 
                 <Route path="PackingPlan" element={<PackingPlan />} />
-                <Route path="packingplanOverview" element={<PackingPlanOverview />} />
             </Route>
         </Routes>
     );

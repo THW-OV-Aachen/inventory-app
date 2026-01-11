@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package } from 'lucide-react';
+import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package, Save } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import React from 'react';
 import { Form } from 'react-bootstrap';
@@ -31,19 +31,36 @@ const sortFieldLabels: Record<string, string> = {
 
 interface ItemFilterProps {
     packModeState: ReturnType<typeof usePackMode>;
+    onSavePackingPlan?: () => void;
 }
 
-export const ItemFilter = ({ packModeState }: ItemFilterProps) => {
+export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps) => {
     const navigate = useNavigate();
 
     return (
         <ItemFilterWrapper>
             <ItemFilterSearchbar />
             <AddEntityButtons>
-                <PrimaryButton onClick={() => navigate('/items/add')}>
-                    <IconContainer icon={Plus} />
-                    <span>Item</span>
-                </PrimaryButton>
+                {!packModeState.packMode && (
+                    <PrimaryButton onClick={() => navigate('/items/add')}>
+                        <IconContainer icon={Plus} />
+                        <span>Item</span>
+                    </PrimaryButton>
+                )}
+                {packModeState.packMode && (
+                    <PlanNameInput
+                        type="text"
+                        placeholder="Plan name..."
+                        value={packModeState.planName}
+                        onChange={(e) => packModeState.setPlanName(e.target.value)}
+                    />
+                )}
+                {packModeState.packMode && onSavePackingPlan && (
+                    <PrimaryButton onClick={onSavePackingPlan} disabled={packModeState.selectedItemIds.size === 0}>
+                        <IconContainer icon={Save} />
+                        <span>Save</span>
+                    </PrimaryButton>
+                )}
                 <SecondaryButton onClick={packModeState.togglePackMode}>
                     <IconContainer icon={Package} />
                     <span>{packModeState.packMode ? 'Cancel' : 'Pack'}</span>
@@ -134,6 +151,28 @@ const SecondaryButton = styled(AddButton)`
     border: 1px solid #6b7a90;
     background-color: #f1f3f6;
     color: #6b7a90;
+`;
+
+const PlanNameInput = styled.input`
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    font-size: 12px;
+    min-width: 200px;
+    flex: 1;
+    max-width: 300px;
+
+    &:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        width: 100%;
+        max-width: 100%;
+    }
 `;
 
 const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
