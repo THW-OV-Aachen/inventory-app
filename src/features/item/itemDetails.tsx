@@ -168,6 +168,7 @@ const ItemDetails = () => {
 
                 <StyledDetailsCard>
                     <InfoLabel>Informationen</InfoLabel>
+                    <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
