@@ -4,7 +4,7 @@ stages:
     - build
     - deploy
 
-build:
+build-pwa:
     stage: build
     cache:
         paths:
@@ -12,15 +12,30 @@ build:
     script:
         - npm ci
         - npm run build
-        - cp -r public/* dist/
+
     artifacts:
         paths:
-            - dist
+            - dist/
+
+docker-build:
+    stage: deploy
+    image: docker:24.0.5
+    services:
+        - docker:24.0.5-dind
+    dependencies:
+        - build-pwa
+    script:
+        - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+        - docker build -t $CI_REGISTRY_IMAGE:latest .
+        - docker push $CI_REGISTRY_IMAGE:latest
+    only:
+        - main
+        - deploy-external
 
 pages:
     stage: deploy
     dependencies:
-        - build
+        - build-pwa
     script:
         - rm -rf public
         - mv dist public
