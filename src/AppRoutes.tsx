@@ -15,6 +15,9 @@ import AddItem from './features/item/AddItem';
 import ModifyItem from './features/item/ModifyItem';
 import Home from './features/home/home';
 
+import PackingPlan from './features/pack/packingPlan';
+import PackingPlanOverview from './features/pack/packingplanOverview';
+
 const AppRoutes = () => {
     return (
         <Routes>
@@ -32,6 +35,9 @@ const AppRoutes = () => {
                 <Route path="items/:id" element={<ItemDetails />} />
 
                 <Route path="import" element={<ImportExportScreen />} />
+
+                <Route path="PackingPlan" element={<PackingPlan />} />
+                <Route path="packingplanOverview" element={<PackingPlanOverview />} />
             </Route>
         </Routes>
     );
