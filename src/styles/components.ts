@@ -10,9 +10,7 @@ export const Card = styled.div<{ $withLeftBorder?: boolean; $leftBorderColor?: s
     box-shadow: ${theme.shadows.sm};
     box-sizing: border-box;
     ${({ $withLeftBorder, $leftBorderColor }) =>
-        $withLeftBorder
-            ? `border-left: 4px solid ${$leftBorderColor || theme.colors.status.neutral.main};`
-            : ''}
+        $withLeftBorder ? `border-left: 4px solid ${$leftBorderColor || theme.colors.status.neutral.main};` : ''}
 `;
 
 // Form Input
@@ -115,7 +113,7 @@ export const DataValue = styled.span`
 `;
 
 // Button variants
-export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' }>`
+export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'danger' }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -128,7 +126,7 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
     font-weight: ${theme.typography.fontWeight.semibold};
     cursor: pointer;
     transition: ${theme.transitions.default};
-    
+
     ${({ variant = 'primary' }) => {
         switch (variant) {
             case 'primary':
@@ -172,13 +170,25 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
                         transform: translateY(-1px);
                     }
                 `;
+            case 'danger':
+                return `
+                        background-color: ${theme.colors.status.error.dark};
+                        color: white;
+                        height: 44px;
+                
+                        &:hover:not(:disabled) {
+                            background-color: ${theme.colors.status.error.base};
+                            transform: translateY(-1px);
+                            box-shadow: ${theme.shadows.lg};
+                        }
+                    `;
         }
     }}
-    
+
     &:active:not(:disabled) {
         transform: translateY(0);
     }
-    
+
     &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -190,14 +200,14 @@ export const ButtonGroup = styled.div<{ $direction?: 'row' | 'column' }>`
     display: flex;
     gap: ${theme.spacing.md};
     flex-direction: ${({ $direction = 'column' }) => $direction};
-    
+
     ${Button} {
         flex: 1;
     }
-    
+
     @media (min-width: ${theme.breakpoints.sm}) {
         flex-direction: row;
-        
+
         ${Button} {
             flex: 0 1 auto;
         }
@@ -218,7 +228,7 @@ export const StatusBadge = styled.span<{ status?: 'good' | 'warning' | 'error' |
     border-radius: ${theme.borderRadius.xl};
     font-size: ${theme.typography.fontSize.xs};
     font-weight: ${theme.typography.fontWeight.semibold};
-    
+
     ${({ status = 'neutral' }) => {
         const statusColors = theme.colors.status[status];
         return `
@@ -248,7 +258,7 @@ export const Container = styled.div<{ $maxWidth?: string }>`
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    
+
     ${({ $maxWidth }) =>
         $maxWidth &&
         `
@@ -361,7 +371,10 @@ export const ItemCard = styled.div<{ status?: 'good' | 'warning' | 'error' | 'cr
     border-left-width: 4px;
     box-shadow: ${theme.shadows.md};
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
 
     &:hover {
         transform: translateY(-2px);
@@ -470,4 +483,3 @@ export const CardsContainer = styled.div`
     box-sizing: border-box;
     padding: 0 ${theme.spacing.lg};
 `;
-

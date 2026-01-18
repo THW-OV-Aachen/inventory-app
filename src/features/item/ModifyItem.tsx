@@ -107,6 +107,11 @@ const ModifyItem = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const navigate = useNavigate();
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showFinalDelete, setShowFinalDelete] = useState(false);
+    const [deleteInput, setDeleteInput] = useState('');
+    const [deleteError, setDeleteError] = useState('');
+
     useEffect(() => {
         const fetchItem = async () => {
             if (!itemId) return;
@@ -203,6 +208,82 @@ const ModifyItem = () => {
                 console.error(error);
                 alert('Failed to save changes.');
             }
+        }
+    };
+
+    const ModalOverlay = styled.div`
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const ModalContainer = styled.div`
+        background: ${theme.colors.background.white};
+        padding: ${theme.spacing.xl};
+        border-radius: ${theme.borderRadius.md};
+        position: relative;
+        z-index: 1001;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: ${theme.shadows.lg};
+    `;
+
+    const ModalActions = styled.div`
+        display: flex;
+        justify-content: flex-end;
+        gap: ${theme.spacing.md};
+        margin-top: ${theme.spacing.md};
+    `;
+
+    const ModalWarning = styled.p`
+        color: ${theme.colors.status.error.dark};
+        font-weight: ${theme.typography.fontWeight.medium};
+        margin-top: ${theme.spacing.sm};
+    `;
+
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const handleFirstConfirmYes = () => {
+        setShowDeleteConfirm(false);
+        setShowFinalDelete(true);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setShowFinalDelete(false);
+        setDeleteInput('');
+        setDeleteError('');
+    };
+
+    const StyledDeleteInput = styled.input`
+        width: 100%;
+        padding: ${theme.spacing.sm};
+        font-size: ${theme.typography.fontSize.base};
+        border: 1px solid ${theme.colors.border.light};
+        border-radius: ${theme.borderRadius.sm};
+        box-sizing: border-box;
+    `;
+
+    const handleFinalDelete = async () => {
+        if (deleteInput !== 'Löschen') {
+            setDeleteError('Bitte exakt "Löschen" eingeben.');
+            return;
+        }
+
+        if (!item) return;
+
+        try {
+            await inventoryApi.deleteItem(item.id);
+            navigate('/items');
+        } catch (err) {
+            console.error(err);
+            alert('Fehler beim Löschen des Gegenstands.');
         }
     };
 
@@ -454,9 +535,58 @@ const ModifyItem = () => {
                         <StyledButton variant="ghost" onClick={() => navigate(-1)}>
                             Abbrechen
                         </StyledButton>
+                        <StyledButton variant="danger" onClick={handleDeleteClick}>
+                            Löschen
+                        </StyledButton>
                     </StyledButtonGroup>
                 </StyledCard>
             </StyledContentWrapper>
+            {/* First confirmation modal */}
+            {showDeleteConfirm && (
+                <ModalOverlay>
+                    <ModalContainer>
+                        <p>Sind Sie sicher, diesen Gegenstand zu löschen?</p>
+                        <ModalActions>
+                            <StyledButton variant="ghost" onClick={handleCancelDelete}>
+                                Nein
+                            </StyledButton>
+                            <StyledButton variant="danger" onClick={handleFirstConfirmYes}>
+                                Ja
+                            </StyledButton>
+                        </ModalActions>
+                    </ModalContainer>
+                </ModalOverlay>
+            )}
+
+            {/* Final delete modal */}
+            {showFinalDelete && (
+                <ModalOverlay>
+                    <ModalContainer>
+                        <p>
+                            Geben Sie hier <strong>"Löschen"</strong> ein, um den Gegenstand endgültig zu löschen.
+                        </p>
+                        <ModalWarning>Achtung! Dies kann nicht rückgängig gemacht werden!</ModalWarning>
+
+                        <StyledDeleteInput
+                            type="text"
+                            value={deleteInput}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeleteInput(e.target.value)}
+                            placeholder="Löschen"
+                        />
+
+                        {deleteError && <ErrorText>{deleteError}</ErrorText>}
+
+                        <ModalActions>
+                            <StyledButton variant="ghost" onClick={handleCancelDelete}>
+                                Abbrechen
+                            </StyledButton>
+                            <StyledButton variant="danger" onClick={handleFinalDelete}>
+                                Endgültig löschen
+                            </StyledButton>
+                        </ModalActions>
+                    </ModalContainer>
+                </ModalOverlay>
+            )}
         </StyledContainer>
     );
 };
