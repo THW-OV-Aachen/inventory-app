@@ -98,6 +98,49 @@ const ErrorText = styled.small`
     margin-top: ${theme.spacing.xs};
 `;
 
+const ModalOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+`;
+
+const ModalContainer = styled.div`
+    background: ${theme.colors.background.white};
+    padding: ${theme.spacing.xl};
+    border-radius: ${theme.borderRadius.md};
+    position: relative;
+    z-index: 1001;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: ${theme.shadows.lg};
+`;
+
+const ModalActions = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: ${theme.spacing.md};
+    margin-top: ${theme.spacing.md};
+`;
+
+const ModalWarning = styled.p`
+    color: ${theme.colors.status.error.dark};
+    font-weight: ${theme.typography.fontWeight.medium};
+    margin-top: ${theme.spacing.sm};
+`;
+
+const StyledDeleteInput = styled.input`
+    width: 100%;
+    padding: ${theme.spacing.sm};
+    font-size: ${theme.typography.fontSize.base};
+    border: 1px solid ${theme.colors.border.light};
+    border-radius: ${theme.borderRadius.sm};
+    box-sizing: border-box;
+`;
+
 const ModifyItem = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
@@ -211,40 +254,6 @@ const ModifyItem = () => {
         }
     };
 
-    const ModalOverlay = styled.div`
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.4);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    `;
-
-    const ModalContainer = styled.div`
-        background: ${theme.colors.background.white};
-        padding: ${theme.spacing.xl};
-        border-radius: ${theme.borderRadius.md};
-        position: relative;
-        z-index: 1001;
-        width: 100%;
-        max-width: 400px;
-        box-shadow: ${theme.shadows.lg};
-    `;
-
-    const ModalActions = styled.div`
-        display: flex;
-        justify-content: flex-end;
-        gap: ${theme.spacing.md};
-        margin-top: ${theme.spacing.md};
-    `;
-
-    const ModalWarning = styled.p`
-        color: ${theme.colors.status.error.dark};
-        font-weight: ${theme.typography.fontWeight.medium};
-        margin-top: ${theme.spacing.sm};
-    `;
-
     const handleDeleteClick = () => {
         setShowDeleteConfirm(true);
     };
@@ -260,15 +269,6 @@ const ModifyItem = () => {
         setDeleteInput('');
         setDeleteError('');
     };
-
-    const StyledDeleteInput = styled.input`
-        width: 100%;
-        padding: ${theme.spacing.sm};
-        font-size: ${theme.typography.fontSize.base};
-        border: 1px solid ${theme.colors.border.light};
-        border-radius: ${theme.borderRadius.sm};
-        box-sizing: border-box;
-    `;
 
     const handleFinalDelete = async () => {
         if (deleteInput !== 'Löschen') {
