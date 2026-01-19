@@ -19,7 +19,6 @@ import {
     updateFilter,
 } from '../../store/slices/searchSlice';
 import type { SortField } from '../../app/api';
-
 import { usePackMode } from './usePackMode';
 
 const sortFieldLabels: Record<string, string> = {

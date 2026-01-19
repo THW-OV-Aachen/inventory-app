@@ -19,14 +19,12 @@ import { EmergencyScenarioType } from '../../db/packingPlans';
 
 import { usePackMode } from './usePackMode';
 import QuantitySpinner from '../../components/QuantitySpinner';
-
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const packModeState = usePackMode();
     const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
-
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
 
@@ -294,7 +292,7 @@ const ItemOverview = () => {
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('deviceNumber')}>
                                 <HeaderContent>
-                                    <span>{packMode ? 'Pack' : 'Geräte-Nr.'}</span>
+                                    <span>Geräte-Nr.</span>
                                     <SortIndicator
                                         active={sortField === 'deviceNumber'}
                                         sortDirection={sortDirection}
@@ -763,10 +761,6 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
     &:hover > * {
         background-color: var(--color-bg-hover, #f8f9fa);
         cursor: pointer;
-    }
-
-    &.selected > * {
-        background-color: var(--color-primary-light);
     }
 
     & span.info-icon {
