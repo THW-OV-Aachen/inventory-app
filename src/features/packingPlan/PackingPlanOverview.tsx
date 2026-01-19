@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Plus, Droplets, Flame, Wind, Search, FileText, ChevronLeft } from 'lucide-react';
+import { Droplets, Flame, Wind, Search, FileText, ChevronLeft } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import type { IPackingPlan, EmergencyScenarioType } from '../../db/packingPlans';
-import { Card, Button, Container, BackButton } from '../../styles/components';
+import { Card, Container, BackButton } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
 
@@ -48,10 +48,6 @@ const PackingPlanOverview = () => {
     const navigate = useNavigate();
     const packingPlans = packingPlanApi.usePackingPlans();
 
-    const handleCreatePlan = () => {
-        navigate('/packing-plans/create');
-    };
-
     const handlePlanClick = (planId: string) => {
         navigate(`/packing-plans/${planId}`);
     };
@@ -65,10 +61,6 @@ const PackingPlanOverview = () => {
                     </StyledBackButton>
                     <Title>Packing Plans</Title>
                 </HeaderLeft>
-                <CreateButton variant="primary" onClick={handleCreatePlan}>
-                    <IconContainer icon={Plus} />
-                    <span>New Packing Plan</span>
-                </CreateButton>
             </Header>
 
             {packingPlans.length === 0 ? (
@@ -76,12 +68,8 @@ const PackingPlanOverview = () => {
                     <IconContainer icon={FileText} />
                     <EmptyStateTitle>No packing plans yet</EmptyStateTitle>
                     <EmptyStateText>
-                        Create a new packing plan for various emergency scenarios like flood, fire, or storm.
+                        No packing plans have been created yet.
                     </EmptyStateText>
-                    <CreateButton variant="primary" onClick={handleCreatePlan}>
-                        <IconContainer icon={Plus} />
-                        <span>Create First Packing Plan</span>
-                    </CreateButton>
                 </EmptyState>
             ) : (
                 <PlansGrid>
@@ -168,12 +156,6 @@ const Title = styled.h1`
     margin: 0;
     flex: 1;
     min-width: 0;
-`;
-
-const CreateButton = styled(Button)`
-    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        width: 100%;
-    }
 `;
 
 const PlansGrid = styled.div`

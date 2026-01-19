@@ -132,7 +132,6 @@ const AddButton = styled.button`
     transition: all 0.2s ease;
 
     &:hover {
-        background-color: #3a7bc8;
         transform: translateY(-1px);
     }
 
@@ -145,12 +144,20 @@ const PrimaryButton = styled(AddButton)`
     border: none;
     background-color: #4a90e2;
     color: white;
+
+    &:hover {
+        background-color: #3a7bc8;
+    }
 `;
 
 const SecondaryButton = styled(AddButton)`
     border: 1px solid #6b7a90;
     background-color: #f1f3f6;
     color: #6b7a90;
+
+    &:hover {
+        background-color: #e9eef5;
+    }
 `;
 
 const PlanNameInput = styled.input`
