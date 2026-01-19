@@ -1,14 +1,15 @@
 import Dexie, { type Table } from 'dexie';
 import type { IItem } from './items';
 export class InventoryDb extends Dexie {
-    public items!: Table<IItem, string>;
+    public items!: Table<IItem, number>;
 
     constructor() {
         super('InventoryDb');
 
         this.version(1).stores({
             items: [
-                '&id',
+                '++id',
+                'itemId',
                 '&inventoryNumber',
                 '&deviceNumber',
                 'name',

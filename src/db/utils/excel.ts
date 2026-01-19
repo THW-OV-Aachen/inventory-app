@@ -83,7 +83,7 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
     },
     {
         header: 'Sachnummer',
-        key: 'id',
+        key: 'itemId',
         required: true,
         importTransform: (v) => v?.toString(),
     },
@@ -223,7 +223,7 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             }
         }
 
-        if (!rowData.id || !rowData.name) {
+        if (!rowData.itemId || !rowData.name) {
             console.warn(`Skipping row ${rowIdx}: Missing ID or Name`);
             continue;
         }
