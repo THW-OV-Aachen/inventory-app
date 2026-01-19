@@ -20,8 +20,6 @@ import {
 } from '../../store/slices/searchSlice';
 import type { SortField } from '../../app/api';
 
-import { usePackMode } from './usePackMode';
-
 const sortFieldLabels: Record<string, string> = {
     inventoryNumber: 'Inventar-Nr.',
     name: 'Name',
@@ -29,11 +27,7 @@ const sortFieldLabels: Record<string, string> = {
     location: 'Ort',
 };
 
-interface ItemFilterProps {
-    packModeState: ReturnType<typeof usePackMode>;
-}
-
-export const ItemFilter = ({ packModeState }: ItemFilterProps) => {
+export const ItemFilter = () => {
     const navigate = useNavigate();
 
     return (
@@ -44,9 +38,9 @@ export const ItemFilter = ({ packModeState }: ItemFilterProps) => {
                     <IconContainer icon={Plus} />
                     <span>Item</span>
                 </PrimaryButton>
-                <SecondaryButton onClick={packModeState.togglePackMode}>
+                <SecondaryButton>
                     <IconContainer icon={Package} />
-                    <span>{packModeState.packMode ? 'Cancel' : 'Pack'}</span>
+                    <span>Pack</span>
                 </SecondaryButton>
             </AddEntityButtons>
         </ItemFilterWrapper>
