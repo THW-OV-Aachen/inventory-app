@@ -13,6 +13,9 @@ import { parseLocationStringRaw, mapLocationKey } from '../../utils/locationStri
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
+import { Modal, Alert } from 'react-bootstrap';
+import { Html5Qrcode } from 'html5-qrcode';
+import { ScanLine } from 'lucide-react';
 
 const ItemOverview = () => {
     const navigate = useNavigate();
@@ -29,6 +32,10 @@ const ItemOverview = () => {
     const [totalItems, setTotalItems] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    // Barcode reader
+    const [showScanner, setShowScanner] = useState(false);
+    const [scanLookupError, setScanLookupError] = useState<string | null>(null);
 
     // Fetch items with pagination
     useEffect(() => {
@@ -70,6 +77,28 @@ const ItemOverview = () => {
             dispatch(setSortField(field));
             dispatch(setSortDirection('asc'));
         }
+    };
+
+    const handleBarcodeDetected = async (code: string) => {
+        setScanLookupError(null);
+
+        // Option A (recommended): if you can add an endpoint like this, use it
+        // const item = await inventoryApi.fetchItemByInventoryNumber(code);
+        // navigate(`/items/${item.id}`);
+        // return;
+
+        // Option B (works with what you already have): fetch a small page filtered by the scanned code
+        // Here we assume your backend search also matches inventoryNumber.
+        const result = await inventoryApi.fetchItemsPaginatedWithFilter({ page: 1, pageSize: 10 }, code, filters || {});
+
+        const found = result.data.find((it) => (it.inventoryNumber ?? '').toString() === code);
+
+        if (!found) {
+            setScanLookupError(`Kein Gegenstand mit Inventar-Nr. "${code}" gefunden.`);
+            return;
+        }
+
+        navigate(`/items/${found.id}`);
     };
 
     const getSortedItems = (itemsToSort: IItem[]) => {
@@ -145,6 +174,22 @@ const ItemOverview = () => {
     return (
         <div>
             <ItemFilter />
+
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+                <Button variant="outline-primary" onClick={() => setShowScanner(true)}>
+                    <IconContainer icon={ScanLine} /> Barcode scannen
+                </Button>
+
+                {scanLookupError && (
+                    <span style={{ color: 'var(--color-danger)', fontSize: 14 }}>{scanLookupError}</span>
+                )}
+            </div>
+
+            <BarcodeScannerModal
+                show={showScanner}
+                onClose={() => setShowScanner(false)}
+                onDetected={handleBarcodeDetected}
+            />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -708,5 +753,101 @@ const SortIndicatorWrapper = styled.span<{ $isActive: boolean }>`
         opacity: ${(props) => (props.$isActive ? '1' : '0.5')} !important;
     }
 `;
+
+type BarcodeScannerModalProps = {
+    show: boolean;
+    onClose: () => void;
+    onDetected: (code: string) => Promise<void> | void;
+};
+
+const BarcodeScannerModal = ({ show, onClose, onDetected }: BarcodeScannerModalProps) => {
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!show) return;
+
+        const readerId = 'barcode-reader';
+        const html5QrCode = new Html5Qrcode(readerId);
+
+        let isCancelled = false;
+
+        const start = async () => {
+            setError(null);
+            try {
+                await html5QrCode.start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10,
+                        qrbox: { width: 260, height: 160 }, // works fine for 1D too
+                        disableFlip: true,
+                    },
+                    async (decodedText) => {
+                        if (isCancelled) return;
+
+                        // Stop camera first so it doesn't keep scanning
+                        try {
+                            await html5QrCode.stop();
+                            await html5QrCode.clear();
+                        } catch {
+                            // ignore
+                        }
+
+                        // Normalize scanned code
+                        const code = decodedText.trim();
+
+                        await onDetected(code);
+                        onClose();
+                    },
+                    () => {
+                        // ignore scan errors to avoid console spam
+                    }
+                );
+            } catch (e: any) {
+                setError(e?.message ?? 'Kamera konnte nicht gestartet werden.');
+            }
+        };
+
+        start();
+
+        return () => {
+            isCancelled = true;
+            (async () => {
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    await html5QrCode.clear();
+                } catch {
+                    // ignore
+                }
+            })();
+        };
+    }, [show, onClose, onDetected]);
+
+    return (
+        <Modal show={show} onHide={onClose} centered size="lg">
+            <Modal.Header closeButton>
+                <Modal.Title>Barcode scannen</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {error && <Alert variant="danger">{error}</Alert>}
+
+                <div
+                    id="barcode-reader"
+                    style={{
+                        width: '100%',
+                        minHeight: 320,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        background: 'var(--color-bg-accent)',
+                    }}
+                />
+                <div style={{ marginTop: 12, color: 'var(--color-font-secondary)', fontSize: 14 }}>
+                    Kamera auf den Barcode der Inventar-Nr. halten.
+                </div>
+            </Modal.Body>
+        </Modal>
+    );
+};
 
 export default ItemOverview;

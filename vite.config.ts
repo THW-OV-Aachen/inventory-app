@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
     base: '/',
     plugins: [
+        basicSsl(),
         react(),
         VitePWA({
             registerType: 'autoUpdate',
@@ -70,10 +72,12 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         strictPort: false,
+        https: {},
     },
     preview: {
         host: '0.0.0.0',
         port: 4173,
         strictPort: false,
+        https: {},
     },
 });
