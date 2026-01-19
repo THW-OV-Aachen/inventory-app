@@ -1,17 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import {
-    Info,
-    ArrowDownAZ,
-    ArrowDownZA,
-    Box,
-    Boxes,
-    ChevronLeft,
-    ChevronRight,
-    Hourglass,
-    MapPin,
-} from 'lucide-react';
+import { Info, ArrowDownAZ, ArrowDownZA, Box, Boxes, ChevronLeft, ChevronRight, Hourglass, MapPin } from 'lucide-react';
 import type { DamageLevelType, IItem } from '../../db/items';
 import { ItemFilter } from './ItemFilterPanel';
 import { inventoryApi, type SortDirection, type SortField } from '../../app/api';
@@ -214,7 +204,7 @@ const ItemOverview = () => {
                 id: createId('planItem'),
                 packingPlanId: packingPlan.id,
                 itemId: itemId,
-                requiredQuantity: qtyByItemId[itemId] || 1,
+                requiredQuantity: qtyByItemId[itemId] ?? 1,
                 notes: '',
                 order: index,
             }));
@@ -318,11 +308,13 @@ const ItemOverview = () => {
                             const availability = getEffectiveAvailability(item);
                             const hasExplicitAvailability = Number.isFinite(Number(item.availability));
                             const isSelected = selectedItemIds.has(itemId);
-                            const maxQty =
-                                Number.isFinite(availability) && availability > 0 ? availability : undefined;
+                            // In pack mode we treat "Verfügbar" as the upper bound (including 0).
+                            const maxQty = Number.isFinite(availability) ? Math.max(0, availability) : undefined;
+                            const minPackQty = maxQty === 0 ? 0 : 1;
+                            const defaultPackQty = maxQty ?? 1;
                             const onRowClick = () => {
                                 if (packMode) {
-                                    toggleItem(itemId);
+                                    toggleItem(itemId, defaultPackQty);
                                 } else {
                                     navigate(`/items/${itemId}`);
                                 }
@@ -346,12 +338,8 @@ const ItemOverview = () => {
                                     $mobileShadowColor={damageLevel.colorRGB}
                                     className={isSelected ? 'selected' : ''} // ✅
                                 >
-                                    <TableCell id="inventoryNumber">
-                                        {item.inventoryNumber ?? '-'}
-                                    </TableCell>
-                                    <TableCell id="name">
-                                        {item.name ?? '-'}
-                                    </TableCell>
+                                    <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
+                                    <TableCell id="name">{item.name ?? '-'}</TableCell>
                                     <TableCell id="isSet">
                                         <IconContainer icon={item.isSet ? Boxes : Box} />
                                     </TableCell>
@@ -416,12 +404,12 @@ const ItemOverview = () => {
                                                 <CheckboxInput
                                                     type="checkbox"
                                                     checked={isSelected}
-                                                    onChange={() => toggleItem(itemId)}
+                                                    onChange={() => toggleItem(itemId, defaultPackQty)}
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
                                                 <QuantitySpinner
-                                                    value={qtyByItemId[itemId] || 1}
-                                                    min={1}
+                                                    value={qtyByItemId[itemId] ?? defaultPackQty}
+                                                    min={minPackQty}
                                                     max={maxQty}
                                                     disabled={!isSelected}
                                                     onChange={(v) => setQuantity(itemId, v)}
@@ -436,13 +424,15 @@ const ItemOverview = () => {
                                         <PackControlsCell id="packControls">
                                             <PackControlsLabel>
                                                 <span>Pack</span>
-                                                <span style={{ opacity: 0.75 }}>Tap card to {isSelected ? 'unselect' : 'select'}</span>
+                                                <span style={{ opacity: 0.75 }}>
+                                                    Tap card to {isSelected ? 'unselect' : 'select'}
+                                                </span>
                                             </PackControlsLabel>
                                             <PackControlsRight>
                                                 {isSelected && <SelectedBadge>Selected</SelectedBadge>}
                                                 <QuantitySpinner
-                                                    value={qtyByItemId[itemId] || 1}
-                                                    min={1}
+                                                    value={qtyByItemId[itemId] ?? defaultPackQty}
+                                                    min={minPackQty}
                                                     max={maxQty}
                                                     disabled={!isSelected}
                                                     onChange={(v) => setQuantity(itemId, v)}

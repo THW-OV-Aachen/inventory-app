@@ -22,7 +22,7 @@ export const usePackMode = () => {
         });
     };
 
-    const toggleItem = (id: string) => {
+    const toggleItem = (id: string, defaultQuantity: number = 1) => {
         setSelectedItemIds((prev) => {
             const next = new Set(prev);
             if (next.has(id)) {
@@ -35,10 +35,10 @@ export const usePackMode = () => {
                 });
             } else {
                 next.add(id);
-                // Set default quantity to 1 when checking
+                // Set default quantity when checking (only if not set already)
                 setQtyByItemId((prevQty) => ({
                     ...prevQty,
-                    [id]: prevQty[id] || 1,
+                    [id]: prevQty[id] ?? defaultQuantity,
                 }));
             }
             return next;
