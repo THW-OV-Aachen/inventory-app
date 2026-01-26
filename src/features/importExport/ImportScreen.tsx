@@ -262,12 +262,7 @@ const ImportExportScreen = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
-            // Generate filename with date and time suffix
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
-            a.download = `inventory_${dateStr}.xlsx`;
-            
+            a.download = 'inventory.xlsx';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
