@@ -51,6 +51,29 @@ export class InventoryDb extends Dexie {
             packingPlans: '&id,scenarioType,createdAt',
             packingPlanItems: '&id,packingPlanId,Iid,order',
         });
+
+        this.version(3).stores({
+            items: [
+                '++id',
+                'itemId',
+                '&inventoryNumber',
+                '&deviceNumber',
+                'name',
+                'isSet',
+                'art',
+                'amountTarget',
+                'amountActual',
+                'availability',
+                'damageLevel',
+                'lastInspection',
+                'inspectionIntervalMonths',
+                'location',
+                'level',
+                'remark',
+            ].join(','),
+            packingPlans: '&id,scenarioType,createdAt',
+            packingPlanItems: '&id,packingPlanId,Iid,order',
+        });
     }
 }
 

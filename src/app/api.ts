@@ -29,12 +29,13 @@ export interface PaginatedResult<T> {
 
 export const inventoryApi = {
     async addItem(itemData: Omit<IItem, 'id'>): Promise<void> {
+        var id;
         try {
-            await db.items.add(itemData as IItem);
+            id = await db.items.add(itemData as IItem);
         } catch (error) {
             console.error('Failed to add inventory item: ', error);
             if ((error as Error).name === 'ConstraintError') {
-                console.error('Error: An item with this id already exists.');
+                console.error('Error: An item with the id ' + (id.toString() ?? '-') + ' already exists.');
             }
         }
     },
