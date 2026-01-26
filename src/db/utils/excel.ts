@@ -62,7 +62,7 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         defaultValue: 0,
     },
     {
-        header: 'Verfügbarkeit',
+        header: 'Verfügbar',
         key: 'availability',
         required: false,
         exportTransform: (v) => v ?? 0,
@@ -196,14 +196,19 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                 try {
                     let parsedValue = cellValue;
 
-                    if (colDef.importTransform) {
-                        parsedValue = colDef.importTransform(cellValue);
-                    } else if (cellValue !== null && cellValue !== undefined) {
-                        parsedValue = cellValue.toString().trim();
-                    }
-
                     if (colDef.key === 'oe') {
                         continue;
+                    }
+
+                    if (colDef.importTransform) {
+                        if (colDef.key === 'availability') {
+                            var amount = rowData['amountActual'] ?? 0;
+                            parsedValue = colDef.importTransform(cellValue) * amount;
+                        } else {
+                            parsedValue = colDef.importTransform(cellValue);
+                        }
+                    } else if (cellValue !== null && cellValue !== undefined) {
+                        parsedValue = cellValue.toString().trim();
                     }
 
                     rowData[colDef.key] = parsedValue as any;
