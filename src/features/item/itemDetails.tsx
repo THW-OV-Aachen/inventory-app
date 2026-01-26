@@ -35,13 +35,32 @@ function addMonths(date: Date, months: number): Date {
 }
 
 const ItemDetails = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const navigate = useNavigate();
+
+    const saveRemark = useCallback(
+        async (newText: string) => {
+            const itemId = id ? parseInt(id, 10) : null;
+            if (!itemId) return;
+            setIsSaving(true);
+            try {
+                await inventoryApi.updateItem(itemId, {
+                    remark: newText || '',
+                });
+            } catch (error) {
+                console.error('Failed to save remark:', error);
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [id]
+    );
 
     // Fetch the item from Dexie by ID
     useEffect(() => {
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
@@ -49,7 +68,7 @@ const ItemDetails = () => {
             }
         };
         fetchItem();
-    }, [itemId]);
+    }, [id]);
 
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
@@ -116,6 +135,7 @@ const ItemDetails = () => {
 
                 <StyledDetailsCard>
                     <InfoLabel>Informationen</InfoLabel>
+                    <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>

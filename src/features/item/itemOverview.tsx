@@ -88,7 +88,7 @@ const ItemOverview = () => {
             let bValue: any;
 
             switch (sortField) {
-                case 'id':
+                case 'itemId':
                     aValue = a.id;
                     bValue = b.id;
                     break;
@@ -284,10 +284,10 @@ const ItemOverview = () => {
                                     <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
-                            <HeaderCell onClick={() => handleSort('id')}>
+                            <HeaderCell onClick={() => handleSort('itemId')}>
                                 <HeaderContent>
                                     <span>ID</span>
-                                    <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
+                                    <SortIndicator active={sortField === 'itemId'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('deviceNumber')}>

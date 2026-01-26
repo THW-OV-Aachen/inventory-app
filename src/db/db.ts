@@ -12,7 +12,8 @@ export class InventoryDb extends Dexie {
 
         this.version(1).stores({
             items: [
-                '&id',
+                '++id',
+                'itemId',
                 '&inventoryNumber',
                 '&deviceNumber',
                 'name',
