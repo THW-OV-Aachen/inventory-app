@@ -35,7 +35,7 @@ export const inventoryApi = {
         } catch (error) {
             console.error('Failed to add inventory item: ', error);
             if ((error as Error).name === 'ConstraintError') {
-                console.error('Error: An item with the id ' + (id.toString() ?? '-') + ' already exists.');
+                console.error('Error: An item with the id or inventory number already exists.');
             }
         }
     },

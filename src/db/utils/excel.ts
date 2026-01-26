@@ -48,7 +48,11 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         required: false,
         exportTransform: (v) => v ?? 0,
         importTransform: (v) => {
-            v == null ? 0 : parseInt(v.toString(), 10);
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
         },
         defaultValue: 0,
     },
@@ -58,7 +62,11 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         required: false,
         exportTransform: (v) => v ?? 0,
         importTransform: (v) => {
-            v == null ? 0 : parseInt(v.toString(), 10);
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
         },
         defaultValue: 0,
     },
@@ -68,7 +76,11 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         required: false,
         exportTransform: (v) => v ?? 0,
         importTransform: (v) => {
-            v == null ? 0 : parseInt(v.toString(), 10);
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
         },
         defaultValue: 0,
     },
@@ -204,12 +216,7 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                     }
 
                     if (colDef.importTransform) {
-                        if (colDef.key === 'availability') {
-                            var amount = rowData['amountActual'] ?? 0;
-                            parsedValue = colDef.importTransform(cellValue) * amount;
-                        } else {
-                            parsedValue = colDef.importTransform(cellValue);
-                        }
+                        parsedValue = colDef.importTransform(cellValue);
                     } else if (cellValue !== null && cellValue !== undefined) {
                         parsedValue = cellValue.toString().trim();
                     }
