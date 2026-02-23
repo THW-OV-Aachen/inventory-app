@@ -292,7 +292,7 @@ const ModalButton = styled(Button)`
     font-size: ${theme.typography.fontSize.sm};
 `;
 
-// Labels for scenario types
+// Labels for scenario types used in the scenario picker.
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
@@ -332,12 +332,14 @@ const CreatePackingPlan = () => {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
+    // Local modal state for adding items to the plan.
     const [showAddItemModal, setShowAddItemModal] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
     const [quantity, setQuantity] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [tempItems, setTempItems] = useState<TempPackingPlanItem[]>([]);
 
+    // Load items for the add-to-plan modal search list.
     const allInventoryItems = inventoryApi.useItems();
 
     const handleChange = (key: string, value: any) => {
@@ -368,6 +370,7 @@ const CreatePackingPlan = () => {
     };
 
     const handleAddTempItem = () => {
+        // Add selected item to the temporary list before saving the plan.
         if (!selectedItemId || quantity < 1) {
             alert('Please select an item and enter a valid quantity.');
             return;
@@ -417,6 +420,7 @@ const CreatePackingPlan = () => {
     );
 
     const handleSave = async () => {
+        // Create the plan first, then append items in order.
         if (!validateForm()) {
             return;
         }

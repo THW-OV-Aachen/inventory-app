@@ -1,5 +1,6 @@
 import { Home, Package, FolderSync, CircleQuestionMark, ClipboardList } from 'lucide-react';
 
+// Central navigation list used by the sidebar.
 export const navItems = [
     { path: '/', label: 'Start', icon: Home },
     { path: '/items', label: 'Inventar', icon: Package },

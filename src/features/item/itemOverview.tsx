@@ -23,6 +23,7 @@ const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    // Pack mode adds multi-select + quantity controls for creating packing plans.
     const packModeState = usePackMode();
     const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
     const searchState = useSelector((state: RootState) => state.search);
@@ -37,7 +38,7 @@ const ItemOverview = () => {
     const [totalPages, setTotalPages] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Fetch items with pagination
+    // Fetch items with pagination + search/filter state from Redux.
     useEffect(() => {
         const fetchItems = async () => {
             setIsLoading(true);
@@ -60,12 +61,13 @@ const ItemOverview = () => {
         fetchItems();
     }, [currentPage, pageSize, searchTerm, filters]);
 
-    // Reset to page 1 when search term changes
+    // Reset to page 1 when search term or filters change.
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, filters]);
 
     const handleSort = (field: SortField) => {
+        // Cycle: asc -> desc -> off for the current sort field.
         if (sortField === field) {
             if (sortDirection === 'asc') {
                 dispatch(setSortDirection('desc'));
@@ -82,6 +84,7 @@ const ItemOverview = () => {
     const getSortedItems = (itemsToSort: IItem[]) => {
         if (!sortField) return itemsToSort;
 
+        // Local sort for the current page based on active column + direction.
         const sorted = [...itemsToSort];
         sorted.sort((a, b) => {
             let aValue: any;
@@ -172,6 +175,7 @@ const ItemOverview = () => {
     };
 
     const handleSavePackingPlan = async () => {
+        // Create a packing plan from the current pack-mode selection.
         if (selectedItemIds.size === 0) {
             alert('Please select at least one item to pack.');
             return;
@@ -213,8 +217,7 @@ const ItemOverview = () => {
             // Reset pack mode
             packModeState.togglePackMode();
 
-            // Show success message and optionally navigate
-            alert('Packing plan saved successfully!');
+             // Navigate to the created packing plan (no confirmation popup)
             navigate(`/packing-plans/${packingPlan.id}`);
         } catch (error) {
             console.error('Error saving packing plan:', error);
@@ -312,6 +315,7 @@ const ItemOverview = () => {
                             const defaultPackQty = maxQty ?? 1;
                             const onRowClick = () => {
                                 if (packMode) {
+                                    // In pack mode, row click toggles selection.
                                     toggleItem(itemId, defaultPackQty);
                                 } else {
                                     navigate(`/items/${itemId}`);

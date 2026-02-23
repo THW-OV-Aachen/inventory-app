@@ -115,7 +115,7 @@ export const DataValue = styled.span`
 `;
 
 // Button variants
-export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' }>`
+export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'danger' }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -170,6 +170,18 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
                         border-color: ${theme.colors.text.secondary};
                         color: ${theme.colors.text.secondary};
                         transform: translateY(-1px);
+                    }
+                `;
+            case 'danger':
+                return `
+                    background-color: ${theme.colors.status.error.main};
+                    color: white;
+                    height: 44px;
+
+                    &:hover:not(:disabled) {
+                        background-color: ${theme.colors.status.error.dark};
+                        transform: translateY(-1px);
+                        box-shadow: ${theme.shadows.lg};
                     }
                 `;
         }

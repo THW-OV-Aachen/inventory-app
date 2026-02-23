@@ -101,6 +101,7 @@ const ErrorText = styled.small`
 const ModifyItem = () => {
     const { itemId } = useParams<{ itemId: string }>();
     const [item, setItem] = useState<IItem | null>(null);
+    // Form state starts from the loaded item and is edited in place.
     const [formData, setFormData] = useState<Partial<IItem>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -108,6 +109,7 @@ const ModifyItem = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Load the item by ID and seed the form values.
         const fetchItem = async () => {
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
@@ -119,6 +121,7 @@ const ModifyItem = () => {
         fetchItem();
     }, [itemId]);
 
+    // Auto-grow textarea to fit remark content.
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -131,6 +134,7 @@ const ModifyItem = () => {
 
     const itemReference = `Inventarnummer: ${item.inventoryNumber || '-'}`;
 
+    // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: any) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
@@ -162,6 +166,7 @@ const ModifyItem = () => {
     };
 
     const handleSave = async () => {
+        // Validate and persist updates back to Dexie.
         const allKeys = Object.keys(formData) as (keyof IItem)[];
         setTouched(allKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {}));
 

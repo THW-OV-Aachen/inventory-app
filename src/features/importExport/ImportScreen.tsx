@@ -161,6 +161,7 @@ const WarningText = styled.p`
 
 const ImportExportScreen = () => {
     const navigate = useNavigate();
+    // UI state for the import/export flow (file selection, progress, confirmations).
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -172,6 +173,7 @@ const ImportExportScreen = () => {
     const [importProgress, setImportProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Load current items to decide whether import needs a confirmation step.
     const inventoryItems = inventoryApi.useItems(); // fetch current items
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +190,7 @@ const ImportExportScreen = () => {
             return;
         }
 
+        // If items exist, require user to choose extend vs overwrite.
         if ((inventoryItems?.length ?? 0) > 0) {
             setPendingFile(file);
             setShowConfirm(true);
@@ -206,6 +209,7 @@ const ImportExportScreen = () => {
         };
         try {
             if (!extend) {
+                // Overwrite path requires explicit confirmation.
                 if (!overwriteConfirmed) {
                     setShowOverwriteConfirmation(true);
                     return;
@@ -248,6 +252,7 @@ const ImportExportScreen = () => {
     };
 
     const handleOverwriteConfirmation = async () => {
+        // Require the exact keyword before clearing the database.
         if (overwriteConfirmationInput === 'überschreiben') {
             performImport(pendingFile!, false, true);
             setShowOverwriteConfirmation(false);

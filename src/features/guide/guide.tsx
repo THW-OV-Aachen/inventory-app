@@ -59,6 +59,7 @@ const Guide = () => {
 const GuideListScreen = () => {
     const navigate = useNavigate();
 
+    // Central list for the guide tiles and their availability in the UI.
     const topics = useMemo<GuideTopic[]>(
         () => [
             {
@@ -70,22 +71,22 @@ const GuideListScreen = () => {
             },
             {
                 id: 'add-item',
-                title: 'How to add an item',
-                description: 'Create a new inventory entry.',
+                title: 'So fügen Sie einen Artikel hinzu',
+                description: 'Einen neuen Inventareintrag erstellen.',
                 icon: PlusCircle,
                 available: true,
             },
             {
                 id: 'import-export',
-                title: 'Import / export data',
-                description: 'Back up your inventory and restore from Excel.',
+                title: 'Daten importieren / exportieren',
+                description: 'Sichern Sie Ihr Inventar und stellen Sie es aus Excel wieder her.',
                 icon: FileUp,
                 available: true,
             },
             {
                 id: 'packing-plans',
-                title: 'Packing plans',
-                description: 'Select items, set quantities, and save plans.',
+                title: 'Packing-Pläne',
+                description: 'Artikel auswählen, Mengen festlegen und Pläne speichern.',
                 icon: ClipboardList,
                 available: true,
             },
@@ -97,10 +98,10 @@ const GuideListScreen = () => {
         <div>
             <StyledContainer $maxWidth="960px">
                 <IntroCard>
-                    <IntroTitle>Guides</IntroTitle>
+                    <IntroTitle>Anleitungen</IntroTitle>
                     <IntroText>
-                        Learn how to use the inventory app to manage items, organize packing plans, and work efficiently
-                        during operations.
+                        Erfahren Sie, wie Sie die Inventar-App nutzen, Artikel verwalten, Packing-Pläne organisieren und
+                        bei Einsätzen effizient arbeiten.
                     </IntroText>
 
                     <TopicGrid>
@@ -129,7 +130,7 @@ const GuideListScreen = () => {
                                     </TopicHeader>
                                     <TopicDescription>{t.description}</TopicDescription>
                                     {!t.available && (
-                                        <TopicUnavailableHint>Guide not available yet</TopicUnavailableHint>
+                                        <TopicUnavailableHint>Anleitung noch nicht verfügbar</TopicUnavailableHint>
                                     )}
                                 </TopicButton>
                             );
@@ -242,6 +243,7 @@ const FindItemGuideScreen = () => {
                                         alt="Inventarliste mit Suche, Artikelübersicht und Aktionen"
                                         loading="lazy"
                                         decoding="async"
+                                        // Fallback to placeholder if the public screenshot is missing.
                                         onError={() => setHasScreenshot(false)}
                                     />
                                 </ScreenshotFigure>
@@ -294,10 +296,11 @@ const AddItemGuideScreen = () => {
                             <IconPill>
                                 <PlusCircle size={16} />
                             </IconPill>
-                            <span>How to add an item</span>
+                            <span>So fügen Sie einen Artikel hinzu</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Add a new inventory entry from the “Inventar” list. You must provide a unique ID and a name.
+                            Fügen Sie einen neuen Inventareintrag aus der „Inventar“-Liste hinzu. Sie müssen eine
+                            eindeutige ID und einen Namen angeben.
                         </TaskSubtitle>
                     </TaskHeader>
 
@@ -308,8 +311,8 @@ const AddItemGuideScreen = () => {
                                     <Package size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Open “Inventar”</StepTitle>
-                                    <StepText>Use the sidebar navigation to open the inventory list.</StepText>
+                                    <StepTitle>„Inventar“ öffnen</StepTitle>
+                                    <StepText>Öffnen Sie über die Sidebar-Navigation die Inventarliste.</StepText>
                                 </div>
                             </AddItemStep>
 
@@ -318,27 +321,28 @@ const AddItemGuideScreen = () => {
                                     <PlusCircle size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Click “Item”</StepTitle>
+                                    <StepTitle>Auf „Item“ klicken</StepTitle>
                                     <StepText>
-                                        In the sticky filter bar, click the <strong>+ Item</strong> button to open the
-                                        add item form.
+                                        Klicken Sie in der fixierten Filterleiste auf die Schaltfläche{' '}
+                                        <strong>Item</strong> (Plus-Symbol), um das Formular zum Hinzufügen zu öffnen.
                                     </StepText>
                                 </div>
                             </AddItemStep>
 
                             <MobileOnly>
                                 {hasAddItemScreenshot ? (
-                                    <ScreenshotFigure aria-label="Add item screenshot">
+                                    <ScreenshotFigure aria-label="Screenshot: Artikel hinzufügen">
                                         <AddItemScreenshotImage
                                             src={ADD_ITEM_SCREENSHOT_SRC}
-                                            alt="Add item form view showing required fields and save button"
+                                            alt="Formular zum Hinzufügen eines Artikels mit Pflichtfeldern und Hinzufügen-Schaltfläche"
                                             loading="lazy"
                                             decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
                                             onError={() => setHasAddItemScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
                                 ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for add item">
+                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Artikel hinzufügen">
                                         <ScreenshotTopBar>
                                             <Dot $color="#ef4444" />
                                             <Dot $color="#f59e0b" />
@@ -349,10 +353,10 @@ const AddItemGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/AddItem.jpeg</code> to show the add-item form
-                                                screenshot.
+                                                Fügen Sie <code>public/guide/AddItem.jpeg</code> hinzu, um den Screenshot
+                                                des Formulars zum Hinzufügen anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
@@ -364,10 +368,10 @@ const AddItemGuideScreen = () => {
                                     <SquarePen size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Fill required fields</StepTitle>
+                                    <StepTitle>Pflichtfelder ausfüllen</StepTitle>
                                     <StepText>
-                                        Enter <strong>Name</strong> and <strong>Identifikationsnummer (ID)</strong>. The
-                                        ID must be unique.
+                                        Geben Sie <strong>Name</strong> und <strong>Identifikationsnummer (ID)</strong>{' '}
+                                        ein. Die ID muss eindeutig sein.
                                     </StepText>
                                 </div>
                             </AddItemStep>
@@ -377,10 +381,10 @@ const AddItemGuideScreen = () => {
                                     <ArrowDownNarrowWide size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Add details (optional)</StepTitle>
+                                    <StepTitle>Details ergänzen (optional)</StepTitle>
                                     <StepText>
-                                        Add inventory/device numbers, quantities (target/actual/availability), location,
-                                        and inspection info if available.
+                                        Ergänzen Sie bei Bedarf Inventar-/Gerätenummern, Mengen (Soll/Ist/Verfügbarkeit),
+                                        Standort und Prüfinformationen.
                                     </StepText>
                                 </div>
                             </AddItemStep>
@@ -390,27 +394,28 @@ const AddItemGuideScreen = () => {
                                     <CheckCircle2 size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Save</StepTitle>
+                                    <StepTitle>Speichern</StepTitle>
                                     <StepText>
-                                        Click <strong>Hinzufügen</strong>. After saving you’ll be taken directly to the
-                                        item details page.
+                                        Klicken Sie auf <strong>Hinzufügen</strong>. Nach dem Speichern gelangen Sie
+                                        direkt zur Artikeldetailseite.
                                     </StepText>
                                 </div>
                             </AddItemStep>
 
                             <MobileOnly>
                                 {hasHinzufugenScreenshot ? (
-                                    <ScreenshotFigure aria-label="Save item screenshot">
+                                    <ScreenshotFigure aria-label="Screenshot: Artikel speichern">
                                         <AddItemScreenshotImage
                                             src={ADD_ITEM_SAVE_SCREENSHOT_SRC}
-                                            alt="Add item screen showing the Hinzufügen (save) action"
+                                            alt="Ansicht „Artikel hinzufügen“ mit der Aktion „Hinzufügen“"
                                             loading="lazy"
                                             decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
                                             onError={() => setHasHinzufugenScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
                                 ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for save action">
+                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Speichern">
                                         <ScreenshotTopBar>
                                             <Dot $color="#ef4444" />
                                             <Dot $color="#f59e0b" />
@@ -421,10 +426,10 @@ const AddItemGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/Hinzufungen.jpeg</code> to show the save
-                                                (“Hinzufügen”) screenshot.
+                                                Fügen Sie <code>public/guide/Hinzufungen.jpeg</code> hinzu, um den
+                                                Screenshot der Aktion „Hinzufügen“ anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
@@ -436,10 +441,10 @@ const AddItemGuideScreen = () => {
                                     <Search size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Verify</StepTitle>
+                                    <StepTitle>Prüfen</StepTitle>
                                     <StepText>
-                                        Go back to “Inventar” and search for the new ID/name to confirm it’s in the
-                                        list.
+                                        Gehen Sie zurück zu „Inventar“ und suchen Sie nach der neuen ID/dem Namen, um zu
+                                        bestätigen, dass der Eintrag in der Liste ist.
                                     </StepText>
                                 </div>
                             </AddItemStep>
@@ -448,17 +453,17 @@ const AddItemGuideScreen = () => {
                         <DesktopOnly>
                             <AddItemVisualColumn>
                                 {hasAddItemScreenshot ? (
-                                    <ScreenshotFigure aria-label="Add item screenshot">
+                                    <ScreenshotFigure aria-label="Screenshot: Artikel hinzufügen">
                                         <AddItemScreenshotImage
                                             src={ADD_ITEM_SCREENSHOT_SRC}
-                                            alt="Add item form view showing required fields and save button"
+                                            alt="Formular zum Hinzufügen eines Artikels mit Pflichtfeldern und Hinzufügen-Schaltfläche"
                                             loading="lazy"
                                             decoding="async"
                                             onError={() => setHasAddItemScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
                                 ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for add item">
+                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Artikel hinzufügen">
                                         <ScreenshotTopBar>
                                             <Dot $color="#ef4444" />
                                             <Dot $color="#f59e0b" />
@@ -469,27 +474,27 @@ const AddItemGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/AddItem.jpeg</code> to show the add-item form
-                                                screenshot.
+                                                Fügen Sie <code>public/guide/AddItem.jpeg</code> hinzu, um den Screenshot
+                                                des Formulars zum Hinzufügen anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
                                 )}
 
                                 {hasHinzufugenScreenshot ? (
-                                    <ScreenshotFigure aria-label="Save item screenshot">
+                                    <ScreenshotFigure aria-label="Screenshot: Artikel speichern">
                                         <AddItemScreenshotImage
                                             src={ADD_ITEM_SAVE_SCREENSHOT_SRC}
-                                            alt="Add item screen showing the Hinzufügen (save) action"
+                                            alt="Ansicht „Artikel hinzufügen“ mit der Aktion „Hinzufügen“"
                                             loading="lazy"
                                             decoding="async"
                                             onError={() => setHasHinzufugenScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
                                 ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for save action">
+                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Speichern">
                                         <ScreenshotTopBar>
                                             <Dot $color="#ef4444" />
                                             <Dot $color="#f59e0b" />
@@ -500,10 +505,10 @@ const AddItemGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/Hinzufungen.jpeg</code> to show the save
-                                                (“Hinzufügen”) screenshot.
+                                                Fügen Sie <code>public/guide/Hinzufungen.jpeg</code> hinzu, um den
+                                                Screenshot der Aktion „Hinzufügen“ anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
@@ -539,36 +544,37 @@ const ImportExportGuideScreen = () => {
                             <IconPill>
                                 <FileUp size={16} />
                             </IconPill>
-                            <span>Import / export data</span>
+                            <span>Daten importieren / exportieren</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Export an Excel backup of the inventory, or import new data from Excel. Import can extend
-                            the current database or overwrite it.
+                            Exportieren Sie eine Excel-Sicherung des Inventars oder importieren Sie neue Daten aus Excel.
+                            Der Import kann die aktuelle Datenbank erweitern oder überschreiben.
                         </TaskSubtitle>
                     </TaskHeader>
 
-                    <TaskGrid>
-                        <Steps>
-                            <Step>
+                    <ImportExportTaskGrid>
+                        <ImportExportSteps>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <FolderSync size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Open “Import / Export”</StepTitle>
+                                    <StepTitle>„Import / Export“ öffnen</StepTitle>
                                     <StepText>
-                                        Use the sidebar (or “Mehr”) and open the Import / Export screen.
+                                        Öffnen Sie über die Sidebar (oder „Mehr“) den Bereich Import / Export.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </ImportExportStep>
 
                             <MobileOnly>
                                 {hasImportExportScreenshot ? (
                                     <ScreenshotFigure aria-label="Import / Export screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_EXPORT_SCREENSHOT_SRC}
-                                            alt="Import / Export screen showing file picker and Importieren/Exportieren buttons"
+                                            alt="Import/Export-Ansicht mit Dateiauswahl und Import/Export-Aktionen"
                                             loading="lazy"
                                             decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
                                             onError={() => setHasImportExportScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
@@ -584,62 +590,64 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportExport.jpeg</code> to show the
-                                                import/export screenshot.
+                                                Fügen Sie <code>public/guide/ImportExport.jpeg</code> hinzu, um den
+                                                Import/Export-Screenshot anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
                                 )}
                             </MobileOnly>
 
-                            <Step>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <Download size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Export a backup (recommended)</StepTitle>
+                                    <StepTitle>Backup exportieren (empfohlen)</StepTitle>
                                     <StepText>
-                                        Click <strong>Exportieren</strong> to download an <code>.xlsx</code> backup
-                                        before making big changes.
+                                        Klicken Sie auf <strong>Exportieren</strong>, um vor größeren Änderungen ein{' '}
+                                        <code>.xlsx</code>-Backup herunterzuladen.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </ImportExportStep>
 
-                            <Step>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <Upload size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Select your Excel file</StepTitle>
+                                    <StepTitle>Excel-Datei auswählen</StepTitle>
                                     <StepText>
-                                        Click <strong>Durchsuchen</strong> and choose an Excel file (<code>.xlsx</code>,{' '}
-                                        <code>.xls</code>, or <code>.csv</code>).
+                                        Klicken Sie auf <strong>Durchsuchen</strong> und wählen Sie eine Excel-Datei (
+                                        <code>.xlsx</code>, <code>.xls</code> oder <code>.csv</code>).
                                     </StepText>
                                 </div>
-                            </Step>
+                            </ImportExportStep>
 
-                            <Step>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <MousePointerClick size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Start import</StepTitle>
+                                    <StepTitle>Import starten</StepTitle>
                                     <StepText>
-                                        Click <strong>Importieren</strong>. You’ll see progress while the import runs.
+                                        Klicken Sie auf <strong>Importieren</strong>. Der Fortschritt wird angezeigt,
+                                        während der Import läuft.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </ImportExportStep>
 
                             <MobileOnly>
                                 {hasImportInProcessScreenshot ? (
                                     <ScreenshotFigure aria-label="Import progress screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_IN_PROCESS_SCREENSHOT_SRC}
-                                            alt="Import in progress showing a progress indicator"
+                                            alt="Import mit Fortschrittsanzeige"
                                             loading="lazy"
                                             decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
                                             onError={() => setHasImportInProcessScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
@@ -655,38 +663,39 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportInProcess.jpeg</code> to show the
-                                                in-progress import screenshot.
+                                                Fügen Sie <code>public/guide/ImportInProcess.jpeg</code> hinzu, um den
+                                                Screenshot des laufenden Imports anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
                                 )}
                             </MobileOnly>
 
-                            <Step>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <TriangleAlert size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Choose extend vs overwrite</StepTitle>
+                                    <StepTitle>Erweitern oder überschreiben wählen</StepTitle>
                                     <StepText>
-                                        If items already exist, pick <strong>Erweitern</strong> (keep existing + add
-                                        new) or <strong>Überschreiben</strong> (delete existing + replace with imported
-                                        data). Overwrite requires typing <strong>überschreiben</strong> to confirm.
+                                        Wenn bereits Einträge existieren, wählen Sie <strong>Erweitern</strong> (bestehende
+                                        behalten + neue hinzufügen) oder <strong>Überschreiben</strong> (bestehende löschen
+                                        + ersetzen). Zum Überschreiben müssen Sie <strong>überschreiben</strong> eingeben.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </ImportExportStep>
 
                             <MobileOnly>
                                 {hasImportConfirmationScreenshot ? (
                                     <ScreenshotFigure aria-label="Import confirmation screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_EXPORT_CONFIRMATION_SCREENSHOT_SRC}
-                                            alt="Import confirmation modal showing extend vs overwrite options"
+                                            alt="Import-Bestätigung mit den Optionen Erweitern und Überschreiben"
                                             loading="lazy"
                                             decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
                                             onError={() => setHasImportConfirmationScreenshot(false)}
                                         />
                                     </ScreenshotFigure>
@@ -702,37 +711,37 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportConfirmation.jpeg</code> to show the
-                                                confirmation screenshot.
+                                                Fügen Sie <code>public/guide/ImportConfirmation.jpeg</code> hinzu, um den
+                                                Bestätigungs-Screenshot anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
                                 )}
                             </MobileOnly>
 
-                            <Step>
+                            <ImportExportStep>
                                 <StepIcon>
                                     <Search size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Verify results</StepTitle>
+                                    <StepTitle>Ergebnis prüfen</StepTitle>
                                     <StepText>
-                                        Go to “Inventar” and search for a few known items to confirm the import worked
-                                        as expected.
+                                        Gehen Sie zu „Inventar“ und suchen Sie nach einigen bekannten Artikeln, um den
+                                        Import zu prüfen.
                                     </StepText>
                                 </div>
-                            </Step>
-                        </Steps>
+                            </ImportExportStep>
+                        </ImportExportSteps>
 
                         <DesktopOnly>
-                            <VisualColumn>
+                            <ImportExportVisualColumn>
                                 {hasImportExportScreenshot ? (
                                     <ScreenshotFigure aria-label="Import / Export screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_EXPORT_SCREENSHOT_SRC}
-                                            alt="Import / Export screen showing file picker and Importieren/Exportieren buttons"
+                                            alt="Import/Export-Ansicht mit Dateiauswahl und Import/Export-Aktionen"
                                             loading="lazy"
                                             decoding="async"
                                             onError={() => setHasImportExportScreenshot(false)}
@@ -750,10 +759,10 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportExport.jpeg</code> to show the
-                                                import/export screenshot.
+                                                Fügen Sie <code>public/guide/ImportExport.jpeg</code> hinzu, um den
+                                                Import/Export-Screenshot anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
@@ -763,7 +772,7 @@ const ImportExportGuideScreen = () => {
                                     <ScreenshotFigure aria-label="Import confirmation screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_EXPORT_CONFIRMATION_SCREENSHOT_SRC}
-                                            alt="Import confirmation modal showing extend vs overwrite options"
+                                            alt="Import-Bestätigung mit den Optionen Erweitern und Überschreiben"
                                             loading="lazy"
                                             decoding="async"
                                             onError={() => setHasImportConfirmationScreenshot(false)}
@@ -781,10 +790,10 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportConfirmation.jpeg</code> to show the
-                                                confirmation screenshot.
+                                                Fügen Sie <code>public/guide/ImportConfirmation.jpeg</code> hinzu, um den
+                                                Bestätigungs-Screenshot anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
@@ -794,7 +803,7 @@ const ImportExportGuideScreen = () => {
                                     <ScreenshotFigure aria-label="Import progress screenshot">
                                         <ScreenshotImage
                                             src={IMPORT_IN_PROCESS_SCREENSHOT_SRC}
-                                            alt="Import in progress showing a progress indicator"
+                                            alt="Import mit Fortschrittsanzeige"
                                             loading="lazy"
                                             decoding="async"
                                             onError={() => setHasImportInProcessScreenshot(false)}
@@ -812,17 +821,17 @@ const ImportExportGuideScreen = () => {
                                             <PlaceholderIcon>
                                                 <ImageIcon size={28} />
                                             </PlaceholderIcon>
-                                            <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
                                             <PlaceholderText>
-                                                Add <code>public/guide/ImportInProcess.jpeg</code> to show the
-                                                in-progress import screenshot.
+                                                Fügen Sie <code>public/guide/ImportInProcess.jpeg</code> hinzu, um den
+                                                Screenshot des laufenden Imports anzuzeigen.
                                             </PlaceholderText>
                                         </ScreenshotBody>
                                     </ScreenshotPlaceholder>
                                 )}
-                            </VisualColumn>
+                            </ImportExportVisualColumn>
                         </DesktopOnly>
-                    </TaskGrid>
+                    </ImportExportTaskGrid>
                 </TaskCard>
             </StyledContainer>
         </div>
@@ -851,209 +860,316 @@ const PackingPlansGuideScreen = () => {
                             <IconPill>
                                 <ClipboardList size={16} />
                             </IconPill>
-                            <span>Packing plans</span>
+                            <span>Packing-Pläne erstellen</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Create a packing plan by selecting items in “Pack” mode, set required quantities, then save
-                            and review the plan.
+                            Erstellen Sie einen Packing-Plan, indem Sie im „Pack“-Modus Artikel auswählen, Mengen
+                            festlegen, speichern und anschließend prüfen.
                         </TaskSubtitle>
                     </TaskHeader>
 
-                    <TaskGrid>
-                        <Steps>
-                            <Step>
+                    <PackingPlansTaskGrid>
+                        <PackingPlansSteps>
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <Package size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Open “Inventar”</StepTitle>
-                                    <StepText>Use the sidebar navigation to open the inventory list.</StepText>
+                                    <StepTitle>„Inventar“ öffnen</StepTitle>
+                                    <StepText>Öffnen Sie über die Sidebar-Navigation die Inventarliste.</StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <Package size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Enable “Pack” mode</StepTitle>
+                                    <StepTitle>„Pack“-Modus aktivieren</StepTitle>
                                     <StepText>
-                                        In the top bar, click <strong>Pack</strong>. The UI switches to selection mode.
+                                        Klicken Sie in der oberen Leiste auf <strong>Pack</strong>. Die UI wechselt in
+                                        den Auswahlmodus.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <MousePointerClick size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Select items</StepTitle>
+                                    <StepTitle>Artikel auswählen</StepTitle>
                                     <StepText>
-                                        Click item rows/cards to select them for the plan. Selected items are
-                                        highlighted.
+                                        Klicken Sie Artikelzeilen/-karten an, um sie für den Plan auszuwählen.
+                                        Ausgewählte Artikel werden hervorgehoben.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <MobileOnly>
+                                {hasPackPlanScreenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_SRC}
+                                            alt="Pack-Modus mit ausgewählten Artikeln, Planname und Speichern-Aktion"
+                                            loading="lazy"
+                                            decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
+                                            onError={() => setHasPackPlanScreenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
+
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan.jpeg</code> hinzu, um den
+                                                Packing-Plan-Screenshot anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
+                            </MobileOnly>
+
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <ArrowDownNarrowWide size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Set quantities</StepTitle>
+                                    <StepTitle>Mengen festlegen</StepTitle>
                                     <StepText>
-                                        Use the quantity controls (spinner) to set the{' '}
-                                        <strong>required quantity</strong> for each selected item.
+                                        Nutzen Sie die Mengensteuerung (Spinner), um die{' '}
+                                        <strong>benötigte Menge</strong> pro ausgewähltem Artikel zu setzen.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <SquarePen size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Name the plan</StepTitle>
+                                    <StepTitle>Plan benennen</StepTitle>
                                     <StepText>
-                                        Enter a plan name in the <strong>Plan name…</strong> field (shown while in pack
-                                        mode).
+                                        Tragen Sie im Feld <strong>Plan name…</strong> einen Namen ein (sichtbar im
+                                        Pack-Modus).
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <CheckCircle2 size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Save</StepTitle>
+                                    <StepTitle>Speichern</StepTitle>
                                     <StepText>
-                                        Click <strong>Save</strong>. The app creates the packing plan and opens its
-                                        details page.
+                                        Klicken Sie auf <strong>Save</strong>. Die App erstellt den Plan und öffnet die
+                                        Detailseite.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <MobileOnly>
+                                {hasPackPlan2Screenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot 2">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_2_SRC}
+                                            alt="Packing-Plan Schritt 2"
+                                            loading="lazy"
+                                            decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
+                                            onError={() => setHasPackPlan2Screenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 2">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
+
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan2.jpeg</code> hinzu, um den
+                                                Screenshot des Packing-Plans (Schritt 2) anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
+                            </MobileOnly>
+
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <ClipboardList size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Open Packing Plan</StepTitle>
+                                    <StepTitle>Packing-Pläne öffnen</StepTitle>
                                     <StepText>
-                                        Click <strong>Packing Plans</strong> in the sidebar (tab with the list icon) to
-                                        open the overview of all saved packing plans.
+                                        Klicken Sie in der Sidebar auf <strong>Packing Plans</strong> (Tab mit Listen-Icon),
+                                        um die Übersicht der gespeicherten Pläne zu öffnen.
                                     </StepText>
                                 </div>
-                            </Step>
+                            </PackingPlansStep>
 
-                            <Step>
+                            <MobileOnly>
+                                {hasPackPlan3Screenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot 3">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_3_SRC}
+                                            alt="Packing-Plan Schritt 3"
+                                            loading="lazy"
+                                            decoding="async"
+                                            // Fallback to placeholder if the public screenshot is missing.
+                                            onError={() => setHasPackPlan3Screenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 3">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
+
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan3.jpeg</code> hinzu, um den
+                                                Screenshot des Packing-Plans (Schritt 3) anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
+                            </MobileOnly>
+
+                            <PackingPlansStep>
                                 <StepIcon>
                                     <MousePointerClick size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Open a saved plan</StepTitle>
-                                    <StepText>Select a plan from the list to open its details again.</StepText>
+                                    <StepTitle>Gespeicherten Plan öffnen</StepTitle>
+                                    <StepText>
+                                        Wählen Sie einen Plan aus der Liste, um die Details erneut zu öffnen.
+                                    </StepText>
                                 </div>
-                            </Step>
-                        </Steps>
+                            </PackingPlansStep>
+                        </PackingPlansSteps>
 
-                        <VisualColumn>
-                            {hasPackPlanScreenshot ? (
-                                <ScreenshotFigure aria-label="Packing plans screenshot">
-                                    <ScreenshotImage
-                                        src={PACKING_PLANS_SCREENSHOT_SRC}
-                                        alt="Inventory pack mode with selected items, plan name input, and save action"
-                                        loading="lazy"
-                                        decoding="async"
-                                        onError={() => setHasPackPlanScreenshot(false)}
-                                    />
-                                </ScreenshotFigure>
-                            ) : (
-                                <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans">
-                                    <ScreenshotTopBar>
-                                        <Dot $color="#ef4444" />
-                                        <Dot $color="#f59e0b" />
-                                        <Dot $color="#10b981" />
-                                    </ScreenshotTopBar>
+                        <DesktopOnly>
+                            <PackingPlansVisualColumn>
+                                {hasPackPlanScreenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_SRC}
+                                            alt="Pack-Modus mit ausgewählten Artikeln, Planname und Speichern-Aktion"
+                                            loading="lazy"
+                                            decoding="async"
+                                            onError={() => setHasPackPlanScreenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
 
-                                    <ScreenshotBody>
-                                        <PlaceholderIcon>
-                                            <ImageIcon size={28} />
-                                        </PlaceholderIcon>
-                                        <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
-                                        <PlaceholderText>
-                                            Add <code>public/guide/PackPlan.jpeg</code> to show the packing plan
-                                            screenshot.
-                                        </PlaceholderText>
-                                    </ScreenshotBody>
-                                </ScreenshotPlaceholder>
-                            )}
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan.jpeg</code> hinzu, um den
+                                                Packing-Plan-Screenshot anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
 
-                            {hasPackPlan2Screenshot ? (
-                                <ScreenshotFigure aria-label="Packing plans screenshot 2">
-                                    <ScreenshotImage
-                                        src={PACKING_PLANS_SCREENSHOT_2_SRC}
-                                        alt="Packing plan step 2"
-                                        loading="lazy"
-                                        decoding="async"
-                                        onError={() => setHasPackPlan2Screenshot(false)}
-                                    />
-                                </ScreenshotFigure>
-                            ) : (
-                                <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 2">
-                                    <ScreenshotTopBar>
-                                        <Dot $color="#ef4444" />
-                                        <Dot $color="#f59e0b" />
-                                        <Dot $color="#10b981" />
-                                    </ScreenshotTopBar>
+                                {hasPackPlan2Screenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot 2">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_2_SRC}
+                                            alt="Packing-Plan Schritt 2"
+                                            loading="lazy"
+                                            decoding="async"
+                                            onError={() => setHasPackPlan2Screenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 2">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
 
-                                    <ScreenshotBody>
-                                        <PlaceholderIcon>
-                                            <ImageIcon size={28} />
-                                        </PlaceholderIcon>
-                                        <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
-                                        <PlaceholderText>
-                                            Add <code>public/guide/PackPlan2.jpeg</code> to show the packing plan (step
-                                            2) screenshot.
-                                        </PlaceholderText>
-                                    </ScreenshotBody>
-                                </ScreenshotPlaceholder>
-                            )}
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan2.jpeg</code> hinzu, um den
+                                                Screenshot des Packing-Plans (Schritt 2) anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
 
-                            {hasPackPlan3Screenshot ? (
-                                <ScreenshotFigure aria-label="Packing plans screenshot 3">
-                                    <ScreenshotImage
-                                        src={PACKING_PLANS_SCREENSHOT_3_SRC}
-                                        alt="Packing plan step 3"
-                                        loading="lazy"
-                                        decoding="async"
-                                        onError={() => setHasPackPlan3Screenshot(false)}
-                                    />
-                                </ScreenshotFigure>
-                            ) : (
-                                <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 3">
-                                    <ScreenshotTopBar>
-                                        <Dot $color="#ef4444" />
-                                        <Dot $color="#f59e0b" />
-                                        <Dot $color="#10b981" />
-                                    </ScreenshotTopBar>
+                                {hasPackPlan3Screenshot ? (
+                                    <ScreenshotFigure aria-label="Packing plans screenshot 3">
+                                        <ScreenshotImage
+                                            src={PACKING_PLANS_SCREENSHOT_3_SRC}
+                                            alt="Packing-Plan Schritt 3"
+                                            loading="lazy"
+                                            decoding="async"
+                                            onError={() => setHasPackPlan3Screenshot(false)}
+                                        />
+                                    </ScreenshotFigure>
+                                ) : (
+                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for packing plans step 3">
+                                        <ScreenshotTopBar>
+                                            <Dot $color="#ef4444" />
+                                            <Dot $color="#f59e0b" />
+                                            <Dot $color="#10b981" />
+                                        </ScreenshotTopBar>
 
-                                    <ScreenshotBody>
-                                        <PlaceholderIcon>
-                                            <ImageIcon size={28} />
-                                        </PlaceholderIcon>
-                                        <PlaceholderTitle>Screenshot goes here</PlaceholderTitle>
-                                        <PlaceholderText>
-                                            Add <code>public/guide/PackPlan3.jpeg</code> to show the packing plan (step
-                                            3) screenshot.
-                                        </PlaceholderText>
-                                    </ScreenshotBody>
-                                </ScreenshotPlaceholder>
-                            )}
-                        </VisualColumn>
-                    </TaskGrid>
+                                        <ScreenshotBody>
+                                            <PlaceholderIcon>
+                                                <ImageIcon size={28} />
+                                            </PlaceholderIcon>
+                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
+                                            <PlaceholderText>
+                                                Fügen Sie <code>public/guide/PackPlan3.jpeg</code> hinzu, um den
+                                                Screenshot des Packing-Plans (Schritt 3) anzuzeigen.
+                                            </PlaceholderText>
+                                        </ScreenshotBody>
+                                    </ScreenshotPlaceholder>
+                                )}
+                            </PackingPlansVisualColumn>
+                        </DesktopOnly>
+                    </PackingPlansTaskGrid>
                 </TaskCard>
             </StyledContainer>
         </div>
@@ -1307,6 +1423,76 @@ const AddItemStep = styled(Step)`
         border: 1px solid ${theme.colors.border.default};
         background: ${theme.colors.background.white};
         box-shadow: ${theme.shadows.sm};
+    }
+`;
+
+// Desktop-only layout polish for the Import/Export guide (mobile stays unchanged)
+const ImportExportTaskGrid = styled(TaskGrid)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        grid-template-columns: minmax(0, 1fr) 420px;
+        align-items: start;
+    }
+`;
+
+const ImportExportSteps = styled(Steps)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        gap: ${theme.spacing.md};
+    }
+`;
+
+const ImportExportStep = styled(Step)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        padding: ${theme.spacing.md};
+        border-radius: ${theme.borderRadius.lg};
+        border: 1px solid ${theme.colors.border.default};
+        background: ${theme.colors.background.white};
+        box-shadow: ${theme.shadows.sm};
+    }
+`;
+
+const ImportExportVisualColumn = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing.lg};
+
+    @media (min-width: ${theme.breakpoints.lg}) {
+        position: sticky;
+        top: 96px;
+    }
+`;
+
+// Desktop-only layout polish for the Packing Plans guide (mobile stays unchanged)
+const PackingPlansTaskGrid = styled(TaskGrid)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        grid-template-columns: minmax(0, 1fr) 420px;
+        align-items: start;
+    }
+`;
+
+const PackingPlansSteps = styled(Steps)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        gap: ${theme.spacing.md};
+    }
+`;
+
+const PackingPlansStep = styled(Step)`
+    @media (min-width: ${theme.breakpoints.lg}) {
+        padding: ${theme.spacing.md};
+        border-radius: ${theme.borderRadius.lg};
+        border: 1px solid ${theme.colors.border.default};
+        background: ${theme.colors.background.white};
+        box-shadow: ${theme.shadows.sm};
+    }
+`;
+
+const PackingPlansVisualColumn = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing.lg};
+
+    @media (min-width: ${theme.breakpoints.lg}) {
+        position: sticky;
+        top: 96px;
     }
 `;
 

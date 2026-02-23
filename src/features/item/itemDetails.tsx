@@ -25,8 +25,8 @@ function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
     const day = d.getDate();
 
-    // set to first of month to avoid rollover issues, then advance months,
-    // then clamp day to the number of days in that month
+    // Set to first of month to avoid rollover issues, then advance months,
+    // then clamp day to the number of days in that month.
     d.setDate(1);
     d.setMonth(d.getMonth() + months);
     const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -39,7 +39,7 @@ const ItemDetails = () => {
     const [item, setItem] = useState<IItem | null>(null);
     const navigate = useNavigate();
 
-    // Fetch the item from Dexie by ID
+    // Fetch the item from Dexie by ID.
     useEffect(() => {
         const fetchItem = async () => {
             if (!itemId) return;
@@ -51,6 +51,7 @@ const ItemDetails = () => {
         fetchItem();
     }, [itemId]);
 
+    // Placeholder for future document attachments.
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
     };

@@ -7,7 +7,7 @@ import { Card, Container, BackButton } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
 
-// Icon mapping for scenario types
+// Icon mapping for scenario types shown on cards.
 const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
     switch (scenarioType) {
         case 'flood':
@@ -24,7 +24,7 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
     }
 };
 
-// Labels for scenario types
+// Human-readable labels for scenario types.
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
@@ -46,6 +46,7 @@ const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
 
 const PackingPlanOverview = () => {
     const navigate = useNavigate();
+    // Live list of saved packing plans from Dexie.
     const packingPlans = packingPlanApi.usePackingPlans();
 
     const handlePlanClick = (planId: string) => {
