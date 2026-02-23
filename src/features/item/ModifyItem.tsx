@@ -99,7 +99,7 @@ const ErrorText = styled.small`
 `;
 
 const ModifyItem = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     // Form state starts from the loaded item and is edited in place.
     const [formData, setFormData] = useState<Partial<IItem>>({});
@@ -111,6 +111,7 @@ const ModifyItem = () => {
     useEffect(() => {
         // Load the item by ID and seed the form values.
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
@@ -119,7 +120,7 @@ const ModifyItem = () => {
             }
         };
         fetchItem();
-    }, [itemId]);
+    }, [id]);
 
     // Auto-grow textarea to fit remark content.
     const adjustTextareaHeight = () => {
@@ -177,6 +178,7 @@ const ModifyItem = () => {
             if (!item) return;
 
             const updates: Partial<Omit<IItem, 'id'>> = {
+                itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
                 amountTarget: formData.amountTarget ?? 0,
@@ -248,20 +250,20 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="id">
-                            Identifikationsnummer
+                        <Label htmlFor="itemId">
+                            Sachnummer
                             <RequiredStar />
                         </Label>
                         <Input
-                            id="id"
-                            name="id"
+                            id="itemId"
+                            name="itemId"
                             type="text"
                             placeholder="ID eingeben"
-                            value={formData.id ?? ''}
-                            onChange={(e) => handleChange('id', e.target.value)}
-                            onBlur={() => handleBlur('id')}
+                            value={formData.itemId ?? ''}
+                            onChange={(e) => handleChange('itemId', e.target.value)}
+                            onBlur={() => handleBlur('itemId')}
                         />
-                        {renderError('id')}
+                        {renderError('itemId')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>

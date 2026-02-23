@@ -24,9 +24,8 @@ export interface IPackingPlan {
 export interface IPackingPlanItem {
     id: string;
     packingPlanId: string;
-    itemId: string; // Reference to IItem
+    Iid: number; // Reference to IItem
     requiredQuantity: number; // How many are needed for this scenario
     notes?: string; // Optional notes about why this item is needed
     order: number; // Display order
 }
-

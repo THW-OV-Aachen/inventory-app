@@ -95,7 +95,7 @@ const PackingPlanDetails = () => {
         }
 
         // Check if item already exists in plan
-        const existingItem = planItems.find((item) => item.itemId === selectedItemId);
+        const existingItem = planItems.find((item) => item.Iid.toString() === selectedItemId);
         if (existingItem) {
             alert('This item is already in the packing plan.');
             return;
@@ -105,7 +105,7 @@ const PackingPlanDetails = () => {
             const maxOrder = planItems.length > 0 ? Math.max(...planItems.map((i) => i.order)) : -1;
             await packingPlanApi.addPackingPlanItem({
                 packingPlanId: planId,
-                itemId: selectedItemId,
+                Iid: Number(selectedItemId),
                 requiredQuantity: quantity,
                 order: maxOrder + 1,
             });
@@ -147,7 +147,7 @@ const PackingPlanDetails = () => {
     };
 
     // Get item details for display
-    const getItemDetails = (itemId: string): IItem | undefined => {
+    const getItemDetails = (itemId: number): IItem | undefined => {
         return allInventoryItems.find((item) => item.id === itemId);
     };
 
@@ -190,7 +190,7 @@ const PackingPlanDetails = () => {
     // If plan contents change, drop any packed ids that no longer exist in the plan.
     useEffect(() => {
         if (!planId) return;
-        const itemIdsInPlan = new Set(planItems.map((pi) => pi.itemId));
+        const itemIdsInPlan = new Set(planItems.map((pi) => pi.Iid.toString()));
         setPackedItemIds((prev) => {
             const next = new Set(Array.from(prev).filter((id) => itemIdsInPlan.has(id)));
             return next.size === prev.size ? prev : next;
@@ -207,7 +207,10 @@ const PackingPlanDetails = () => {
         });
     };
 
-    const packedCount = planItems.reduce((acc, pi) => acc + (packedItemIds.has(pi.itemId) ? 1 : 0), 0);
+    const packedCount = planItems.reduce(
+        (acc, pi) => acc + (packedItemIds.has(pi.Iid.toString()) ? 1 : 0),
+        0
+    );
 
     // Filter inventory items for modal
     const filteredInventoryItems = allInventoryItems.filter((item) => {
@@ -215,7 +218,7 @@ const PackingPlanDetails = () => {
         const term = searchTerm.toLowerCase();
         return (
             item.name.toLowerCase().includes(term) ||
-            item.id.toLowerCase().includes(term) ||
+            item.id.toString().includes(term) ||
             (item.inventoryNumber && item.inventoryNumber.toLowerCase().includes(term)) ||
             (item.location && item.location.toLowerCase().includes(term))
         );
@@ -223,7 +226,7 @@ const PackingPlanDetails = () => {
 
     // Exclude items already in the plan
     const availableItems = filteredInventoryItems.filter(
-        (item) => !planItems.some((planItem) => planItem.itemId === item.id)
+        (item) => !planItems.some((planItem) => planItem.Iid === item.id)
     );
 
     if (!plan) {
@@ -325,13 +328,13 @@ const PackingPlanDetails = () => {
                     ) : (
                         <ItemsList>
                             {planItems.map((planItem) => {
-                                const item = getItemDetails(planItem.itemId);
+                                const item = getItemDetails(planItem.Iid);
                                 const itemName = item?.name ?? 'Unknown item';
-                                const itemId = item?.id ?? planItem.itemId;
+                                const itemId = item?.id ?? planItem.Iid;
                                 const inventoryNumber = item?.inventoryNumber;
                                 const location = item?.location;
                                 const missingNote = item ? '' : ' • Item missing from inventory';
-                                const isPacked = packedItemIds.has(planItem.itemId);
+                                const isPacked = packedItemIds.has(planItem.Iid.toString());
 
                                 return (
                                     <ItemRow key={planItem.id} data-packed={isPacked ? 'true' : 'false'}>
@@ -368,7 +371,7 @@ const PackingPlanDetails = () => {
                                                 <Checkbox
                                                     type="checkbox"
                                                     checked={isPacked}
-                                                    onChange={() => togglePacked(planItem.itemId)}
+                                                    onChange={() => togglePacked(planItem.Iid.toString())}
                                                 />
                                             </PackCheckboxWrapper>
                                         ) : (
@@ -471,8 +474,8 @@ const PackingPlanDetails = () => {
                                     availableItems.map((item) => (
                                         <ItemOption
                                             key={item.id}
-                                            onClick={() => setSelectedItemId(item.id)}
-                                            $selected={selectedItemId === item.id}
+                                            onClick={() => setSelectedItemId(item.id.toString())}
+                                            $selected={selectedItemId === item.id.toString()}
                                         >
                                             <div>
                                                 <ItemOptionName>{item.name}</ItemOptionName>
@@ -917,13 +920,11 @@ const ItemOption = styled.div<{ $selected: boolean }>`
     padding: ${theme.spacing.md};
     cursor: pointer;
     border-bottom: 1px solid ${theme.colors.border.default};
-    background-color: ${({ $selected }) =>
-        $selected ? theme.colors.primaryLight : theme.colors.background.white};
+    background-color: ${({ $selected }) => ($selected ? theme.colors.primaryLight : theme.colors.background.white)};
     transition: ${theme.transitions.default};
 
     &:hover {
-        background-color: ${({ $selected }) =>
-            $selected ? theme.colors.primaryLight : theme.colors.background.light};
+        background-color: ${({ $selected }) => ($selected ? theme.colors.primaryLight : theme.colors.background.light)};
     }
 
     &:last-child {

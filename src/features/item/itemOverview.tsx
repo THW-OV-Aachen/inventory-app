@@ -91,7 +91,7 @@ const ItemOverview = () => {
             let bValue: any;
 
             switch (sortField) {
-                case 'id':
+                case 'itemId':
                     aValue = a.id;
                     bValue = b.id;
                     break;
@@ -205,7 +205,7 @@ const ItemOverview = () => {
             const packingPlanItems: IPackingPlanItem[] = Array.from(selectedItemIds).map((itemId, index) => ({
                 id: createId('planItem'),
                 packingPlanId: packingPlan.id,
-                itemId: itemId,
+                Iid: Number(itemId),
                 requiredQuantity: qtyByItemId[itemId] ?? 1,
                 notes: '',
                 order: index,
@@ -287,10 +287,10 @@ const ItemOverview = () => {
                                     <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
-                            <HeaderCell onClick={() => handleSort('id')}>
+                            <HeaderCell onClick={() => handleSort('itemId')}>
                                 <HeaderContent>
                                     <span>ID</span>
-                                    <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
+                                    <SortIndicator active={sortField === 'itemId'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('deviceNumber')}>
@@ -318,7 +318,7 @@ const ItemOverview = () => {
                                     // In pack mode, row click toggles selection.
                                     toggleItem(itemId, defaultPackQty);
                                 } else {
-                                    navigate(`/items/${itemId}`);
+                                    navigate(`/items/${item.id}`);
                                 }
                             };
 
@@ -368,33 +368,37 @@ const ItemOverview = () => {
                                     <TableCell id="location">
                                         <IconContainer icon={MapPin} />
                                         {(() => {
-                                            const components = parseLocationStringRaw(item.location);
-                                            return (
-                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
-                                                    {Object.entries(components).map(([key, value]) => {
-                                                        return (
-                                                            <React.Fragment key={`${item.id}-${key}`}>
-                                                                {key === 'subcontainerNumber' && '.'}
-                                                                {key === 'toolNumber' && '-'}
-                                                                <InfoInline
-                                                                    infoComponent={
-                                                                        <span>
-                                                                            {mapLocationKey(key)}
-                                                                            {key === 'type' && ': '}{' '}
-                                                                            {key === 'type' &&
-                                                                                (value === 'R'
-                                                                                    ? 'Rollcontainer'
-                                                                                    : 'Box (EU-Palette)')}
-                                                                        </span>
-                                                                    }
-                                                                >
-                                                                    <span>{value}</span>
-                                                                </InfoInline>
-                                                            </React.Fragment>
-                                                        );
-                                                    })}
-                                                </div>
-                                            );
+                                            try {
+                                                const components = parseLocationStringRaw(item.location);
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
+                                                        {Object.entries(components).map(([key, value]) => {
+                                                            return (
+                                                                <React.Fragment key={`${item.id}-${key}`}>
+                                                                    {key === 'subcontainerNumber' && '.'}
+                                                                    {key === 'toolNumber' && '-'}
+                                                                    <InfoInline
+                                                                        infoComponent={
+                                                                            <span>
+                                                                                {mapLocationKey(key)}
+                                                                                {key === 'type' && ': '}{' '}
+                                                                                {key === 'type' &&
+                                                                                    (value === 'R'
+                                                                                        ? 'Rollcontainer'
+                                                                                        : 'Box (EU-Palette)')}
+                                                                            </span>
+                                                                        }
+                                                                    >
+                                                                        <span>{value}</span>
+                                                                    </InfoInline>
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            } catch {
+                                                return item.location ?? '-';
+                                            }
                                         })()}
                                     </TableCell>
                                     <TableCell id="id" $hideOnMobile>

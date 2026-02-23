@@ -29,12 +29,13 @@ export interface PaginatedResult<T> {
 
 export const inventoryApi = {
     async addItem(itemData: Omit<IItem, 'id'>): Promise<void> {
+        var id;
         try {
-            await db.items.add(itemData as IItem);
+            id = await db.items.add(itemData as IItem);
         } catch (error) {
             console.error('Failed to add inventory item: ', error);
             if ((error as Error).name === 'ConstraintError') {
-                console.error('Error: An item with this "Sachnummer" (id) already exists.');
+                console.error('Error: An item with the id or inventory number already exists.');
             }
         }
     },
@@ -88,7 +89,7 @@ export const inventoryApi = {
             const filteredItems = allItems.filter((item) => {
                 const matchesSearch =
                     !searchTerm ||
-                    [item.name, item.location, item.id, item.inventoryNumber || '', item.deviceNumber || ''].some(
+                    [item.name, item.location, item.itemId, item.inventoryNumber || '', item.deviceNumber || ''].some(
                         (field) => field.toLowerCase().includes(term)
                     );
 
@@ -141,7 +142,7 @@ export const inventoryApi = {
         return count ?? 0;
     },
 
-    async deleteItem(id: string): Promise<void> {
+    async deleteItem(id: number): Promise<void> {
         try {
             await db.items.delete(id);
         } catch (error) {
@@ -149,7 +150,7 @@ export const inventoryApi = {
         }
     },
 
-    async updateItem(id: string, updates: Partial<Omit<IItem, 'id'>>): Promise<void> {
+    async updateItem(id: number, updates: Partial<Omit<IItem, 'id'>>): Promise<void> {
         try {
             const existingItem = await db.items.get(id);
             if (!existingItem) {
@@ -219,7 +220,7 @@ export const inventoryApi = {
 };
 
 export type SortField =
-    | 'id'
+    | 'itemId'
     | 'name'
     | 'type'
     | 'amountActual'
