@@ -2,7 +2,7 @@
 
 This document focuses only on the frontend part of the project. For backend or data model details, see the main README.
 
-## What I worked on
+## Frontend Overview
 - Translated the Guides landing page text and topic titles/descriptions to German.
 - Updated intro copy and availability hint text to match the new language.
 - Worked with the Guides list interaction flow (topic navigation and availability states) to ensure copy fit the UI.
