@@ -89,18 +89,18 @@ export const inventoryApi = {
             const filteredItems = allItems.filter((item) => {
                 const matchesSearch =
                     !searchTerm ||
-                    [item.name, item.location, item.itemId, item.inventoryNumber || '', item.deviceNumber || ''].some(
-                        (field) => field.toLowerCase().includes(term)
+                    [item.name, item.location, item.itemId, item.inventoryNumber, item.deviceNumber].some(
+                        (field) => (field || '').toLowerCase().includes(term)
                     );
 
                 const matchesDamageLevel = !filters?.damageLevel || item.damageLevel === filters.damageLevel;
-
+                
                 const matchesType =
                     !filters?.type ||
-                    (filters.type === 'isSet' ? item.isSet : filters.type === 'isPart' ? !item.isSet : true);
+                    (filters.type === 'isSet' ? item.isSet === true : filters.type === 'isPart' ? item.isSet === false : true);
 
                 const matchesLocation =
-                    !filters?.location || item.location.toLowerCase().includes(filters.location.toLowerCase());
+                    !filters?.location || (item.location || '').toLowerCase().includes(filters.location.toLowerCase());
 
                 return matchesSearch && matchesDamageLevel && matchesType && matchesLocation;
             });

@@ -289,7 +289,7 @@ const ItemOverview = () => {
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('itemId')}>
                                 <HeaderContent>
-                                    <span>ID</span>
+                                    <span>Sachnummer</span>
                                     <SortIndicator active={sortField === 'itemId'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
@@ -401,8 +401,8 @@ const ItemOverview = () => {
                                             }
                                         })()}
                                     </TableCell>
-                                    <TableCell id="id" $hideOnMobile>
-                                        {item.id ?? '-'}
+                                    <TableCell id="itemId" $hideOnMobile>
+                                        {item.itemId ?? '-'}
                                     </TableCell>
                                     <TableCell id="deviceNumber" $hideOnMobile>
                                         {packMode ? (
