@@ -113,7 +113,7 @@ const MaintenanceOverview = () => {
                                     </DetailRow>
                                     <DetailRow>
                                         <DataLabel>Ist Satz:</DataLabel>
-                                        <DataValue>{item.isSet ? 'Ja' : 'Nein'}</DataValue>
+                                        <DataValue>{item.isSet === true ? 'Ja' : item.isSet === false ? 'Nein' : '-'}</DataValue>
                                     </DetailRow>
                                     <DetailRow>
                                         <DataLabel>Ist / Ziel:</DataLabel>

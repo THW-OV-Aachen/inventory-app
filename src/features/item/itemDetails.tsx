@@ -70,11 +70,11 @@ const ItemDetails = () => {
                         <ChevronLeft size={20} />
                     </StyledBackButton>
                     <Title>
-                        {item.isSet ? (
+                        {item.isSet === true ? (
                             <Layers size={20} color={theme.colors.text.muted} />
-                        ) : (
+                        ) : (item.isSet === false ? 
                             <Box size={20} color={theme.colors.text.muted} />
-                        )}
+                        : "")}
                         {item.name}
                     </Title>
                     <HeaderEditButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>

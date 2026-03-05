@@ -343,7 +343,8 @@ const ItemOverview = () => {
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
                                     <TableCell id="isSet">
-                                        <IconContainer icon={item.isSet ? Boxes : Box} />
+                                        {item.isSet === true && <IconContainer icon={Boxes} />}
+                                        {item.isSet === false && <IconContainer icon={Box} />}
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
