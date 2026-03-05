@@ -367,7 +367,7 @@ const ItemOverview = () => {
                                         <StatusBadge damageLevelType={item.damageLevel} />
                                     </TableCell>
                                     <TableCell id="location">
-                                        <IconContainer icon={MapPin} />
+                                        {item.location && <IconContainer icon={MapPin} />}
                                         {(() => {
                                             try {
                                                 const components = parseLocationStringRaw(item.location);
