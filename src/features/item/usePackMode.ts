@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 // usePackMode.ts
+// Shared pack-mode state for selecting items + quantities and naming a plan.
 export const usePackMode = () => {
     const [packMode, setPackMode] = useState(false);
     const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set()); // use string
@@ -61,6 +62,7 @@ export const usePackMode = () => {
         togglePackMode,
         toggleItem,
         setQuantity,
+        // Clear selection but keep pack mode active.
         clear: () => {
             setSelectedItemIds(new Set());
             setQtyByItemId({});

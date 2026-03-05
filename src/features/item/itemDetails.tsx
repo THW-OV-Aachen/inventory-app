@@ -1,6 +1,6 @@
 import { Box, FileText, Layers, MapPin, Pen, ChevronLeft } from 'lucide-react';
 import styled from 'styled-components';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../db/db';
 import type { IItem } from '../../db/items';
@@ -20,14 +20,13 @@ import {
     ContentWrapper,
 } from '../../styles/components';
 import { mapStatusToTheme, mapDamageLevelToStatus } from '../../styles/utils';
-import { inventoryApi } from '../../app/api';
 
 function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
     const day = d.getDate();
 
-    // set to first of month to avoid rollover issues, then advance months,
-    // then clamp day to the number of days in that month
+    // Set to first of month to avoid rollover issues, then advance months,
+    // then clamp day to the number of days in that month.
     d.setDate(1);
     d.setMonth(d.getMonth() + months);
     const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -40,25 +39,7 @@ const ItemDetails = () => {
     const [item, setItem] = useState<IItem | null>(null);
     const navigate = useNavigate();
 
-    const saveRemark = useCallback(
-        async (newText: string) => {
-            const itemId = id ? parseInt(id, 10) : null;
-            if (!itemId) return;
-            setIsSaving(true);
-            try {
-                await inventoryApi.updateItem(itemId, {
-                    remark: newText || '',
-                });
-            } catch (error) {
-                console.error('Failed to save remark:', error);
-            } finally {
-                setIsSaving(false);
-            }
-        },
-        [id]
-    );
-
-    // Fetch the item from Dexie by ID
+    // Fetch the item from Dexie by ID.
     useEffect(() => {
         const fetchItem = async () => {
             const itemId = id ? parseInt(id, 10) : null;
@@ -71,6 +52,7 @@ const ItemDetails = () => {
         fetchItem();
     }, [id]);
 
+    // Placeholder for future document attachments.
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
     };
@@ -344,6 +326,3 @@ const ButtonContainer = styled.div`
         }
     }
 `;
-function setIsSaving(arg0: boolean) {
-    throw new Error('Function not implemented.');
-}

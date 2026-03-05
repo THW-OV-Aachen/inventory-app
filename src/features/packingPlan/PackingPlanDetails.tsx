@@ -1,10 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { ChevronLeft, Pen, Droplets, Flame, Wind, Search, FileText, Plus, X, Trash2 } from 'lucide-react';
+import {
+    ChevronLeft,
+    Pen,
+    Droplets,
+    Flame,
+    Wind,
+    Search,
+    FileText,
+    Plus,
+    X,
+    Trash2,
+    Package,
+    CheckCircle2,
+} from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import { inventoryApi } from '../../app/api';
-import type { IPackingPlan, IPackingPlanItem, EmergencyScenarioType } from '../../db/packingPlans';
+import type { EmergencyScenarioType } from '../../db/packingPlans';
 import type { IItem } from '../../db/items';
 import IconContainer from '../../utils/IconContainer';
 import { theme } from '../../styles/theme';
@@ -20,7 +33,7 @@ import {
     Input,
 } from '../../styles/components';
 
-// Icon mapping for scenario types
+// Icon mapping for scenario types shown on the plan header.
 const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
     switch (scenarioType) {
         case 'flood':
@@ -37,7 +50,7 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
     }
 };
 
-// Labels for scenario types
+// Human-readable labels for scenario types.
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
@@ -60,23 +73,29 @@ const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
 const PackingPlanDetails = () => {
     const { planId } = useParams<{ planId: string }>();
     const [showAddItemModal, setShowAddItemModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeletingPlan, setIsDeletingPlan] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
     const [quantity, setQuantity] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [packMode, setPackMode] = useState(false);
+    const [packedItemIds, setPackedItemIds] = useState<Set<string>>(new Set());
     const navigate = useNavigate();
 
+    // Live data for plan header, plan items, and inventory selection.
     const plan = planId ? packingPlanApi.usePackingPlan(planId) : undefined;
     const planItems = planId ? packingPlanApi.usePackingPlanItems(planId) : [];
     const allInventoryItems = inventoryApi.useItems();
 
     const handleAddItem = async () => {
+        // Add a new item row to the plan (after basic checks).
         if (!planId || !selectedItemId || quantity < 1) {
             alert('Please select an item and enter a valid quantity.');
             return;
         }
 
         // Check if item already exists in plan
-        const existingItem = planItems.find((item) => item.id.toString() === selectedItemId);
+        const existingItem = planItems.find((item) => item.Iid.toString() === selectedItemId);
         if (existingItem) {
             alert('This item is already in the packing plan.');
             return;
@@ -101,6 +120,7 @@ const PackingPlanDetails = () => {
     };
 
     const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+        // Update required quantity for an existing plan item.
         if (newQuantity < 1) {
             alert('Quantity must be at least 1.');
             return;
@@ -114,6 +134,7 @@ const PackingPlanDetails = () => {
     };
 
     const handleDeleteItem = async (itemId: string) => {
+        // Remove an item row from the plan.
         if (!window.confirm('Are you sure you want to remove this item from the packing plan?')) {
             return;
         }
@@ -129,6 +150,67 @@ const PackingPlanDetails = () => {
     const getItemDetails = (itemId: number): IItem | undefined => {
         return allInventoryItems.find((item) => item.id === itemId);
     };
+
+    // Persist per-plan packed state in localStorage (if available).
+    const packedStorageKey = useMemo(() => {
+        if (!planId) return '';
+        return `packingPlan:${planId}:packedItemIds`;
+    }, [planId]);
+
+    // Hydrate packed state from localStorage when plan changes.
+    useEffect(() => {
+        if (!packedStorageKey) return;
+        try {
+            const raw = localStorage.getItem(packedStorageKey);
+            if (!raw) {
+                setPackedItemIds(new Set());
+                return;
+            }
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                setPackedItemIds(new Set());
+                return;
+            }
+            setPackedItemIds(new Set(parsed.filter((x) => typeof x === 'string')));
+        } catch {
+            setPackedItemIds(new Set());
+        }
+    }, [packedStorageKey]);
+
+    // Persist packed state to localStorage (best effort).
+    useEffect(() => {
+        if (!packedStorageKey) return;
+        try {
+            localStorage.setItem(packedStorageKey, JSON.stringify(Array.from(packedItemIds)));
+        } catch {
+            // ignore quota / privacy mode issues; pack mode will still work in-memory
+        }
+    }, [packedItemIds, packedStorageKey]);
+
+    // If plan contents change, drop any packed ids that no longer exist in the plan.
+    useEffect(() => {
+        if (!planId) return;
+        const itemIdsInPlan = new Set(planItems.map((pi) => pi.Iid.toString()));
+        setPackedItemIds((prev) => {
+            const next = new Set(Array.from(prev).filter((id) => itemIdsInPlan.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [planId, planItems]);
+
+    const togglePacked = (itemId: string) => {
+        // Toggle packed/unpacked for an item row.
+        setPackedItemIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(itemId)) next.delete(itemId);
+            else next.add(itemId);
+            return next;
+        });
+    };
+
+    const packedCount = planItems.reduce(
+        (acc, pi) => acc + (packedItemIds.has(pi.Iid.toString()) ? 1 : 0),
+        0
+    );
 
     // Filter inventory items for modal
     const filteredInventoryItems = allInventoryItems.filter((item) => {
@@ -157,6 +239,23 @@ const PackingPlanDetails = () => {
 
     const Icon = getScenarioIcon(plan.scenarioType);
     const scenarioLabel = getScenarioLabel(plan.scenarioType);
+
+    const openDeleteConfirm = () => setShowDeleteConfirm(true);
+
+    const handleConfirmDeletePlan = async () => {
+        if (!planId) return;
+        setIsDeletingPlan(true);
+        try {
+            await packingPlanApi.deletePackingPlan(planId);
+            navigate('/packing-plans', { replace: true });
+        } catch (error) {
+            console.error('Failed to delete packing plan:', error);
+            alert('Failed to delete packing plan.');
+        } finally {
+            setIsDeletingPlan(false);
+            setShowDeleteConfirm(false);
+        }
+    };
 
     return (
         <StyledContainer>
@@ -196,10 +295,30 @@ const PackingPlanDetails = () => {
                 <ItemsSection>
                     <ItemsHeader>
                         <InfoLabel>Items ({planItems.length})</InfoLabel>
-                        <AddItemButton variant="primary" onClick={() => setShowAddItemModal(true)}>
-                            <IconContainer icon={Plus} />
-                            <span>Add Item</span>
-                        </AddItemButton>
+                        <ItemsHeaderActions>
+                            {packMode ? (
+                                <>
+                                    <PackProgress>
+                                        {packedCount}/{planItems.length} packed
+                                    </PackProgress>
+                                    <PackButton variant="primary" onClick={() => setPackMode(false)}>
+                                        <IconContainer icon={X} />
+                                        <span>Save</span>
+                                    </PackButton>
+                                </>
+                            ) : (
+                                <>
+                                    <PackButton variant="ghost" onClick={() => setPackMode(true)}>
+                                        <IconContainer icon={Package} />
+                                        <span>Pack</span>
+                                    </PackButton>
+                                    <AddItemButton variant="primary" onClick={() => setShowAddItemModal(true)}>
+                                        <IconContainer icon={Plus} />
+                                        <span>Add Item</span>
+                                    </AddItemButton>
+                                </>
+                            )}
+                        </ItemsHeaderActions>
                     </ItemsHeader>
 
                     {planItems.length === 0 ? (
@@ -210,16 +329,30 @@ const PackingPlanDetails = () => {
                         <ItemsList>
                             {planItems.map((planItem) => {
                                 const item = getItemDetails(planItem.Iid);
-                                if (!item) return null;
+                                const itemName = item?.name ?? 'Unknown item';
+                                const itemId = item?.id ?? planItem.Iid;
+                                const inventoryNumber = item?.inventoryNumber;
+                                const location = item?.location;
+                                const missingNote = item ? '' : ' • Item missing from inventory';
+                                const isPacked = packedItemIds.has(planItem.Iid.toString());
 
                                 return (
-                                    <ItemRow key={planItem.id}>
+                                    <ItemRow key={planItem.id} data-packed={isPacked ? 'true' : 'false'}>
                                         <ItemInfo>
-                                            <ItemName>{item.name}</ItemName>
+                                            <ItemName>
+                                                <span>{itemName}</span>
+                                                {isPacked && (
+                                                    <PackedBadge>
+                                                        <IconContainer icon={CheckCircle2} />
+                                                        Packed
+                                                    </PackedBadge>
+                                                )}
+                                            </ItemName>
                                             <ItemMeta>
-                                                ID: {item.id}
-                                                {item.inventoryNumber && ` • Inv: ${item.inventoryNumber}`}
-                                                {item.location && ` • Location: ${item.location}`}
+                                                ID: {itemId}
+                                                {inventoryNumber && ` • Inv: ${inventoryNumber}`}
+                                                {location && ` • Location: ${location}`}
+                                                {missingNote}
                                             </ItemMeta>
                                         </ItemInfo>
                                         <QuantityInput
@@ -233,9 +366,22 @@ const PackingPlanDetails = () => {
                                                 }
                                             }}
                                         />
-                                        <DeleteButton onClick={() => handleDeleteItem(planItem.id)} title="Remove item">
-                                            <IconContainer icon={Trash2} />
-                                        </DeleteButton>
+                                        {packMode ? (
+                                            <PackCheckboxWrapper>
+                                                <Checkbox
+                                                    type="checkbox"
+                                                    checked={isPacked}
+                                                    onChange={() => togglePacked(planItem.Iid.toString())}
+                                                />
+                                            </PackCheckboxWrapper>
+                                        ) : (
+                                            <DeleteButton
+                                                onClick={() => handleDeleteItem(planItem.id)}
+                                                title="Remove item"
+                                            >
+                                                <IconContainer icon={Trash2} />
+                                            </DeleteButton>
+                                        )}
                                     </ItemRow>
                                 );
                             })}
@@ -246,10 +392,60 @@ const PackingPlanDetails = () => {
                 <ButtonContainer>
                     <StyledButton variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
                         <IconContainer icon={Pen} />
-                        Edit Packing Plan
+                        Edit
                     </StyledButton>
+                    <DangerActionButton type="button" onClick={openDeleteConfirm}>
+                        <IconContainer icon={Trash2} />
+                        Delete
+                    </DangerActionButton>
                 </ButtonContainer>
             </StyledContentWrapper>
+
+            {showDeleteConfirm && (
+                <ModalOverlay
+                    onClick={() => {
+                        if (isDeletingPlan) return;
+                        setShowDeleteConfirm(false);
+                    }}
+                >
+                    <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <ModalHeader>
+                            <ModalTitle>Packing Plan löschen?</ModalTitle>
+                            <CloseButton
+                                type="button"
+                                onClick={() => {
+                                    if (isDeletingPlan) return;
+                                    setShowDeleteConfirm(false);
+                                }}
+                                aria-label="Close"
+                            >
+                                <IconContainer icon={X} />
+                            </CloseButton>
+                        </ModalHeader>
+
+                        <ModalText>
+                            Diese Aktion kann nicht rückgängig gemacht werden. Der Plan und alle zugehörigen Positionen
+                            werden gelöscht.
+                        </ModalText>
+
+                        <ModalButtons>
+                            <ModalButton
+                                variant="ghost"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeletingPlan}
+                            >
+                                Abbrechen
+                            </ModalButton>
+                            <DangerModalButton
+                                onClick={handleConfirmDeletePlan}
+                                disabled={isDeletingPlan}
+                            >
+                                {isDeletingPlan ? 'Löschen…' : 'Löschen'}
+                            </DangerModalButton>
+                        </ModalButtons>
+                    </ModalBox>
+                </ModalOverlay>
+            )}
 
             {showAddItemModal && (
                 <ModalOverlay onClick={() => setShowAddItemModal(false)}>
@@ -364,12 +560,12 @@ const HeaderContent = styled.div`
 const HeaderEditButton = styled(Button)`
     display: flex;
     align-items: center;
-    gap: ${theme.spacing.xs};
+    box-shadow: ${theme.shadows.sm};
     margin-left: auto;
     height: 36px;
     padding: 0 ${theme.spacing.md};
     font-size: ${theme.typography.fontSize.sm};
-    box-shadow: ${theme.shadows.sm};
+    gap: ${theme.spacing.xs};
 
     &:hover {
         box-shadow: ${theme.shadows.md};
@@ -386,6 +582,17 @@ const HeaderEditButton = styled(Button)`
             display: none;
         }
     }
+`;
+
+// Shared button styling for this view (keeps all non-header action buttons visually consistent)
+const DetailActionButton = styled(Button)`
+    box-sizing: border-box;
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    gap: ${theme.spacing.xs};
+    min-width: 132px;
+    border: 1px solid transparent;
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -440,28 +647,45 @@ const InfoValue = styled(DataValue)`
     gap: 6px;
 `;
 
-const StyledButton = styled(Button)`
-    height: 36px;
-    padding: 0 ${theme.spacing.md};
-    font-size: ${theme.typography.fontSize.sm};
-    gap: ${theme.spacing.xs};
+const StyledButton = styled(DetailActionButton)``;
+
+const DangerActionButton = styled(DetailActionButton)`
+    background-color: ${theme.colors.status.error.main};
+    color: white;
+    border-color: ${theme.colors.status.error.main};
+
+    &:hover:not(:disabled) {
+        background-color: ${theme.colors.status.error.dark};
+        border-color: ${theme.colors.status.error.dark};
+        transform: translateY(-1px);
+        box-shadow: ${theme.shadows.md};
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
 `;
 
 const ButtonContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
-    flex-direction: column;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: wrap;
 
-    & > ${StyledButton} {
-        width: 100%;
+    & > ${StyledButton},
+    & > ${DangerActionButton} {
+        flex: 1;
+        min-width: 160px;
     }
 
     @media (min-width: ${theme.breakpoints.md}) {
-        flex-direction: row;
         justify-content: flex-end;
 
-        & > ${StyledButton} {
-            width: unset;
+        & > ${StyledButton},
+        & > ${DangerActionButton} {
+            flex: 0 0 160px;
+            min-width: 160px;
         }
     }
 `;
@@ -484,12 +708,19 @@ const ItemsHeader = styled.div`
     margin-bottom: ${theme.spacing.md};
 `;
 
-const AddItemButton = styled(Button)`
-    height: 36px;
-    padding: 0 ${theme.spacing.md};
-    font-size: ${theme.typography.fontSize.sm};
-    gap: ${theme.spacing.xs};
+const ItemsHeaderActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+
+    & > ${DetailActionButton} {
+        min-width: 132px;
+    }
 `;
+
+const AddItemButton = styled(DetailActionButton)``;
+
+const PackButton = styled(AddItemButton)``;
 
 const EmptyItemsMessage = styled.div`
     text-align: center;
@@ -507,6 +738,13 @@ const ItemsList = styled.div`
     gap: ${theme.spacing.sm};
 `;
 
+const PackProgress = styled.div`
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.muted};
+    margin-right: ${theme.spacing.xs};
+    white-space: nowrap;
+`;
+
 const ItemRow = styled.div`
     display: flex;
     align-items: center;
@@ -515,6 +753,25 @@ const ItemRow = styled.div`
     background-color: ${theme.colors.background.light};
     border-radius: ${theme.borderRadius.md};
     border: 1px solid ${theme.colors.border.default};
+
+    &[data-packed='true'] {
+        background-color: ${theme.colors.status.good.light};
+        border-color: ${theme.colors.status.good.main};
+    }
+`;
+
+const Checkbox = styled.input`
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: ${theme.colors.primary};
+`;
+
+const PackCheckboxWrapper = styled.div`
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
 `;
 
 const ItemInfo = styled.div`
@@ -527,6 +784,26 @@ const ItemName = styled.div`
     font-size: ${theme.typography.fontSize.base};
     color: ${theme.colors.text.primary};
     margin-bottom: ${theme.spacing.xs};
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${theme.spacing.sm};
+`;
+
+const PackedBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: ${theme.colors.status.good.main};
+    color: white;
+    font-size: ${theme.typography.fontSize.xs};
+    font-weight: ${theme.typography.fontWeight.semibold};
+
+    & svg {
+        color: white;
+    }
 `;
 
 const ItemMeta = styled.div`
@@ -591,6 +868,13 @@ const ModalTitle = styled.h3`
     font-size: ${theme.typography.fontSize.lg};
     font-weight: ${theme.typography.fontWeight.semibold};
     color: ${theme.colors.text.primary};
+`;
+
+const ModalText = styled.p`
+    margin: 0 0 ${theme.spacing.lg} 0;
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.secondary};
+    line-height: 1.5;
 `;
 
 const CloseButton = styled.button`
@@ -676,10 +960,29 @@ const ModalButtons = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
     justify-content: flex-end;
+
+    & > ${DetailActionButton} {
+        min-width: 132px;
+    }
 `;
 
-const ModalButton = styled(Button)`
-    height: 36px;
+const ModalButton = styled(DetailActionButton)`
     padding: 0 ${theme.spacing.lg};
-    font-size: ${theme.typography.fontSize.sm};
+`;
+
+const DangerModalButton = styled(ModalButton)`
+    background-color: ${theme.colors.status.error.main};
+    color: white;
+    border: 1px solid ${theme.colors.status.error.main};
+
+    &:hover:not(:disabled) {
+        background-color: ${theme.colors.status.error.dark};
+        border-color: ${theme.colors.status.error.dark};
+        transform: translateY(-1px);
+        box-shadow: ${theme.shadows.md};
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
 `;

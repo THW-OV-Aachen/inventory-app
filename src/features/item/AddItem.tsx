@@ -85,6 +85,7 @@ const AddItem = () => {
     const navigate = useNavigate();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Form state mirrors the IItem shape but stays partial until validation.
     const [formData, setFormData] = useState<Partial<IItem>>({
         itemId: '',
         name: '',
@@ -105,7 +106,7 @@ const AddItem = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-    // Auto-grow textarea
+    // Auto-grow textarea to fit remark content.
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -114,6 +115,7 @@ const AddItem = () => {
     };
     useEffect(() => adjustTextareaHeight(), [formData.remark]);
 
+    // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: any) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
@@ -145,6 +147,7 @@ const AddItem = () => {
     };
 
     const handleSave = async () => {
+        // Validate all fields and block if schema errors exist.
         const allKeys = Object.keys(formData) as (keyof IItem)[];
         setTouched(allKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {}));
 
@@ -169,6 +172,7 @@ const AddItem = () => {
     };
 
     const saveItem = async () => {
+        // Normalize optional fields before persisting to Dexie.
         try {
             const cleanedItem: Omit<IItem, 'id'> = {
                 itemId: formData.itemId!.trim(),

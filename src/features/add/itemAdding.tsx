@@ -59,6 +59,7 @@ const StyledButton = styled(Button)`
 const ItemAdding = () => {
     const navigate = useNavigate();
 
+    // Local form state for the minimal item fields on this screen.
     const [newItem, setNewItem] = useState({
         name: '',
         id: '',
@@ -67,11 +68,13 @@ const ItemAdding = () => {
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        // One handler updates any field by input name.
         const { name, value } = e.target;
         setNewItem((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSave = () => {
+        // Placeholder: item persistence will be wired in later.
         // Save to DB here
         console.log('New Item:', newItem);
 
