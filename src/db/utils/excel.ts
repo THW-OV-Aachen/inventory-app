@@ -221,6 +221,10 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                         parsedValue = cellValue.toString().trim();
                     }
 
+                    if (parsedValue?.toString().match(/^( |-|–|—)+$/)) {
+                        parsedValue = null;
+                    }
+
                     if (colDef.key === 'art') {
                         if (parsedValue === 'Satz') {
                             rowData['isSet'] = true;
