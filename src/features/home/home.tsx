@@ -26,7 +26,7 @@ const Home = () => {
                         {totalCount > 0 && (
                             <PreviewItemContainer>
                                 {firstThreeEntries.map((item) => (
-                                    <PreviewItem item={item} />
+                                    <PreviewItem key={item.id} item={item} />
                                 ))}
                             </PreviewItemContainer>
                         )}
@@ -40,7 +40,7 @@ const Home = () => {
                         {damagedCount > 0 && (
                             <PreviewItemContainer>
                                 {threeDamaged.map((item) => (
-                                    <PreviewItem item={item} />
+                                    <PreviewItem key={item.id} item={item} />
                                 ))}
                             </PreviewItemContainer>
                         )}

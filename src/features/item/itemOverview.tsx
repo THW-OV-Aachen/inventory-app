@@ -289,7 +289,7 @@ const ItemOverview = () => {
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('itemId')}>
                                 <HeaderContent>
-                                    <span>ID</span>
+                                    <span>Sachnummer</span>
                                     <SortIndicator active={sortField === 'itemId'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
@@ -343,7 +343,8 @@ const ItemOverview = () => {
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
                                     <TableCell id="isSet">
-                                        <IconContainer icon={item.isSet ? Boxes : Box} />
+                                        {item.isSet === true && <IconContainer icon={Boxes} />}
+                                        {item.isSet === false && <IconContainer icon={Box} />}
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
@@ -366,7 +367,7 @@ const ItemOverview = () => {
                                         <StatusBadge damageLevelType={item.damageLevel} />
                                     </TableCell>
                                     <TableCell id="location">
-                                        <IconContainer icon={MapPin} />
+                                        {item.location && <IconContainer icon={MapPin} />}
                                         {(() => {
                                             try {
                                                 const components = parseLocationStringRaw(item.location);
@@ -401,8 +402,8 @@ const ItemOverview = () => {
                                             }
                                         })()}
                                     </TableCell>
-                                    <TableCell id="id" $hideOnMobile>
-                                        {item.id ?? '-'}
+                                    <TableCell id="itemId" $hideOnMobile>
+                                        {item.itemId ?? '-'}
                                     </TableCell>
                                     <TableCell id="deviceNumber" $hideOnMobile>
                                         {packMode ? (

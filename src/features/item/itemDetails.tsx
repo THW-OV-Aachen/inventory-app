@@ -70,14 +70,14 @@ const ItemDetails = () => {
                         <ChevronLeft size={20} />
                     </StyledBackButton>
                     <Title>
-                        {item.isSet ? (
+                        {item.isSet === true ? (
                             <Layers size={20} color={theme.colors.text.muted} />
-                        ) : (
+                        ) : (item.isSet === false ? 
                             <Box size={20} color={theme.colors.text.muted} />
-                        )}
+                        : "")}
                         {item.name}
                     </Title>
-                    <HeaderEditButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                         <IconContainer icon={Pen} />
                         <span>Bearbeiten</span>
                     </HeaderEditButton>
@@ -87,7 +87,7 @@ const ItemDetails = () => {
             <StyledContentWrapper>
                 <Subtitle>Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}</Subtitle>
 
-                <StyledInfoCard status={themeStatus}>
+                <StyledInfoCard $status={themeStatus}>
                     <CardContent>
                         <InfoRow>
                             <div style={{ flex: 1 }}>
@@ -121,7 +121,7 @@ const ItemDetails = () => {
                     <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
-                    <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
+                    <InfoValue>Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}</InfoValue>
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
@@ -158,11 +158,11 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <ButtonContainer>
-                    <StyledButton variant="primary" onClick={handleAdditionalDocs}>
+                    <StyledButton $variant="primary" onClick={handleAdditionalDocs}>
                         <IconContainer icon={FileText} />
                         Weitere Dokumente
                     </StyledButton>
-                    <StyledButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                    <StyledButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                         <IconContainer icon={Pen} /> Bearbeiten
                     </StyledButton>
                 </ButtonContainer>

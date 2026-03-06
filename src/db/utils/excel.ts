@@ -37,10 +37,7 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         header: 'Art',
         key: 'art',
         required: false,
-        exportTransform: (v) => (v ? v.toString().string : undefined),
-        importTransform: (v) => {
-            return v?.toString().trim();
-        },
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Menge',
@@ -71,6 +68,12 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         defaultValue: 0,
     },
     {
+        header: 'Ort',
+        key: 'location',
+        required: false,
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+    {
         header: 'Verfügbar',
         key: 'availability',
         required: false,
@@ -83,12 +86,6 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
             return isNaN(parsed) ? 0 : parsed;
         },
         defaultValue: 0,
-    },
-    {
-        header: 'Ort',
-        key: 'location',
-        required: false,
-        importTransform: (v) => v?.toString()?.trim(),
     },
     {
         header: 'Ausstattung | Hersteller | Typ',
@@ -190,6 +187,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
 
     const totalRows = sheet.rowCount;
 
+    const itemsToAdd: IItem[] = [];
+
     for (let rowIdx = 2; rowIdx <= totalRows; rowIdx++) {
         const row = sheet.getRow(rowIdx);
 
@@ -219,6 +218,10 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                         parsedValue = colDef.importTransform(cellValue);
                     } else if (cellValue !== null && cellValue !== undefined) {
                         parsedValue = cellValue.toString().trim();
+                    }
+
+                    if (parsedValue?.toString().match(/^( |-|–|—)+$/)) {
+                        parsedValue = null;
                     }
 
                     if (colDef.key === 'art') {
@@ -253,10 +256,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             continue;
         }
 
-        try {
-            await inventoryApi.addItem(rowData as IItem);
-        } catch (err) {
-            console.error(`Failed to add row ${rowIdx}`, err);
-        }
+        itemsToAdd.push(rowData as IItem);
     }
+
+    await inventoryApi.addItemsBulk(itemsToAdd);
 }

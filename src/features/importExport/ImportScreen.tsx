@@ -136,7 +136,7 @@ const ModalTitle = styled.h3`
     margin: 0 0 10px 0;
 `;
 
-const ModalText = styled.p`
+const ModalText = styled.div`
     margin: 0 0 16px 0;
 `;
 
@@ -154,7 +154,7 @@ const ConfirmationInput = styled.input`
     margin-bottom: 10px;
 `;
 
-const WarningText = styled.p`
+const WarningText = styled.div`
     color: #f00;
     font-weight: bold;
 `;
@@ -312,14 +312,14 @@ const ImportExportScreen = () => {
                     </FileInputWrapper>
                     <StyledButtonGroup>
                         <StyledPrimaryButton
-                            variant="primary"
+                            $variant="primary"
                             onClick={handleImportClick}
                             disabled={importing || !file}
                         >
                             <Upload size={14} />
                             <span>{importing ? 'Import läuft…' : 'Importieren'}</span>
                         </StyledPrimaryButton>
-                        <StyledSecondaryButton variant="ghost" onClick={handleExportClick} disabled={exporting}>
+                        <StyledSecondaryButton $variant="ghost" onClick={handleExportClick} disabled={exporting}>
                             <Download size={14} />
                             <span>{exporting ? 'Export läuft…' : 'Exportieren'}</span>
                         </StyledSecondaryButton>
@@ -362,7 +362,7 @@ const ImportExportScreen = () => {
                                 <StyledSecondaryButton onClick={() => handleConfirmChoice('overwrite')}>
                                     Überschreiben
                                 </StyledSecondaryButton>
-                                <StyledSecondaryButton variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
+                                <StyledSecondaryButton $variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
                                     Abbrechen
                                 </StyledSecondaryButton>
                             </ModalButtons>
@@ -385,6 +385,11 @@ const ImportExportScreen = () => {
                                 type="text"
                                 value={overwriteConfirmationInput}
                                 onChange={(e) => setOverwriteConfirmationInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && overwriteConfirmationInput === 'überschreiben') {
+                                        handleOverwriteConfirmation();
+                                    }
+                                }}
                                 placeholder='Geben Sie "überschreiben" ein'
                             />
                             <ModalButtons>
@@ -395,7 +400,7 @@ const ImportExportScreen = () => {
                                     Bestätigen
                                 </StyledPrimaryButton>
                                 <StyledSecondaryButton
-                                    variant="ghost"
+                                    $variant="ghost"
                                     onClick={() => {
                                         setShowOverwriteConfirmation(false);
                                         setOverwriteConfirmationInput('');

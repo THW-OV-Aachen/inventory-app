@@ -268,7 +268,7 @@ const PackingPlanDetails = () => {
                         <IconContainer icon={Icon} />
                         {plan.name}
                     </Title>
-                    <HeaderEditButton variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
+                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
                         <IconContainer icon={Pen} />
                         <span>Edit</span>
                     </HeaderEditButton>
@@ -301,18 +301,18 @@ const PackingPlanDetails = () => {
                                     <PackProgress>
                                         {packedCount}/{planItems.length} packed
                                     </PackProgress>
-                                    <PackButton variant="primary" onClick={() => setPackMode(false)}>
+                                    <PackButton $variant="primary" onClick={() => setPackMode(false)}>
                                         <IconContainer icon={X} />
                                         <span>Save</span>
                                     </PackButton>
                                 </>
                             ) : (
                                 <>
-                                    <PackButton variant="ghost" onClick={() => setPackMode(true)}>
+                                    <PackButton $variant="ghost" onClick={() => setPackMode(true)}>
                                         <IconContainer icon={Package} />
                                         <span>Pack</span>
                                     </PackButton>
-                                    <AddItemButton variant="primary" onClick={() => setShowAddItemModal(true)}>
+                                    <AddItemButton $variant="primary" onClick={() => setShowAddItemModal(true)}>
                                         <IconContainer icon={Plus} />
                                         <span>Add Item</span>
                                     </AddItemButton>
@@ -390,7 +390,7 @@ const PackingPlanDetails = () => {
                 </ItemsSection>
 
                 <ButtonContainer>
-                    <StyledButton variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
+                    <StyledButton $variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
                         <IconContainer icon={Pen} />
                         Edit
                     </StyledButton>
@@ -430,7 +430,7 @@ const PackingPlanDetails = () => {
 
                         <ModalButtons>
                             <ModalButton
-                                variant="ghost"
+                                $variant="ghost"
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeletingPlan}
                             >
@@ -503,11 +503,11 @@ const PackingPlanDetails = () => {
                             )}
                         </ModalContent>
                         <ModalButtons>
-                            <ModalButton variant="ghost" onClick={() => setShowAddItemModal(false)}>
+                            <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
                                 Cancel
                             </ModalButton>
                             <ModalButton
-                                variant="primary"
+                                $variant="primary"
                                 onClick={handleAddItem}
                                 disabled={!selectedItemId || quantity < 1}
                             >

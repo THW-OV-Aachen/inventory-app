@@ -516,7 +516,7 @@ const CreatePackingPlan = () => {
                     <ItemsSection>
                         <ItemsHeader>
                             <Label>Items ({tempItems.length})</Label>
-                            <AddItemButton variant="primary" onClick={() => setShowAddItemModal(true)}>
+                            <AddItemButton $variant="primary" onClick={() => setShowAddItemModal(true)}>
                                 <IconContainer icon={Plus} />
                                 <span>Add Item</span>
                             </AddItemButton>
@@ -567,10 +567,10 @@ const CreatePackingPlan = () => {
                     </ItemsSection>
 
                     <StyledButtonGroup>
-                        <StyledButton variant="ghost" onClick={() => navigate(-1)} disabled={isSaving}>
+                        <StyledButton $variant="ghost" onClick={() => navigate(-1)} disabled={isSaving}>
                             Cancel
                         </StyledButton>
-                        <StyledButton variant="primary" onClick={handleSave} disabled={isSaving}>
+                        <StyledButton $variant="primary" onClick={handleSave} disabled={isSaving}>
                             {isSaving ? 'Saving...' : 'Save'}
                         </StyledButton>
                     </StyledButtonGroup>
@@ -633,11 +633,11 @@ const CreatePackingPlan = () => {
                             )}
                         </ModalContent>
                         <ModalButtons>
-                            <ModalButton variant="ghost" onClick={() => setShowAddItemModal(false)}>
+                            <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
                                 Cancel
                             </ModalButton>
                             <ModalButton
-                                variant="primary"
+                                $variant="primary"
                                 onClick={handleAddTempItem}
                                 disabled={!selectedItemId || quantity < 1}
                             >
