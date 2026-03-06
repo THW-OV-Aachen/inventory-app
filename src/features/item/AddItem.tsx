@@ -133,8 +133,9 @@ const AddItem = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Form state mirrors the IItem shape but stays partial until validation.
     const [formData, setFormData] = useState<Partial<IItem>>({
-        id: '',
+        itemId: '',
         name: '',
         inventoryNumber: '',
         deviceNumber: '',
@@ -181,7 +182,7 @@ const AddItem = () => {
         };
     }, []);
 
-    // Auto-grow textarea
+    // Auto-grow textarea to fit remark content.
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -190,6 +191,7 @@ const AddItem = () => {
     };
     useEffect(() => adjustTextareaHeight(), [formData.remark]);
 
+    // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
@@ -245,19 +247,12 @@ const AddItem = () => {
     };
 
     const handleSave = async () => {
+        // Validate all fields and block if schema errors exist.
         const allKeys = Object.keys(formData) as (keyof IItem)[];
         setTouched(allKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {}));
 
         try {
             await ItemValidationSchema.validate(formData, { abortEarly: false });
-
-            const existing = await db.items.get(formData.id!.trim());
-            if (existing) {
-                setErrors((prev) => ({ ...prev, id: 'Ein Gegenstand mit dieser ID existiert bereits!' }));
-                alert('Ein Gegenstand mit dieser ID existiert bereits!');
-                return;
-            }
-
             setErrors({});
             await saveItem();
         } catch (error) {
@@ -277,9 +272,10 @@ const AddItem = () => {
     };
 
     const saveItem = async () => {
+        // Normalize optional fields before persisting to Dexie.
         try {
-            const cleanedItem: IItem = {
-                id: formData.id!.trim(),
+            const cleanedItem: Omit<IItem, 'id'> = {
+                itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
                 amountTarget: formData.amountTarget ?? 0,
@@ -297,8 +293,8 @@ const AddItem = () => {
                 labels: selectedLabels,
             };
 
-            await db.items.add(cleanedItem);
-            navigate(`/items/${cleanedItem.id}`, { replace: true });
+            const newItemId = await db.items.add(cleanedItem as IItem);
+            navigate(`/items/${newItemId}`, { replace: true });
         } catch (err) {
             console.error(err);
             alert('Fehler beim Speichern des Gegenstands.');
@@ -346,20 +342,20 @@ const AddItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="id">
-                            Identifikationsnummer
+                        <Label htmlFor="itemId">
+                            Sachnummer
                             <RequiredStar />
                         </Label>
                         <Input
-                            id="id"
-                            name="id"
+                            id="itemId"
+                            name="itemId"
                             type="text"
                             placeholder="ID eingeben"
-                            value={formData.id ?? ''}
-                            onChange={(e) => handleChange('id', e.target.value)}
-                            onBlur={() => handleBlur('id')}
+                            value={formData.itemId ?? ''}
+                            onChange={(e) => handleChange('itemId', e.target.value)}
+                            onBlur={() => handleBlur('itemId')}
                         />
-                        {renderError('id')}
+                        {renderError('itemId')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
@@ -621,10 +617,10 @@ const AddItem = () => {
                     </StyledFormGroup>
 
                     <StyledButtonGroup>
-                        <StyledButton variant="primary" onClick={handleSave}>
+                        <StyledButton $variant="primary" onClick={handleSave}>
                             Hinzufügen
                         </StyledButton>
-                        <StyledButton variant="ghost" onClick={() => navigate(-1)}>
+                        <StyledButton $variant="ghost" onClick={() => navigate(-1)}>
                             Abbrechen
                         </StyledButton>
                     </StyledButtonGroup>

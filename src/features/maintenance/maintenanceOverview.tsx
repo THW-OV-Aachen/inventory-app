@@ -23,6 +23,7 @@ import {
 type MaintenanceStatus = 'GREEN' | 'YELLOW' | 'RED';
 type ThemeStatus = 'good' | 'warning' | 'error';
 
+// Compute a simple stock-based status for maintenance visibility.
 const getMaintenanceStatus = (item: IItem): MaintenanceStatus => {
     if (item.amountActual === 0 || item.availability === 0) return 'RED';
     const ratio = item.amountTarget > 0 ? item.amountActual / item.amountTarget : 1;
@@ -31,6 +32,7 @@ const getMaintenanceStatus = (item: IItem): MaintenanceStatus => {
     return 'GREEN';
 };
 
+// Map status to theme badges used by the UI.
 const mapStatusToTheme = (status: MaintenanceStatus): ThemeStatus => {
     switch (status) {
         case 'GREEN':
@@ -46,8 +48,9 @@ const mapStatusToTheme = (status: MaintenanceStatus): ThemeStatus => {
 const MaintenanceOverview = () => {
     const navigate = useNavigate();
     const items = inventoryApi.useItems();
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<number | null>(null);
 
+    // Precompute rows with status so render stays simple.
     const rows = useMemo(() => {
         return items.map((item: IItem) => {
             const status = getMaintenanceStatus(item);
@@ -70,15 +73,15 @@ const MaintenanceOverview = () => {
             <StyledContentWrapper>
                 <Legend>
                     <LegendItem>
-                        <StatusBadge status="good" />
+                        <StatusBadge $status="good" />
                         <LegendText>OK (ausreichender Bestand)</LegendText>
                     </LegendItem>
                     <LegendItem>
-                        <StatusBadge status="warning" />
+                        <StatusBadge $status="warning" />
                         <LegendText>Niedrig (unter Ziel)</LegendText>
                     </LegendItem>
                     <LegendItem>
-                        <StatusBadge status="error" />
+                        <StatusBadge $status="error" />
                         <LegendText>Kritisch / Nicht verfügbar</LegendText>
                     </LegendItem>
                 </Legend>
@@ -88,7 +91,7 @@ const MaintenanceOverview = () => {
                     {rows.map(({ item, themeStatus }) => (
                         <StyledItemCard
                             key={item.id}
-                            status={themeStatus}
+                            $status={themeStatus}
                             onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                         >
                             <CardHeader>
@@ -110,7 +113,7 @@ const MaintenanceOverview = () => {
                                     </DetailRow>
                                     <DetailRow>
                                         <DataLabel>Ist Satz:</DataLabel>
-                                        <DataValue>{item.isSet ? 'Ja' : 'Nein'}</DataValue>
+                                        <DataValue>{item.isSet === true ? 'Ja' : item.isSet === false ? 'Nein' : '-'}</DataValue>
                                     </DetailRow>
                                     <DetailRow>
                                         <DataLabel>Ist / Ziel:</DataLabel>

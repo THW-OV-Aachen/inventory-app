@@ -71,3 +71,17 @@ export default defineConfig([
     },
 ]);
 ```
+
+## Frontend
+
+This frontend is a React + Vite app for managing inventory items, packing plans, and import/export flows. It renders the UI, routes between screens, and orchestrates client-side data operations and user workflows.
+
+Run locally (from repo root):
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+
+Main folders: `src/` (app code, routes, features, components), `public/` (static assets).
+
+State/data: Redux Toolkit is used for UI/search state (`src/store`), and Dexie (IndexedDB) stores inventory and packing plans (`src/db`).

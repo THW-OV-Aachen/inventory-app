@@ -145,8 +145,9 @@ const ColorInput = styled(Input)`
 `;
 
 const ModifyItem = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const {id} = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
+    // Form state starts from the loaded item and is edited in place.
     const [formData, setFormData] = useState<Partial<IItem>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -161,7 +162,9 @@ const ModifyItem = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Load the item by ID and seed the form values.
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
@@ -205,6 +208,7 @@ const ModifyItem = () => {
 
     const itemReference = `Inventarnummer: ${item.inventoryNumber || '-'}`;
 
+    // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         try {
             await ItemValidationSchema.validateAt(key, { ...formData, [key]: value });
@@ -260,6 +264,7 @@ const ModifyItem = () => {
     };
 
     const handleSave = async () => {
+        // Validate and persist updates back to Dexie.
         const allKeys = Object.keys(formData) as (keyof IItem)[];
         setTouched(allKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {}));
 
@@ -270,6 +275,7 @@ const ModifyItem = () => {
             if (!item) return;
 
             const updates: Partial<Omit<IItem, 'id'>> = {
+                itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
                 amountTarget: formData.amountTarget ?? 0,
@@ -351,20 +357,20 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="id">
-                            Identifikationsnummer
+                        <Label htmlFor="itemId">
+                            Sachnummer
                             <RequiredStar />
                         </Label>
                         <Input
-                            id="id"
-                            name="id"
+                            id="itemId"
+                            name="itemId"
                             type="text"
                             placeholder="ID eingeben"
-                            value={formData.id ?? ''}
-                            onChange={(e) => handleChange('id', e.target.value)}
-                            onBlur={() => handleBlur('id')}
+                            value={formData.itemId ?? ''}
+                            onChange={(e) => handleChange('itemId', e.target.value)}
+                            onBlur={() => handleBlur('itemId')}
                         />
-                        {renderError('id')}
+                        {renderError('itemId')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
@@ -620,10 +626,10 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledButtonGroup>
-                        <StyledButton variant="primary" onClick={handleSave}>
+                        <StyledButton $variant="primary" onClick={handleSave}>
                             Speichern
                         </StyledButton>
-                        <StyledButton variant="ghost" onClick={() => navigate(-1)}>
+                        <StyledButton $variant="ghost" onClick={() => navigate(-1)}>
                             Abbrechen
                         </StyledButton>
                     </StyledButtonGroup>

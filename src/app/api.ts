@@ -36,9 +36,27 @@ export const inventoryApi = {
         } catch (error) {
             console.error('Failed to add inventory item: ', error);
             if ((error as Error).name === 'ConstraintError') {
-                console.error('Error: An item with this "Sachnummer" (id) already exists.');
+                console.error('Error: An item with the id or inventory number already exists.');
             }
         }
+    },
+
+    async addItemsBulk(itemsData: IItem[]): Promise<void> {
+        const existing = await db.items.toArray();
+        const invNumToId = new Map<string, number>(
+            existing
+                .filter((it) => it.inventoryNumber)
+                .map((it) => [it.inventoryNumber!, it.id])
+        );
+
+        const resolved = itemsData.map((item) => {
+            if (item.inventoryNumber && invNumToId.has(item.inventoryNumber)) {
+                return { ...item, id: invNumToId.get(item.inventoryNumber) };
+            }
+            return item;
+        });
+
+        await db.items.bulkPut(resolved as IItem[]);
     },
 
     async fetchItemsPaginated(params: PaginationParams): Promise<PaginatedResult<IItem>> {
@@ -95,18 +113,18 @@ export const inventoryApi = {
             const filteredItems = allItems.filter((item) => {
                 const matchesSearch =
                     !searchTerm ||
-                    [item.name, item.location, item.id, item.inventoryNumber || '', item.deviceNumber || ''].some(
-                        (field) => field.toLowerCase().includes(term)
+                    [item.name, item.location, item.itemId, item.inventoryNumber, item.deviceNumber].some(
+                        (field) => (field || '').toLowerCase().includes(term)
                     );
 
                 const matchesDamageLevel = !filters?.damageLevel || item.damageLevel === filters.damageLevel;
-
+                
                 const matchesType =
                     !filters?.type ||
-                    (filters.type === 'isSet' ? item.isSet : filters.type === 'isPart' ? !item.isSet : true);
+                    (filters.type === 'isSet' ? item.isSet === true : filters.type === 'isPart' ? item.isSet === false : true);
 
                 const matchesLocation =
-                    !filters?.location || item.location.toLowerCase().includes(filters.location.toLowerCase());
+                    !filters?.location || (item.location || '').toLowerCase().includes(filters.location.toLowerCase());
 
                 const matchesLabels =
                     !filters?.labels ||
@@ -153,7 +171,7 @@ export const inventoryApi = {
         return count ?? 0;
     },
 
-    async deleteItem(id: string): Promise<void> {
+    async deleteItem(id: number): Promise<void> {
         try {
             await db.items.delete(id);
         } catch (error) {
@@ -161,7 +179,7 @@ export const inventoryApi = {
         }
     },
 
-    async updateItem(id: string, updates: Partial<Omit<IItem, 'id'>>): Promise<void> {
+    async updateItem(id: number, updates: Partial<Omit<IItem, 'id'>>): Promise<void> {
         try {
             const existingItem = await db.items.get(id);
             if (!existingItem) {
@@ -243,7 +261,7 @@ export const labelsApi = {
 };
 
 export type SortField =
-    | 'id'
+    | 'itemId'
     | 'name'
     | 'type'
     | 'amountActual'

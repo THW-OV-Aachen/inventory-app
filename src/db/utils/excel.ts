@@ -35,22 +35,22 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
     },
     {
         header: 'Art',
-        key: 'isSet',
+        key: 'art',
         required: false,
-        exportTransform: (v) => (v ? 'Satz' : 'Teil'),
-        importTransform: (v) => {
-            const str = v?.toString().trim();
-            if (str === 'Satz') return true;
-            if (str === 'Teil') return false;
-            return undefined;
-        },
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Menge',
         key: 'amountTarget',
         required: false,
         exportTransform: (v) => v ?? 0,
-        importTransform: (v) => (v ? parseInt(v.toString()) : 0),
+        importTransform: (v) => {
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
+        },
         defaultValue: 0,
     },
     {
@@ -58,72 +58,84 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         key: 'amountActual',
         required: false,
         exportTransform: (v) => v ?? 0,
-        importTransform: (v) => (v ? parseInt(v.toString()) : 0),
-        defaultValue: 0,
-    },
-    {
-        header: 'Verfügbarkeit',
-        key: 'availability',
-        required: false,
-        exportTransform: (v) => v ?? 0,
-        importTransform: (v) => (v ? parseInt(v.toString()) : 0),
+        importTransform: (v) => {
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
+        },
         defaultValue: 0,
     },
     {
         header: 'Ort',
         key: 'location',
         required: false,
-        importTransform: (v) => v?.toString(),
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+    {
+        header: 'Verfügbar',
+        key: 'availability',
+        required: false,
+        exportTransform: (v) => v ?? 0,
+        importTransform: (v) => {
+            if (v == null) {
+                return 0;
+            }
+            const parsed = parseInt(v.toString(), 10);
+            return isNaN(parsed) ? 0 : parsed;
+        },
+        defaultValue: 0,
     },
     {
         header: 'Ausstattung | Hersteller | Typ',
         key: 'name',
         required: true,
-        importTransform: (v) => v?.toString(),
+        importTransform: (v) => v?.toString()?.trim(),
     },
     {
         header: 'Sachnummer',
-        key: 'id',
+        key: 'itemId',
         required: true,
-        importTransform: (v) => v?.toString(),
+        importTransform: (v) => v?.toString()?.trim(),
     },
     {
         header: 'Inventar Nr',
         key: 'inventoryNumber',
         required: false,
-        importTransform: (v) => (v ? v.toString() : undefined),
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Gerätenr.',
         key: 'deviceNumber',
         required: false,
-        importTransform: (v) => (v ? v.toString() : undefined),
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Schadenszustand',
         key: 'damageLevel',
         required: false,
         exportTransform: (v) => DamageLevelTranslation[v as DamageLevelType] ?? v ?? '',
-        importTransform: (v) => (v ? getDamageKeyFromTranslation(v.toString()) : 'none'),
+        importTransform: (v) => (v ? getDamageKeyFromTranslation(v.toString().trim()) : 'none'),
         defaultValue: 'none',
     },
     {
         header: 'Letzte Inspektion',
         key: 'lastInspection',
         required: false,
-        importTransform: (v) => (v ? v.toString() : undefined),
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Inspektionsintervall (Monate)',
         key: 'inspectionIntervalMonths',
         required: false,
-        importTransform: (v) => (v ? parseInt(v.toString()) : undefined),
+        importTransform: (v) => (v ? parseInt(v.toString().trim()) : undefined),
     },
     {
         header: 'Bemerkung',
         key: 'remark',
         required: false,
-        importTransform: (v) => (v ? v.toString() : undefined),
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
 ];
 
@@ -175,6 +187,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
 
     const totalRows = sheet.rowCount;
 
+    const itemsToAdd: IItem[] = [];
+
     for (let rowIdx = 2; rowIdx <= totalRows; rowIdx++) {
         const row = sheet.getRow(rowIdx);
 
@@ -196,14 +210,28 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                 try {
                     let parsedValue = cellValue;
 
+                    if (colDef.key === 'oe') {
+                        continue;
+                    }
+
                     if (colDef.importTransform) {
                         parsedValue = colDef.importTransform(cellValue);
                     } else if (cellValue !== null && cellValue !== undefined) {
                         parsedValue = cellValue.toString().trim();
                     }
 
-                    if (colDef.key === 'oe') {
-                        continue;
+                    if (parsedValue?.toString().match(/^( |-|–|—)+$/)) {
+                        parsedValue = null;
+                    }
+
+                    if (colDef.key === 'art') {
+                        if (parsedValue === 'Satz') {
+                            rowData['isSet'] = true;
+                        } else if (parsedValue === 'Teil') {
+                            rowData['isSet'] = false;
+                        } else {
+                            rowData['isSet'] = undefined;
+                        }
                     }
 
                     rowData[colDef.key] = parsedValue as any;
@@ -223,15 +251,13 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             }
         }
 
-        if (!rowData.id || !rowData.name) {
+        if (!rowData.itemId || !rowData.name) {
             console.warn(`Skipping row ${rowIdx}: Missing ID or Name`);
             continue;
         }
 
-        try {
-            await inventoryApi.addItem(rowData as IItem);
-        } catch (err) {
-            console.error(`Failed to add row ${rowIdx}`, err);
-        }
+        itemsToAdd.push(rowData as IItem);
     }
+
+    await inventoryApi.addItemsBulk(itemsToAdd);
 }

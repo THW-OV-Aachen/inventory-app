@@ -13,11 +13,19 @@ import { parseLocationStringRaw, mapLocationKey } from '../../utils/locationStri
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
+import { db } from '../../db/db';
+import type { IPackingPlan, IPackingPlanItem } from '../../db/packingPlans';
+import { EmergencyScenarioType } from '../../db/packingPlans';
 
+import { usePackMode } from './usePackMode';
+import QuantitySpinner from '../../components/QuantitySpinner';
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    // Pack mode adds multi-select + quantity controls for creating packing plans.
+    const packModeState = usePackMode();
+    const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
 
@@ -30,7 +38,7 @@ const ItemOverview = () => {
     const [totalPages, setTotalPages] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Fetch items with pagination
+    // Fetch items with pagination + search/filter state from Redux.
     useEffect(() => {
         const fetchItems = async () => {
             setIsLoading(true);
@@ -53,12 +61,13 @@ const ItemOverview = () => {
         fetchItems();
     }, [currentPage, pageSize, searchTerm, filters]);
 
-    // Reset to page 1 when search term changes
+    // Reset to page 1 when search term or filters change.
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, filters]);
 
     const handleSort = (field: SortField) => {
+        // Cycle: asc -> desc -> off for the current sort field.
         if (sortField === field) {
             if (sortDirection === 'asc') {
                 dispatch(setSortDirection('desc'));
@@ -75,13 +84,14 @@ const ItemOverview = () => {
     const getSortedItems = (itemsToSort: IItem[]) => {
         if (!sortField) return itemsToSort;
 
+        // Local sort for the current page based on active column + direction.
         const sorted = [...itemsToSort];
         sorted.sort((a, b) => {
             let aValue: any;
             let bValue: any;
 
             switch (sortField) {
-                case 'id':
+                case 'itemId':
                     aValue = a.id;
                     bValue = b.id;
                     break;
@@ -135,6 +145,28 @@ const ItemOverview = () => {
 
     const sortedItems = getSortedItems(items);
 
+    const createId = (prefix = 'id'): string => {
+        // `crypto.randomUUID()` is not always available (e.g. http:// on LAN IPs).
+        // Use it when present, otherwise fall back to a reasonably-unique string.
+        const c = globalThis.crypto as Crypto | undefined;
+        if (c && 'randomUUID' in c && typeof (c as any).randomUUID === 'function') {
+            return (c as any).randomUUID();
+        }
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    };
+
+    const getEffectiveAvailability = (item: IItem): number => {
+        // Older DB rows / imports may not have `availability` populated.
+        // In that case we fall back to `amountActual` to avoid "everything disabled" in pack mode.
+        const availability = Number(item.availability);
+        if (Number.isFinite(availability)) return availability;
+
+        const amountActual = Number(item.amountActual);
+        if (Number.isFinite(amountActual)) return amountActual;
+
+        return 0;
+    };
+
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
@@ -142,9 +174,60 @@ const ItemOverview = () => {
         }
     };
 
+    const handleSavePackingPlan = async () => {
+        // Create a packing plan from the current pack-mode selection.
+        if (selectedItemIds.size === 0) {
+            alert('Please select at least one item to pack.');
+            return;
+        }
+
+        if (!planName.trim()) {
+            alert('Please enter a plan name.');
+            return;
+        }
+
+        try {
+            // Create IPackingPlan
+            const now = new Date().toISOString();
+            const packingPlan: IPackingPlan = {
+                id: createId('plan'),
+                name: planName.trim(),
+                scenarioType: EmergencyScenarioType.CUSTOM,
+                description: '',
+                createdAt: now,
+                updatedAt: now,
+            };
+
+            // Insert packing plan
+            await db.packingPlans.add(packingPlan);
+
+            // Create IPackingPlanItem[] for selected items
+            const packingPlanItems: IPackingPlanItem[] = Array.from(selectedItemIds).map((itemId, index) => ({
+                id: createId('planItem'),
+                packingPlanId: packingPlan.id,
+                Iid: Number(itemId),
+                requiredQuantity: qtyByItemId[itemId] ?? 1,
+                notes: '',
+                order: index,
+            }));
+
+            // Bulk insert packing plan items
+            await db.packingPlanItems.bulkAdd(packingPlanItems);
+
+            // Reset pack mode
+            packModeState.togglePackMode();
+
+             // Navigate to the created packing plan (no confirmation popup)
+            navigate(`/packing-plans/${packingPlan.id}`);
+        } catch (error) {
+            console.error('Error saving packing plan:', error);
+            alert('Failed to save packing plan. Please try again.');
+        }
+    };
+
     return (
         <div>
-            <ItemFilter />
+            <ItemFilter packModeState={packModeState} onSavePackingPlan={handleSavePackingPlan} />
 
             {isLoading ? (
                 <LoadingContainer>
@@ -204,10 +287,10 @@ const ItemOverview = () => {
                                     <SortIndicator active={sortField === 'location'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
-                            <HeaderCell onClick={() => handleSort('id')}>
+                            <HeaderCell onClick={() => handleSort('itemId')}>
                                 <HeaderContent>
-                                    <span>ID</span>
-                                    <SortIndicator active={sortField === 'id'} sortDirection={sortDirection} />
+                                    <span>Sachnummer</span>
+                                    <SortIndicator active={sortField === 'itemId'} sortDirection={sortDirection} />
                                 </HeaderContent>
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('deviceNumber')}>
@@ -222,24 +305,51 @@ const ItemOverview = () => {
                         </TableHeader>
                         {sortedItems.map((item) => {
                             const damageLevel = DamageLevelStyles[item.damageLevel as DamageLevelType];
+                            const itemId = item.id.toString();
+                            const availability = getEffectiveAvailability(item);
+                            const hasExplicitAvailability = Number.isFinite(Number(item.availability));
+                            const isSelected = selectedItemIds.has(itemId);
+                            // In pack mode we treat "Verfügbar" as the upper bound (including 0).
+                            const maxQty = Number.isFinite(availability) ? Math.max(0, availability) : undefined;
+                            const minPackQty = maxQty === 0 ? 0 : 1;
+                            const defaultPackQty = maxQty ?? 1;
+                            const onRowClick = () => {
+                                if (packMode) {
+                                    // In pack mode, row click toggles selection.
+                                    toggleItem(itemId, defaultPackQty);
+                                } else {
+                                    navigate(`/items/${item.id}`);
+                                }
+                            };
 
                             return (
                                 <TableRow
                                     key={item.id}
-                                    onClick={() => navigate(`/items/${item.id}`)}
+                                    onClick={onRowClick}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={packMode ? isSelected : undefined}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            onRowClick();
+                                        }
+                                    }}
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
                                     $mobileShadowColor={damageLevel.colorRGB}
+                                    className={isSelected ? 'selected' : ''} // ✅
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
                                     <TableCell id="isSet">
-                                        <IconContainer icon={item.isSet ? Boxes : Box} />
+                                        {item.isSet === true && <IconContainer icon={Boxes} />}
+                                        {item.isSet === false && <IconContainer icon={Box} />}
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
                                             <InfoInline infoComponent={<span>Verfügbare Menge</span>}>
-                                                {item.availability ?? '-'}
+                                                {hasExplicitAvailability ? item.availability : availability}
                                             </InfoInline>
                                         </span>
                                         <span>
@@ -257,43 +367,87 @@ const ItemOverview = () => {
                                         <StatusBadge damageLevelType={item.damageLevel} />
                                     </TableCell>
                                     <TableCell id="location">
-                                        <IconContainer icon={MapPin} />
+                                        {item.location && <IconContainer icon={MapPin} />}
                                         {(() => {
-                                            const components = parseLocationStringRaw(item.location);
-                                            return (
-                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
-                                                    {Object.entries(components).map(([key, value]) => {
-                                                        return (
-                                                            <React.Fragment key={`${item.id}-${key}`}>
-                                                                {key === 'subcontainerNumber' && '.'}
-                                                                {key === 'toolNumber' && '-'}
-                                                                <InfoInline
-                                                                    infoComponent={
-                                                                        <span>
-                                                                            {mapLocationKey(key)}
-                                                                            {key === 'type' && ': '}{' '}
-                                                                            {key === 'type' &&
-                                                                                (value === 'R'
-                                                                                    ? 'Rollcontainer'
-                                                                                    : 'Box (EU-Palette)')}
-                                                                        </span>
-                                                                    }
-                                                                >
-                                                                    <span>{value}</span>
-                                                                </InfoInline>
-                                                            </React.Fragment>
-                                                        );
-                                                    })}
-                                                </div>
-                                            );
+                                            try {
+                                                const components = parseLocationStringRaw(item.location);
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
+                                                        {Object.entries(components).map(([key, value]) => {
+                                                            return (
+                                                                <React.Fragment key={`${item.id}-${key}`}>
+                                                                    {key === 'subcontainerNumber' && '.'}
+                                                                    {key === 'toolNumber' && '-'}
+                                                                    <InfoInline
+                                                                        infoComponent={
+                                                                            <span>
+                                                                                {mapLocationKey(key)}
+                                                                                {key === 'type' && ': '}{' '}
+                                                                                {key === 'type' &&
+                                                                                    (value === 'R'
+                                                                                        ? 'Rollcontainer'
+                                                                                        : 'Box (EU-Palette)')}
+                                                                            </span>
+                                                                        }
+                                                                    >
+                                                                        <span>{value}</span>
+                                                                    </InfoInline>
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            } catch {
+                                                return item.location ?? '-';
+                                            }
                                         })()}
                                     </TableCell>
-                                    <TableCell id="id" $hideOnMobile>
-                                        {item.id ?? '-'}
+                                    <TableCell id="itemId" $hideOnMobile>
+                                        {item.itemId ?? '-'}
                                     </TableCell>
                                     <TableCell id="deviceNumber" $hideOnMobile>
-                                        {item.deviceNumber ?? '-'}
+                                        {packMode ? (
+                                            <PackModeCell>
+                                                <CheckboxInput
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleItem(itemId, defaultPackQty)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <QuantitySpinner
+                                                    value={qtyByItemId[itemId] ?? defaultPackQty}
+                                                    min={minPackQty}
+                                                    max={maxQty}
+                                                    disabled={!isSelected}
+                                                    onChange={(v) => setQuantity(itemId, v)}
+                                                    ariaLabel="Required quantity"
+                                                />
+                                            </PackModeCell>
+                                        ) : (
+                                            (item.deviceNumber ?? '-')
+                                        )}
                                     </TableCell>
+                                    {packMode && (
+                                        <PackControlsCell id="packControls">
+                                            <PackControlsLabel>
+                                                <span>Pack</span>
+                                                <span style={{ opacity: 0.75 }}>
+                                                    Tap card to {isSelected ? 'unselect' : 'select'}
+                                                </span>
+                                            </PackControlsLabel>
+                                            <PackControlsRight>
+                                                {isSelected && <SelectedBadge>Selected</SelectedBadge>}
+                                                <QuantitySpinner
+                                                    value={qtyByItemId[itemId] ?? defaultPackQty}
+                                                    min={minPackQty}
+                                                    max={maxQty}
+                                                    disabled={!isSelected}
+                                                    onChange={(v) => setQuantity(itemId, v)}
+                                                    ariaLabel="Required quantity"
+                                                />
+                                            </PackControlsRight>
+                                        </PackControlsCell>
+                                    )}
                                 </TableRow>
                             );
                         })}
@@ -632,7 +786,8 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         grid-template-areas:
             'inventoryNumber damageLevel'
             'name name'
-            'location isSet';
+            'location isSet'
+            'packControls packControls';
         gap: 12px;
         padding: 16px;
 
@@ -641,6 +796,12 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         border-radius: 8px;
 
         box-shadow: 0 2px 6px rgba(${(p) => p.$mobileShadowColor}, 0.05);
+
+        &.selected {
+            border: 2px solid var(--color-primary) !important;
+            border-left: 4px solid var(--color-primary) !important;
+            background-color: rgba(var(--color-primary-rgb), 0.06);
+        }
 
         & > #location svg {
             display: none;
@@ -683,6 +844,10 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
             justify-self: end;
             grid-area: isSet;
         }
+
+        & > #packControls {
+            grid-area: packControls;
+        }
     }
 `;
 
@@ -706,6 +871,64 @@ const SortIndicatorWrapper = styled.span<{ $isActive: boolean }>`
 
     ${HeaderCell}:hover & {
         opacity: ${(props) => (props.$isActive ? '1' : '0.5')} !important;
+    }
+`;
+
+const PackModeCell = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const PackControlsCell = styled(TableCell)`
+    /* Only show mobile pack controls on phones */
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--color-bg-accent);
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: flex;
+    }
+`;
+
+const PackControlsLabel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--color-font-secondary);
+`;
+
+const PackControlsRight = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const SelectedBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: rgba(var(--color-primary-rgb), 0.12);
+`;
+
+const CheckboxInput = styled.input`
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
     }
 `;
 

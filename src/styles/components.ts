@@ -113,7 +113,7 @@ export const DataValue = styled.span`
 `;
 
 // Button variants
-export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' }>`
+export const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'ghost' | 'danger' }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -127,8 +127,8 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
     cursor: pointer;
     transition: ${theme.transitions.default};
 
-    ${({ variant = 'primary' }) => {
-        switch (variant) {
+    ${({ $variant = 'primary' }) => {
+        switch ($variant) {
             case 'primary':
                 return `
                     background-color: ${theme.colors.primary};
@@ -170,6 +170,18 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
                         transform: translateY(-1px);
                     }
                 `;
+            case 'danger':
+                return `
+                    background-color: ${theme.colors.status.error.main};
+                    color: white;
+                    height: 44px;
+
+                    &:hover:not(:disabled) {
+                        background-color: ${theme.colors.status.error.dark};
+                        transform: translateY(-1px);
+                        box-shadow: ${theme.shadows.lg};
+                    }
+                `;
         }
     }}
 
@@ -188,14 +200,14 @@ export const ButtonGroup = styled.div<{ $direction?: 'row' | 'column' }>`
     display: flex;
     gap: ${theme.spacing.md};
     flex-direction: ${({ $direction = 'column' }) => $direction};
-
+    
     ${Button} {
         flex: 1;
     }
-
+    
     @media (min-width: ${theme.breakpoints.sm}) {
         flex-direction: row;
-
+        
         ${Button} {
             flex: 0 1 auto;
         }
@@ -208,7 +220,7 @@ export const FormGroup = styled.div`
 `;
 
 // Status Badge
-export const StatusBadge = styled.span<{ status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
+export const StatusBadge = styled.span<{ $status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
     display: inline-flex;
     align-items: center;
     gap: ${theme.spacing.xs};
@@ -217,8 +229,8 @@ export const StatusBadge = styled.span<{ status?: 'good' | 'warning' | 'error' |
     font-size: ${theme.typography.fontSize.xs};
     font-weight: ${theme.typography.fontWeight.semibold};
 
-    ${({ status = 'neutral' }) => {
-        const statusColors = theme.colors.status[status];
+    ${({ $status = 'neutral' }) => {
+        const statusColors = theme.colors.status[$status];
         return `
             background-color: ${statusColors.light};
             color: ${statusColors.dark};
@@ -227,7 +239,7 @@ export const StatusBadge = styled.span<{ status?: 'good' | 'warning' | 'error' |
 `;
 
 // Info Card (with status border)
-export const InfoCard = styled.div<{ status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
+export const InfoCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
     width: 100%;
     max-width: 100%;
     border-radius: ${theme.borderRadius.lg};
@@ -235,8 +247,8 @@ export const InfoCard = styled.div<{ status?: 'good' | 'warning' | 'error' | 'cr
     margin-bottom: ${theme.spacing.lg};
     background-color: ${theme.colors.background.white};
     box-sizing: border-box;
-    border-left: 4px solid ${({ status = 'neutral' }) => theme.colors.status[status].main};
-    border: 1px solid ${({ status = 'neutral' }) => theme.colors.status[status].light};
+    border-left: 4px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].main};
+    border: 1px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].light};
     border-left-width: 4px;
     box-shadow: ${theme.shadows.md};
 `;
@@ -246,7 +258,7 @@ export const Container = styled.div<{ $maxWidth?: string }>`
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-
+    
     ${({ $maxWidth }) =>
         $maxWidth &&
         `
@@ -346,7 +358,7 @@ export const ControlsWrapper = styled.div`
 `;
 
 // Item Card (for item lists)
-export const ItemCard = styled.div<{ status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
+export const ItemCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
     width: 100%;
     max-width: 100%;
     border-radius: ${theme.borderRadius.lg};
@@ -354,20 +366,17 @@ export const ItemCard = styled.div<{ status?: 'good' | 'warning' | 'error' | 'cr
     margin-bottom: ${theme.spacing.md};
     background-color: ${theme.colors.background.white};
     box-sizing: border-box;
-    border-left: 4px solid ${({ status = 'neutral' }) => theme.colors.status[status].main};
-    border: 1px solid ${({ status = 'neutral' }) => theme.colors.status[status].light};
+    border-left: 4px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].main};
+    border: 1px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].light};
     border-left-width: 4px;
     box-shadow: ${theme.shadows.md};
     cursor: pointer;
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        border-color 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
     &:hover {
         transform: translateY(-2px);
         box-shadow: ${theme.shadows.lg};
-        border-color: ${({ status = 'neutral' }) => theme.colors.status[status].main};
+        border-color: ${({ $status = 'neutral' }) => theme.colors.status[$status].main};
     }
 `;
 

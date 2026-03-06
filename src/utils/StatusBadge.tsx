@@ -34,7 +34,7 @@ export const DamageLevelStyles = {
 const StatusBadge = (props: { damageLevelType: DamageLevelType; omitText?: boolean }) => {
     const { damageLevelType } = props;
 
-    const damageStyle = DamageLevelStyles[damageLevelType];
+    const damageStyle = DamageLevelStyles[damageLevelType] || DamageLevelStyles.none;
 
     return (
         <StatusBadgeWrapper $color={damageStyle.color} $bgColor={damageStyle.colorBg} $omitText={props.omitText}>

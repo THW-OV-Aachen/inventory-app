@@ -136,7 +136,7 @@ const ModalTitle = styled.h3`
     margin: 0 0 10px 0;
 `;
 
-const ModalText = styled.p`
+const ModalText = styled.div`
     margin: 0 0 16px 0;
 `;
 
@@ -154,13 +154,14 @@ const ConfirmationInput = styled.input`
     margin-bottom: 10px;
 `;
 
-const WarningText = styled.p`
+const WarningText = styled.div`
     color: #f00;
     font-weight: bold;
 `;
 
 const ImportExportScreen = () => {
     const navigate = useNavigate();
+    // UI state for the import/export flow (file selection, progress, confirmations).
     const [file, setFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -172,6 +173,7 @@ const ImportExportScreen = () => {
     const [importProgress, setImportProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Load current items to decide whether import needs a confirmation step.
     const inventoryItems = inventoryApi.useItems(); // fetch current items
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +190,7 @@ const ImportExportScreen = () => {
             return;
         }
 
+        // If items exist, require user to choose extend vs overwrite.
         if ((inventoryItems?.length ?? 0) > 0) {
             setPendingFile(file);
             setShowConfirm(true);
@@ -206,6 +209,7 @@ const ImportExportScreen = () => {
         };
         try {
             if (!extend) {
+                // Overwrite path requires explicit confirmation.
                 if (!overwriteConfirmed) {
                     setShowOverwriteConfirmation(true);
                     return;
@@ -248,6 +252,7 @@ const ImportExportScreen = () => {
     };
 
     const handleOverwriteConfirmation = async () => {
+        // Require the exact keyword before clearing the database.
         if (overwriteConfirmationInput === 'überschreiben') {
             performImport(pendingFile!, false, true);
             setShowOverwriteConfirmation(false);
@@ -262,7 +267,12 @@ const ImportExportScreen = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'inventory.xlsx';
+            
+            // Generate filename with date and time suffix
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
+            a.download = `inventory_${dateStr}.xlsx`;
+            
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -302,14 +312,14 @@ const ImportExportScreen = () => {
                     </FileInputWrapper>
                     <StyledButtonGroup>
                         <StyledPrimaryButton
-                            variant="primary"
+                            $variant="primary"
                             onClick={handleImportClick}
                             disabled={importing || !file}
                         >
                             <Upload size={14} />
                             <span>{importing ? 'Import läuft…' : 'Importieren'}</span>
                         </StyledPrimaryButton>
-                        <StyledSecondaryButton variant="ghost" onClick={handleExportClick} disabled={exporting}>
+                        <StyledSecondaryButton $variant="ghost" onClick={handleExportClick} disabled={exporting}>
                             <Download size={14} />
                             <span>{exporting ? 'Export läuft…' : 'Exportieren'}</span>
                         </StyledSecondaryButton>
@@ -352,7 +362,7 @@ const ImportExportScreen = () => {
                                 <StyledSecondaryButton onClick={() => handleConfirmChoice('overwrite')}>
                                     Überschreiben
                                 </StyledSecondaryButton>
-                                <StyledSecondaryButton variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
+                                <StyledSecondaryButton $variant="ghost" onClick={() => handleConfirmChoice('cancel')}>
                                     Abbrechen
                                 </StyledSecondaryButton>
                             </ModalButtons>
@@ -375,6 +385,11 @@ const ImportExportScreen = () => {
                                 type="text"
                                 value={overwriteConfirmationInput}
                                 onChange={(e) => setOverwriteConfirmationInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && overwriteConfirmationInput === 'überschreiben') {
+                                        handleOverwriteConfirmation();
+                                    }
+                                }}
                                 placeholder='Geben Sie "überschreiben" ein'
                             />
                             <ModalButtons>
@@ -385,7 +400,7 @@ const ImportExportScreen = () => {
                                     Bestätigen
                                 </StyledPrimaryButton>
                                 <StyledSecondaryButton
-                                    variant="ghost"
+                                    $variant="ghost"
                                     onClick={() => {
                                         setShowOverwriteConfirmation(false);
                                         setOverwriteConfirmationInput('');

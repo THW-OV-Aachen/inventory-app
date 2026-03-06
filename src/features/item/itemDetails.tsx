@@ -1,11 +1,10 @@
 import { Box, FileText, Layers, MapPin, Pen, ChevronLeft } from 'lucide-react';
 import styled from 'styled-components';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../db/db';
 import type { IItem } from '../../db/items';
 import StatusBadge from '../../utils/StatusBadge';
-import { inventoryApi } from '../../app/api';
 import IconContainer from '../../utils/IconContainer';
 import { theme } from '../../styles/theme';
 import {
@@ -27,8 +26,8 @@ function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
     const day = d.getDate();
 
-    // set to first of month to avoid rollover issues, then advance months,
-    // then clamp day to the number of days in that month
+    // Set to first of month to avoid rollover issues, then advance months,
+    // then clamp day to the number of days in that month.
     d.setDate(1);
     d.setMonth(d.getMonth() + months);
     const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -37,77 +36,24 @@ function addMonths(date: Date, months: number): Date {
 }
 
 const ItemDetails = () => {
-    const { itemId } = useParams<{ itemId: string }>();
+    const {id} = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
-    const [text, setText] = useState('');
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const navigate = useNavigate();
 
-    const saveRemark = useCallback(
-        async (newText: string) => {
-            if (!itemId) return;
-            setIsSaving(true);
-            try {
-                await inventoryApi.updateItem(itemId, {
-                    remark: newText || '',
-                });
-            } catch (error) {
-                console.error('Failed to save remark:', error);
-            } finally {
-                setIsSaving(false);
-            }
-        },
-        [itemId]
-    );
-
-    // Fetch the item from Dexie by ID
+    // Fetch the item from Dexie by ID.
     useEffect(() => {
         const fetchItem = async () => {
+            const itemId = id ? parseInt(id, 10) : null;
             if (!itemId) return;
             const dbItem = await db.items.get(itemId);
             if (dbItem) {
                 setItem(dbItem);
-                setText(dbItem.remark || '');
             }
         };
         fetchItem();
-    }, [itemId]);
+    }, [id]);
 
-    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newText = e.target.value;
-        setText(newText);
-
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
-        debounceTimerRef.current = setTimeout(() => {
-            saveRemark(newText);
-        }, 3000);
-    };
-
-    // Auto-grow textarea
-    const adjustTextareaHeight = () => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    };
-
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [text]);
-
-    useEffect(() => {
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, []);
-
+    // Placeholder for future document attachments.
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
     };
@@ -120,23 +66,29 @@ const ItemDetails = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <StyledBackButton onClick={() => navigate(-1)}>
-                    <ChevronLeft size={20} />
-                </StyledBackButton>
-                <Title>
-                    {item.isSet ? (
-                        <Layers size={20} color={theme.colors.text.muted} />
-                    ) : (
-                        <Box size={20} color={theme.colors.text.muted} />
-                    )}
-                    {item.name}
-                </Title>
+                <HeaderContent>
+                    <StyledBackButton onClick={() => navigate(-1)}>
+                        <ChevronLeft size={20} />
+                    </StyledBackButton>
+                    <Title>
+                        {item.isSet === true ? (
+                            <Layers size={20} color={theme.colors.text.muted} />
+                        ) : (item.isSet === false ?
+                            <Box size={20} color={theme.colors.text.muted} />
+                        : "")}
+                        {item.name}
+                    </Title>
+                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                        <IconContainer icon={Pen} />
+                        <span>Bearbeiten</span>
+                    </HeaderEditButton>
+                </HeaderContent>
             </StyledHeader>
 
             <StyledContentWrapper>
                 <Subtitle>Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}</Subtitle>
 
-                <StyledInfoCard status={themeStatus}>
+                <StyledInfoCard $status={themeStatus}>
                     <CardContent>
                         <InfoRow>
                             <div style={{ flex: 1 }}>
@@ -167,9 +119,10 @@ const ItemDetails = () => {
 
                 <StyledDetailsCard>
                     <InfoLabel>Weitere Informationen</InfoLabel>
+                    <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
-                    <InfoValue>Typ: {item.isSet ? 'Satz' : 'Einzelstück'}</InfoValue>
+                    <InfoValue>Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}</InfoValue>
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
@@ -218,25 +171,16 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
-                    <InfoLabel style={{ marginBottom: theme.spacing.md }}>
-                        Kommentare{' '}
-                        {isSaving && (
-                            <span
-                                style={{ color: theme.colors.text.secondary, fontSize: theme.typography.fontSize.xs }}
-                            >
-                                Wird gespeichert...
-                            </span>
-                        )}
-                    </InfoLabel>
-                    <StyledTextarea ref={textareaRef} value={text} onChange={handleTextChange} />
+                    <InfoLabel style={{ marginBottom: theme.spacing.md }}>Kommentare</InfoLabel>
+                    <StyledTextarea value={item.remark || ''} disabled readOnly />
                 </StyledDetailsCard>
 
                 <ButtonContainer>
-                    <StyledButton variant="primary" onClick={handleAdditionalDocs}>
+                    <StyledButton $variant="primary" onClick={handleAdditionalDocs}>
                         <IconContainer icon={FileText} />
                         Weitere Dokumente
                     </StyledButton>
-                    <StyledButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                    <StyledButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                         <IconContainer icon={Pen} /> Bearbeiten
                     </StyledButton>
                 </ButtonContainer>
@@ -260,12 +204,51 @@ const StyledContainer = styled(Container)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    padding: ${theme.spacing.md} 0;
     margin-bottom: 0;
     margin-left: 0;
+    position: relative;
+`;
+
+const HeaderContent = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md};
+    }
+`;
+
+const HeaderEditButton = styled(Button)`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.xs};
+    margin-left: auto;
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    box-shadow: ${theme.shadows.sm};
+
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
+        }
+    }
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -284,7 +267,11 @@ const Title = styled.h1`
 `;
 
 const StyledContentWrapper = styled(ContentWrapper)`
-    padding: 0;
+    padding: 0 ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md};
+    }
 `;
 
 const Subtitle = styled.div`

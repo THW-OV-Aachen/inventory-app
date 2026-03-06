@@ -3,6 +3,8 @@ const IconContainer = (props: {
     width?: string;
     height?: string;
 }) => {
+    if (!props.icon) return null;
+
     return (
         <div
             style={{
