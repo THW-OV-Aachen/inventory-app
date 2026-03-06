@@ -190,6 +190,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
 
     const totalRows = sheet.rowCount;
 
+    const itemsToAdd: IItem[] = [];
+
     for (let rowIdx = 2; rowIdx <= totalRows; rowIdx++) {
         const row = sheet.getRow(rowIdx);
 
@@ -257,10 +259,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             continue;
         }
 
-        try {
-            await inventoryApi.addItem(rowData as IItem);
-        } catch (err) {
-            console.error(`Failed to add row ${rowIdx}`, err);
-        }
+        itemsToAdd.push(rowData as IItem);
     }
+
+    await inventoryApi.addItemsBulk(itemsToAdd);
 }
