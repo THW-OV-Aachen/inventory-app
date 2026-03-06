@@ -385,6 +385,11 @@ const ImportExportScreen = () => {
                                 type="text"
                                 value={overwriteConfirmationInput}
                                 onChange={(e) => setOverwriteConfirmationInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && overwriteConfirmationInput === 'überschreiben') {
+                                        handleOverwriteConfirmation();
+                                    }
+                                }}
                                 placeholder='Geben Sie "überschreiben" ein'
                             />
                             <ModalButtons>

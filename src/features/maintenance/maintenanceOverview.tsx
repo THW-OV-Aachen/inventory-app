@@ -48,7 +48,7 @@ const mapStatusToTheme = (status: MaintenanceStatus): ThemeStatus => {
 const MaintenanceOverview = () => {
     const navigate = useNavigate();
     const items = inventoryApi.useItems();
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<number | null>(null);
 
     // Precompute rows with status so render stays simple.
     const rows = useMemo(() => {
@@ -73,15 +73,15 @@ const MaintenanceOverview = () => {
             <StyledContentWrapper>
                 <Legend>
                     <LegendItem>
-                        <StatusBadge status="good" />
+                        <StatusBadge $status="good" />
                         <LegendText>OK (ausreichender Bestand)</LegendText>
                     </LegendItem>
                     <LegendItem>
-                        <StatusBadge status="warning" />
+                        <StatusBadge $status="warning" />
                         <LegendText>Niedrig (unter Ziel)</LegendText>
                     </LegendItem>
                     <LegendItem>
-                        <StatusBadge status="error" />
+                        <StatusBadge $status="error" />
                         <LegendText>Kritisch / Nicht verfügbar</LegendText>
                     </LegendItem>
                 </Legend>
@@ -91,7 +91,7 @@ const MaintenanceOverview = () => {
                     {rows.map(({ item, themeStatus }) => (
                         <StyledItemCard
                             key={item.id}
-                            status={themeStatus}
+                            $status={themeStatus}
                             onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                         >
                             <CardHeader>

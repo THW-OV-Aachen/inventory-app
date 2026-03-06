@@ -87,7 +87,7 @@ const ItemDetails = () => {
             <StyledContentWrapper>
                 <Subtitle>Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}</Subtitle>
 
-                <StyledInfoCard status={themeStatus}>
+                <StyledInfoCard $status={themeStatus}>
                     <CardContent>
                         <InfoRow>
                             <div style={{ flex: 1 }}>
