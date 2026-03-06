@@ -136,7 +136,7 @@ const ModalTitle = styled.h3`
     margin: 0 0 10px 0;
 `;
 
-const ModalText = styled.p`
+const ModalText = styled.div`
     margin: 0 0 16px 0;
 `;
 
@@ -154,7 +154,7 @@ const ConfirmationInput = styled.input`
     margin-bottom: 10px;
 `;
 
-const WarningText = styled.p`
+const WarningText = styled.div`
     color: #f00;
     font-weight: bold;
 `;

@@ -29,9 +29,8 @@ export interface PaginatedResult<T> {
 
 export const inventoryApi = {
     async addItem(itemData: Omit<IItem, 'id'>): Promise<void> {
-        var id;
         try {
-            id = await db.items.add(itemData as IItem);
+            await db.items.add(itemData as IItem);
         } catch (error) {
             console.error('Failed to add inventory item: ', error);
             if ((error as Error).name === 'ConstraintError') {
