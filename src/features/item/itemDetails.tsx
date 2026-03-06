@@ -73,9 +73,11 @@ const ItemDetails = () => {
                     <Title>
                         {item.isSet === true ? (
                             <Layers size={20} color={theme.colors.text.muted} />
-                        ) : (item.isSet === false ?
+                        ) : item.isSet === false ?(
                             <Box size={20} color={theme.colors.text.muted} />
-                        : "")}
+                        ) : (
+                            ''
+                        )}
                         {item.name}
                     </Title>
                     <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
@@ -122,7 +124,9 @@ const ItemDetails = () => {
                     <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
-                    <InfoValue>Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}</InfoValue>
+                    <InfoValue>
+                        Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}
+                    </InfoValue>
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
@@ -179,9 +183,6 @@ const ItemDetails = () => {
                     <StyledButton $variant="primary" onClick={handleAdditionalDocs}>
                         <IconContainer icon={FileText} />
                         Weitere Dokumente
-                    </StyledButton>
-                    <StyledButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
-                        <IconContainer icon={Pen} /> Bearbeiten
                     </StyledButton>
                 </ButtonContainer>
             </StyledContentWrapper>
@@ -337,7 +338,7 @@ const ButtonContainer = styled.div`
 
     @media (min-width: ${theme.breakpoints.md}) {
         flex-direction: row;
-        justify-content: flex-end;
+        justify-content: flex-start;
 
         & > ${StyledButton} {
             width: unset;
