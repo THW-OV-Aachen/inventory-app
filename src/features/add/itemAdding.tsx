@@ -140,10 +140,10 @@ const ItemAdding = () => {
                     </StyledFormGroup>
 
                     <StyledButtonGroup>
-                        <StyledButton variant="primary" onClick={handleSave}>
+                        <StyledButton $variant="primary" onClick={handleSave}>
                             Save Item
                         </StyledButton>
-                        <StyledButton variant="ghost" onClick={() => navigate(-1)}>
+                        <StyledButton $variant="ghost" onClick={() => navigate(-1)}>
                             Cancel
                         </StyledButton>
                     </StyledButtonGroup>

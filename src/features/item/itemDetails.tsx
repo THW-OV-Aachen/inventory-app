@@ -77,7 +77,7 @@ const ItemDetails = () => {
                         : "")}
                         {item.name}
                     </Title>
-                    <HeaderEditButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                         <IconContainer icon={Pen} />
                         <span>Bearbeiten</span>
                     </HeaderEditButton>
@@ -158,11 +158,11 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <ButtonContainer>
-                    <StyledButton variant="primary" onClick={handleAdditionalDocs}>
+                    <StyledButton $variant="primary" onClick={handleAdditionalDocs}>
                         <IconContainer icon={FileText} />
                         Weitere Dokumente
                     </StyledButton>
-                    <StyledButton variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                    <StyledButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                         <IconContainer icon={Pen} /> Bearbeiten
                     </StyledButton>
                 </ButtonContainer>

@@ -40,11 +40,6 @@ export const inventoryApi = {
     },
 
     async addItemsBulk(itemsData: IItem[]): Promise<void> {
-        // bulkPut matches by primary key (auto-increment `id`).
-        // Imported items have no `id`, so without help every one would be
-        // treated as an INSERT and crash on the &inventoryNumber unique index.
-        // Fix: pre-fetch existing inventoryNumber→id pairs and assign the
-        // correct id so bulkPut does an UPDATE for already-existing rows.
         const existing = await db.items.toArray();
         const invNumToId = new Map<string, number>(
             existing

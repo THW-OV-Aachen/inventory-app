@@ -455,10 +455,10 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledButtonGroup>
-                        <StyledButton variant="primary" onClick={handleSave}>
+                        <StyledButton $variant="primary" onClick={handleSave}>
                             Speichern
                         </StyledButton>
-                        <StyledButton variant="ghost" onClick={() => navigate(-1)}>
+                        <StyledButton $variant="ghost" onClick={() => navigate(-1)}>
                             Abbrechen
                         </StyledButton>
                     </StyledButtonGroup>
