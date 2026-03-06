@@ -37,10 +37,7 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         header: 'Art',
         key: 'art',
         required: false,
-        exportTransform: (v) => (v ? v.toString().string : undefined),
-        importTransform: (v) => {
-            return v?.toString().trim();
-        },
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
         header: 'Menge',
@@ -71,6 +68,12 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         defaultValue: 0,
     },
     {
+        header: 'Ort',
+        key: 'location',
+        required: false,
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+    {
         header: 'Verfügbar',
         key: 'availability',
         required: false,
@@ -83,12 +86,6 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
             return isNaN(parsed) ? 0 : parsed;
         },
         defaultValue: 0,
-    },
-    {
-        header: 'Ort',
-        key: 'location',
-        required: false,
-        importTransform: (v) => v?.toString()?.trim(),
     },
     {
         header: 'Ausstattung | Hersteller | Typ',
