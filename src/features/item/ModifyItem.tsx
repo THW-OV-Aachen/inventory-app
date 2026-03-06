@@ -145,7 +145,7 @@ const ColorInput = styled(Input)`
 `;
 
 const ModifyItem = () => {
-    const {id} = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     // Form state starts from the loaded item and is edited in place.
     const [formData, setFormData] = useState<Partial<IItem>>({});
@@ -181,7 +181,7 @@ const ModifyItem = () => {
         };
         fetchItem();
         fetchLabels();
-    }, [itemId]);
+    }, [id]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -394,7 +394,9 @@ const ModifyItem = () => {
                                                 color={label.color}
                                             >
                                                 {label.name}
-                                                {selectedLabels.some((l) => l.id === label.id) && <IconContainer icon={Check} />}
+                                                {selectedLabels.some((l) => l.id === label.id) && (
+                                                    <IconContainer icon={Check} />
+                                                )}
                                             </LabelOption>
                                         ))
                                     ) : (
