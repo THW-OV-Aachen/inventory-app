@@ -207,10 +207,7 @@ const PackingPlanDetails = () => {
         });
     };
 
-    const packedCount = planItems.reduce(
-        (acc, pi) => acc + (packedItemIds.has(pi.Iid.toString()) ? 1 : 0),
-        0
-    );
+    const packedCount = planItems.reduce((acc, pi) => acc + (packedItemIds.has(pi.Iid.toString()) ? 1 : 0), 0);
 
     // Filter inventory items for modal
     const filteredInventoryItems = allInventoryItems.filter((item) => {
@@ -270,8 +267,12 @@ const PackingPlanDetails = () => {
                     </Title>
                     <HeaderEditButton $variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
                         <IconContainer icon={Pen} />
-                        <span>Edit</span>
+                        <span>Bearbeiten</span>
                     </HeaderEditButton>
+                    <HeaderDangerActionButton type="button" onClick={openDeleteConfirm}>
+                        <IconContainer icon={Trash2} />
+                        <span>Löschen</span>
+                    </HeaderDangerActionButton>
                 </HeaderContent>
             </StyledHeader>
 
@@ -388,17 +389,6 @@ const PackingPlanDetails = () => {
                         </ItemsList>
                     )}
                 </ItemsSection>
-
-                <ButtonContainer>
-                    <StyledButton $variant="primary" onClick={() => navigate(`/packing-plans/${plan.id}/edit`)}>
-                        <IconContainer icon={Pen} />
-                        Edit
-                    </StyledButton>
-                    <DangerActionButton type="button" onClick={openDeleteConfirm}>
-                        <IconContainer icon={Trash2} />
-                        Delete
-                    </DangerActionButton>
-                </ButtonContainer>
             </StyledContentWrapper>
 
             {showDeleteConfirm && (
@@ -436,10 +426,7 @@ const PackingPlanDetails = () => {
                             >
                                 Abbrechen
                             </ModalButton>
-                            <DangerModalButton
-                                onClick={handleConfirmDeletePlan}
-                                disabled={isDeletingPlan}
-                            >
+                            <DangerModalButton onClick={handleConfirmDeletePlan} disabled={isDeletingPlan}>
                                 {isDeletingPlan ? 'Löschen…' : 'Löschen'}
                             </DangerModalButton>
                         </ModalButtons>
@@ -649,7 +636,14 @@ const InfoValue = styled(DataValue)`
 
 const StyledButton = styled(DetailActionButton)``;
 
-const DangerActionButton = styled(DetailActionButton)`
+const HeaderDangerActionButton = styled(Button)`
+    display: flex;
+    align-items: center;
+    box-shadow: ${theme.shadows.sm};
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    gap: ${theme.spacing.xs};
     background-color: ${theme.colors.status.error.main};
     color: white;
     border-color: ${theme.colors.status.error.main};
@@ -664,28 +658,11 @@ const DangerActionButton = styled(DetailActionButton)`
     &:active:not(:disabled) {
         transform: translateY(0);
     }
-`;
 
-const ButtonContainer = styled.div`
-    display: flex;
-    gap: ${theme.spacing.sm};
-    flex-direction: row;
-    align-items: stretch;
-    flex-wrap: wrap;
-
-    & > ${StyledButton},
-    & > ${DangerActionButton} {
-        flex: 1;
-        min-width: 160px;
-    }
-
-    @media (min-width: ${theme.breakpoints.md}) {
-        justify-content: flex-end;
-
-        & > ${StyledButton},
-        & > ${DangerActionButton} {
-            flex: 0 0 160px;
-            min-width: 160px;
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
         }
     }
 `;
