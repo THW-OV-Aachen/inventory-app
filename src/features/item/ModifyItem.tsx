@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { Check, ChevronLeft, Pen, X } from 'lucide-react';
+import { Check, ChevronLeft, Pen, Trash, X } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { type ILabel } from '../../db/labels';
@@ -32,6 +34,7 @@ import {
 } from '../../utils/LabelBadge';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
+import { updateFilter } from '../../store/slices/searchSlice';
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
@@ -160,6 +163,8 @@ const ModifyItem = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const activeFilter = useSelector((state: RootState) => state.search.filters)?.labels || [];
 
     useEffect(() => {
         // Load the item by ID and seed the form values.
@@ -263,6 +268,24 @@ const ModifyItem = () => {
         });
     };
 
+    const handleDeleteLabel = async (labelId: string) => {
+        if (window.confirm('Sind Sie sicher, dass Sie dieses Label löschen möchten?')) {
+            try {
+                await labelsApi.deleteLabel(labelId);
+                await inventoryApi.removeLabelFromAllItems(labelId);
+                setAllLabels((prev) => prev.filter((l) => l.id !== labelId));
+                setSelectedLabels((prev) => prev.filter((l) => l.id !== labelId));
+
+                // Update the filter
+                const newFilter = activeFilter.filter((l) => l !== labelId);
+                dispatch(updateFilter({ labels: newFilter }));
+            } catch (error) {
+                console.error('Failed to delete label:', error);
+                alert('Fehler beim Löschen des Labels.');
+            }
+        }
+    };
+
     const handleSave = async () => {
         // Validate and persist updates back to Dexie.
         const allKeys = Object.keys(formData) as (keyof IItem)[];
@@ -278,6 +301,7 @@ const ModifyItem = () => {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
+                art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
                 availability: formData.availability ?? 0,
@@ -394,9 +418,18 @@ const ModifyItem = () => {
                                                 color={label.color}
                                             >
                                                 {label.name}
-                                                {selectedLabels.some((l) => l.id === label.id) && (
-                                                    <IconContainer icon={Check} />
-                                                )}
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {selectedLabels.some((l) => l.id === label.id) && (
+                                                        <IconContainer icon={Check} />
+                                                    )}
+                                                    <IconContainer
+                                                        icon={Trash}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteLabel(label.id);
+                                                        }}
+                                                    />
+                                                </div>
                                             </LabelOption>
                                         ))
                                     ) : (
@@ -415,7 +448,7 @@ const ModifyItem = () => {
                                             value={newLabelName}
                                             onChange={(e) => setNewLabelName(e.target.value)}
                                         />
-                                        <StyledButton variant="primary" onClick={handleCreateLabel}>
+                                        <StyledButton $variant="primary" onClick={handleCreateLabel}>
                                             Erstellen
                                         </StyledButton>
                                     </CreateLabelContainer>

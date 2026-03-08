@@ -222,6 +222,14 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     }
 `;
 
+import { store } from '../../store/store';
+
+export const removeLabel = (labelId: string) => {
+    const activeFilter = store.getState().search.filters?.labels || [];
+    const newFilter = activeFilter.filter((l) => l !== labelId);
+    store.dispatch(updateFilter({ labels: newFilter }));
+};
+
 const LabelSelector = () => {
     const dispatch = useDispatch();
     const filters = useSelector((state: RootState) => state.search.filters);
@@ -301,11 +309,6 @@ const LabelSelector = () => {
                 <SelectedLabels>
                     {selectedLabels.map((labelId) => {
                         const label = allLabels.find((l) => l.id === labelId);
-                        function removeLabel(labelId: string): void {
-                            const newSelectedLabels = selectedLabels.filter((id) => id !== labelId);
-                            dispatch(updateFilter({ labels: newSelectedLabels }));
-                        }
-
                         return label ? (
                             <LabelBadge key={labelId} onClick={() => removeLabel(labelId)} color={label.color}>
                                 {label.name} <IconContainer icon={X} />

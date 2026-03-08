@@ -2,6 +2,7 @@ const IconContainer = (props: {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     width?: string;
     height?: string;
+    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
     if (!props.icon) return null;
 
@@ -13,7 +14,9 @@ const IconContainer = (props: {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: props.onClick ? 'pointer' : 'default',
             }}
+            onClick={props.onClick}
         >
             <props.icon width="100%" height="100%" />
         </div>

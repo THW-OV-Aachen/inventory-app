@@ -140,6 +140,7 @@ const AddItem = () => {
         inventoryNumber: '',
         deviceNumber: '',
         isSet: false,
+        art: '',
         amountTarget: 0,
         amountActual: 0,
         availability: 0,
@@ -278,6 +279,7 @@ const AddItem = () => {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
+                art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
                 availability: formData.availability ?? 0,
@@ -398,7 +400,7 @@ const AddItem = () => {
                                             value={newLabelName}
                                             onChange={(e) => setNewLabelName(e.target.value)}
                                         />
-                                        <StyledButton variant="primary" onClick={handleCreateLabel}>
+                                        <StyledButton $variant="primary" onClick={handleCreateLabel}>
                                             Erstellen
                                         </StyledButton>
                                     </CreateLabelContainer>

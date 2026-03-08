@@ -246,6 +246,27 @@ export const inventoryApi = {
 
         return result ?? { totalCount: 0, firstThreeEntries: [] };
     },
+
+    async removeLabelFromAllItems(labelId: string): Promise<void> {
+        try {
+            const allItems = await db.items.toArray();
+            const itemsToUpdate = allItems.filter((item) => item.labels?.some((label) => label.id === labelId));
+
+            if (itemsToUpdate.length > 0) {
+                const updates = itemsToUpdate.map((item) => {
+                    const newLabels = item.labels?.filter((label) => label.id !== labelId);
+                    return {
+                        ...item,
+                        labels: newLabels,
+                    };
+                });
+                await db.items.bulkPut(updates);
+            }
+        } catch (error) {
+            console.error(`Failed to remove label ${labelId} from all items:`, error);
+            throw error;
+        }
+    },
 };
 
 export const labelsApi = {
@@ -255,6 +276,14 @@ export const labelsApi = {
             return labels;
         } catch (error) {
             console.error('Failed to fetch all labels: ', error);
+            throw error;
+        }
+    },
+    async deleteLabel(labelId: string): Promise<void> {
+        try {
+            await db.labels.delete(labelId);
+        } catch (error) {
+            console.error('Failed to delete label: ', error);
             throw error;
         }
     },
