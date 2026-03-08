@@ -247,6 +247,18 @@ export const inventoryApi = {
         return result ?? { totalCount: 0, firstThreeEntries: [] };
     },
 
+    useCountItemsWithLabel(labelId: string | undefined) {
+        const count = useLiveQuery(
+            async () => {
+                if (!labelId) return 0;
+                const allItems = await db.items.toArray();
+                return allItems.filter(item => item.labels?.some(l => l.id === labelId)).length;
+            },
+            [labelId]
+        );
+        return count ?? 0;
+    },
+
     async removeLabelFromAllItems(labelId: string): Promise<void> {
         try {
             const allItems = await db.items.toArray();

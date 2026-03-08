@@ -208,6 +208,8 @@ const ModifyItem = () => {
     const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
     const [labelToDelete, setLabelToDelete] = useState<ILabel | null>(null);
     const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
+
+    const itemsWithLabelToDeleteCount = inventoryApi.useCountItemsWithLabel(labelToDelete?.id);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -528,7 +530,11 @@ const ModifyItem = () => {
                                     <ModalTitle id="delete-confirm-title">Label löschen bestätigen</ModalTitle>
                                     <ModalText>
                                         <WarningText>
-                                            WARNUNG: Dieses Label wird von ALLEN Gegenständen entfernt!
+                                            WARNUNG: Dieses Label wird von{' '}
+                                            {itemsWithLabelToDeleteCount === 1
+                                                ? '1 Gegenstand'
+                                                : `${itemsWithLabelToDeleteCount} Gegenständen`}{' '}
+                                            entfernt!
                                         </WarningText>
                                         Bitte geben Sie "ja" ein, um zu bestätigen, dass Sie dieses Label endgültig
                                         löschen möchten.

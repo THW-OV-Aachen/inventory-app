@@ -210,6 +210,8 @@ const AddItem = () => {
     const [labelToDelete, setLabelToDelete] = useState<ILabel | null>(null);
     const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
+    const itemsWithLabelToDeleteCount = inventoryApi.useCountItemsWithLabel(labelToDelete?.id);
+
     useEffect(() => {
         const fetchLabels = async () => {
             const allLabels = await labelsApi.getAllLabels();
@@ -511,7 +513,11 @@ const AddItem = () => {
                                     <ModalTitle id="delete-confirm-title">Label löschen bestätigen</ModalTitle>
                                     <ModalText>
                                         <WarningText>
-                                            WARNUNG: Dieses Label wird von ALLEN Gegenständen entfernt!
+                                            WARNUNG: Dieses Label wird von{' '}
+                                            {itemsWithLabelToDeleteCount === 1
+                                                ? '1 Gegenstand'
+                                                : `${itemsWithLabelToDeleteCount} Gegenständen`}{' '}
+                                            entfernt!
                                         </WarningText>
                                         Bitte geben Sie "ja" ein, um zu bestätigen, dass Sie dieses Label endgültig
                                         löschen möchten.
