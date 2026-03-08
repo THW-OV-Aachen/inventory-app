@@ -31,7 +31,53 @@ import {
 } from '../../utils/LabelBadge';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
-import { labelsApi } from '../../app/api';
+import { labelsApi, inventoryApi } from '../../app/api';
+
+const ModalOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+`;
+
+const ModalTitle = styled.h3`
+    margin: 0 0 10px 0;
+`;
+
+const ModalText = styled.div`
+    margin: 0 0 16px 0;
+`;
+
+const ModalButtons = styled.div`
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+`;
+
+const ConfirmationInput = styled.input`
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+`;
+
+const WarningText = styled.div`
+    color: #f00;
+    font-weight: bold;
+`;
 
 const StyledContainer = styled(Container)`
     padding-top: 8px;
@@ -161,6 +207,8 @@ const AddItem = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [newLabelName, setNewLabelName] = useState('');
     const [newLabelColor, setNewLabelColor] = useState<string>(theme.colors.primary);
+    const [labelToDelete, setLabelToDelete] = useState<ILabel | null>(null);
+    const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
     useEffect(() => {
         const fetchLabels = async () => {
@@ -245,6 +293,23 @@ const AddItem = () => {
                 return [...prev, label];
             }
         });
+    };
+
+    const confirmDeleteLabel = async () => {
+        if (!labelToDelete || deleteConfirmationInput.toLowerCase() !== 'ja') return;
+
+        try {
+            await labelsApi.deleteLabel(labelToDelete.id);
+            await inventoryApi.removeLabelFromAllItems(labelToDelete.id);
+            setAllLabels((prev) => prev.filter((l) => l.id !== labelToDelete.id));
+            setSelectedLabels((prev) => prev.filter((l) => l.id !== labelToDelete.id));
+        } catch (error) {
+            console.error('Failed to delete label:', error);
+            alert('Fehler beim Löschen des Labels.');
+        } finally {
+            setLabelToDelete(null);
+            setDeleteConfirmationInput('');
+        }
     };
 
     const handleSave = async () => {
@@ -377,11 +442,22 @@ const AddItem = () => {
                                             <LabelOption
                                                 key={label.id}
                                                 onClick={() => handleLabelClick(label.id)}
-                                                $isSelected={selectedLabels.includes(label)}
+                                                $isSelected={selectedLabels.some((l) => l.id === label.id)}
                                                 color={label.color}
                                             >
                                                 {label.name}
-                                                {selectedLabels.includes(label) && <IconContainer icon={Check} />}
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {selectedLabels.some((l) => l.id === label.id) && (
+                                                        <IconContainer icon={Check} />
+                                                    )}
+                                                    <IconContainer
+                                                        icon={X}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setLabelToDelete(label);
+                                                        }}
+                                                    />
+                                                </div>
                                             </LabelOption>
                                         ))
                                     ) : (
@@ -427,6 +503,50 @@ const AddItem = () => {
                                     ) : null;
                                 })}
                             </SelectedLabels>
+                        )}
+                        {labelToDelete && (
+                            <ModalOverlay>
+                                <ModalBox role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+                                    <ModalTitle id="delete-confirm-title">Label löschen bestätigen</ModalTitle>
+                                    <ModalText>
+                                        <WarningText>
+                                            WARNUNG: Dieses Label wird von ALLEN Gegenständen entfernt!
+                                        </WarningText>
+                                        Bitte geben Sie "ja" ein, um zu bestätigen, dass Sie dieses Label endgültig
+                                        löschen möchten.
+                                    </ModalText>
+                                    <ConfirmationInput
+                                        type="text"
+                                        value={deleteConfirmationInput}
+                                        onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && deleteConfirmationInput.toLowerCase() === 'ja') {
+                                                confirmDeleteLabel();
+                                            }
+                                        }}
+                                        placeholder='Geben Sie "ja" ein'
+                                        autoFocus
+                                    />
+                                    <ModalButtons>
+                                        <StyledButton
+                                            $variant="primary"
+                                            onClick={confirmDeleteLabel}
+                                            disabled={deleteConfirmationInput.toLowerCase() !== 'ja'}
+                                        >
+                                            Bestätigen
+                                        </StyledButton>
+                                        <StyledButton
+                                            $variant="ghost"
+                                            onClick={() => {
+                                                setLabelToDelete(null);
+                                                setDeleteConfirmationInput('');
+                                            }}
+                                        >
+                                            Abbrechen
+                                        </StyledButton>
+                                    </ModalButtons>
+                                </ModalBox>
+                            </ModalOverlay>
                         )}
                     </StyledFormGroup>
 
