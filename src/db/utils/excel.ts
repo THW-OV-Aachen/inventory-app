@@ -1,7 +1,8 @@
 import ExcelJS from 'exceljs';
 import { type IItem, DamageLevelType } from '../items';
-import { inventoryApi } from '../../app/api';
+import { inventoryApi, labelsApi } from '../../app/api';
 import DamageLevelTranslation from '../../utils/damageLevels';
+import type { ILabel } from '../labels';
 interface ColumnDefinition {
     header: string;
     key: keyof IItem | 'oe';
@@ -137,9 +138,45 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         required: false,
         importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
+    {
+        header: 'Labels',
+        key: 'labels',
+        required: false,
+        exportTransform: (v: ILabel[]) => (v && v.length > 0 ? v.map((l) => l.name).join(', ') : ''),
+        importTransform: (v) => (v ? v.toString().trim() : undefined),
+    },
 ];
 
-export async function exportExcel(items: IItem[]): Promise<Blob> {
+interface LabelColumnDefinition {
+    header: string;
+    key: keyof ILabel;
+    required: boolean;
+    exportTransform?: (value: any, label: ILabel) => ExcelJS.CellValue;
+    importTransform?: (value: ExcelJS.CellValue) => any;
+}
+
+const LABEL_EXCEL_COLUMNS: LabelColumnDefinition[] = [
+    {
+        header: 'ID',
+        key: 'id',
+        required: true,
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+    {
+        header: 'Name',
+        key: 'name',
+        required: true,
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+    {
+        header: 'Farbe',
+        key: 'color',
+        required: true,
+        importTransform: (v) => v?.toString()?.trim(),
+    },
+];
+
+export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promise<Blob> {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Inventory');
 
@@ -151,10 +188,22 @@ export async function exportExcel(items: IItem[]): Promise<Blob> {
             if (col.key == 'oe') {
                 return col.exportTransform ? col.exportTransform('', item) : '';
             }
-            const rawValue = item[col.key];
+            const rawValue = item[col.key as keyof IItem];
             return col.exportTransform ? col.exportTransform(rawValue, item) : rawValue;
         });
         sheet.addRow(rowValues);
+    });
+
+    const labelsSheet = workbook.addWorksheet('Labels');
+    const labelHeaderRow = LABEL_EXCEL_COLUMNS.map((col) => col.header);
+    labelsSheet.addRow(labelHeaderRow);
+
+    labels.forEach((label) => {
+        const rowValues = LABEL_EXCEL_COLUMNS.map((col) => {
+            const rawValue = label[col.key];
+            return col.exportTransform ? col.exportTransform(rawValue, label) : rawValue;
+        });
+        labelsSheet.addRow(rowValues);
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -165,8 +214,70 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
     const workbook = new ExcelJS.Workbook();
     const buffer = await file.arrayBuffer();
     await workbook.xlsx.load(buffer);
-    const sheet = workbook.worksheets[0];
 
+    // 1. Process Labels sheet if it exists
+    const labelsSheet = workbook.getWorksheet('Labels');
+    const existingLabelsMap = new Map<string, ILabel>();
+    const labelsByNameMap = new Map<string, ILabel>();
+
+    if (labelsSheet) {
+        const labelHeaderRow = labelsSheet.getRow(1);
+        const labelHeaderMap = new Map<string, number>();
+
+        labelHeaderRow.eachCell((cell, colNumber) => {
+            const headerText = (cell.value ?? '').toString().trim();
+            if (headerText) {
+                labelHeaderMap.set(headerText, colNumber);
+            }
+        });
+
+        const idCol = labelHeaderMap.get('ID');
+        const nameCol = labelHeaderMap.get('Name');
+        const colorCol = labelHeaderMap.get('Farbe');
+
+        if (idCol && nameCol && colorCol) {
+            const labelsToAdd: ILabel[] = [];
+            const totalLabelRows = labelsSheet.rowCount;
+
+            for (let rowIdx = 2; rowIdx <= totalLabelRows; rowIdx++) {
+                const row = labelsSheet.getRow(rowIdx);
+                if (!row.hasValues) continue;
+
+                const id = row.getCell(idCol).value?.toString().trim();
+                const name = row.getCell(nameCol).value?.toString().trim();
+                const color = row.getCell(colorCol).value?.toString().trim();
+
+                if (id && name && color) {
+                    const newLabel: ILabel = { id, name, color };
+                    labelsToAdd.push(newLabel);
+                    existingLabelsMap.set(id, newLabel);
+                    labelsByNameMap.set(name, newLabel);
+                }
+            }
+
+            // Upsert all labels found in the Excel to the DB
+            for (const label of labelsToAdd) {
+                try {
+                    // Try to get first, if it doesn't exist add it. If it exists, we could update it. 
+                    // But for simplicity, we just rely on addLabel which might overwrite or we just catch duplicate ID errors.
+                    await labelsApi.addLabel(label);
+                } catch (e) {
+                   // Ignore duplicate errors if they exist
+                   console.log("Label may already exist", label.id);
+                }
+            }
+        }
+    } else {
+        // If there's no Labels sheet, let's load what we have from the DB to map any old items
+        const dbLabels = await labelsApi.getAllLabels();
+        dbLabels.forEach(l => {
+            existingLabelsMap.set(l.id, l);
+            labelsByNameMap.set(l.name, l);
+        });
+    }
+
+
+    const sheet = workbook.worksheets[0];
     const headerRow = sheet.getRow(1);
     const headerMap = new Map<string, number>();
 
@@ -232,9 +343,22 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                         } else {
                             rowData['isSet'] = undefined;
                         }
+                    } else if (colDef.key === 'labels') {
+                        const rawLabels = parsedValue?.toString() || '';
+                        const labelIdentifiers = rawLabels.split(',').map(s => s.trim()).filter(Boolean);
+                        const assignedLabels: ILabel[] = [];
+
+                        for (const lIdOrName of labelIdentifiers) {
+                            const foundLabel = existingLabelsMap.get(lIdOrName) || labelsByNameMap.get(lIdOrName);
+                            if (foundLabel) {
+                                assignedLabels.push(foundLabel);
+                            }
+                        }
+                        rowData['labels'] = assignedLabels;
+                        continue;
                     }
 
-                    rowData[colDef.key] = parsedValue as any;
+                    rowData[colDef.key as keyof IItem] = parsedValue as any;
                 } catch (error) {
                     console.warn(`Error parsing column '${colDef.header}' at row ${rowIdx}`, error);
                 }

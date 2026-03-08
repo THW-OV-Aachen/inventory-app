@@ -279,6 +279,14 @@ export const labelsApi = {
             throw error;
         }
     },
+    async addLabel(label: ILabel): Promise<void> {
+        try {
+            await db.labels.put(label);
+        } catch (error) {
+            console.error('Failed to add label: ', error);
+            throw error;
+        }
+    },
     async deleteLabel(labelId: string): Promise<void> {
         try {
             await db.labels.delete(labelId);

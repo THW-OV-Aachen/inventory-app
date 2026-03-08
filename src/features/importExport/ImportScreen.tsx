@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exportExcel, importExcel } from '../../db/utils/excel';
-import { inventoryApi } from '../../app/api';
+import { inventoryApi, labelsApi } from '../../app/api';
 import styled from 'styled-components';
 import { Upload, Download, ChevronLeft, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/theme';
@@ -263,7 +263,8 @@ const ImportExportScreen = () => {
     const handleExportClick = async () => {
         setExporting(true);
         try {
-            const blob = await exportExcel(inventoryItems);
+            const allLabels = await labelsApi.getAllLabels();
+            const blob = await exportExcel(inventoryItems || [], allLabels);
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
