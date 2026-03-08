@@ -178,6 +178,7 @@ const AddItem = () => {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
                 isSet: formData.isSet ?? false,
+                art: formData.art?.trim() || '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
                 availability: formData.availability ?? 0,
