@@ -399,7 +399,7 @@ const ItemOverview = () => {
                                                     </div>
                                                 );
                                             } catch {
-                                                return item.location ?? '-';
+                                                return item.location || '';
                                             }
                                         })()}
                                     </TableCell>

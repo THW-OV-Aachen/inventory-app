@@ -1,6 +1,10 @@
 export function parseLocationStringRaw(locationString: string) {
     const pattern = /^(\d+)?-?([RG])?(\d+)?\.?(\d+)?-?(\d+)?$/;
 
+    if (!locationString || locationString.trim() === '') {
+        throw new Error('Location string is empty');
+    }
+
     const match = locationString.match(pattern);
 
     if (!match) {
@@ -22,6 +26,10 @@ export function parseLocationStringRaw(locationString: string) {
 
 export function parseLocationString(locationString: string) {
     const pattern = /^(\d+)?-?([RG])?(\d+)?\.?(\d+)?-?(\d+)?$/;
+
+    if (!locationString || locationString.trim() === '') {
+        throw new Error('Location string is empty');
+    }
 
     const match = locationString.match(pattern);
 

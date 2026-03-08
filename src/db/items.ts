@@ -1,4 +1,4 @@
-import type { unstable_InstrumentRequestHandlerFunction } from 'react-router';
+
 import * as yup from 'yup';
 import type { ILabel } from './labels';
 
@@ -9,7 +9,6 @@ export const DamageLevelType = {
     TOTAL: 'total',
 } as const;
 
-export const LOCATION_PATTERN = /^(\d+)?-?([RG])?(\d+)?\.?(\d+)?-?(\d+)?$/;
 
 export type DamageLevelType = (typeof DamageLevelType)[keyof typeof DamageLevelType];
 
@@ -38,14 +37,7 @@ export const ItemValidationSchema = yup.object().shape({
     name: yup.string().required('Name ist erforderlich.').min(1, 'Name darf nicht leer sein.'),
     inventoryNumber: yup.string().optional(),
     deviceNumber: yup.string().optional(),
-    location: yup
-        .string()
-        .optional()
-        .test(
-            'location-format',
-            'Erwartetes Format: [Etage]-[Typ][Container-Nr].[Subcontainer-Nr]-[Tool-Nr.] (z. B. 1-G2.3-4).',
-            (value: any) => value === undefined || value === '' || LOCATION_PATTERN.test(String(value))
-        ),
+    location: yup.string().optional(),
     remark: yup.string().optional(),
     amountTarget: yup.number().optional().min(0, 'Zielmenge darf nicht negativ sein.'),
     amountActual: yup.number().optional().min(0, 'Istmenge darf nicht negativ sein.'),
