@@ -3,7 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
-import { ArrowDownAZ, ArrowDownZA, Search, ArrowDownNarrowWide, Check, X, Plus, Package, Save } from 'lucide-react';
+import {
+    ArrowDownAZ,
+    ArrowDownZA,
+    Search,
+    ArrowDownNarrowWide,
+    Check,
+    X,
+    Plus,
+    Package,
+    Save,
+    ScanLine,
+} from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
 import React from 'react';
 import { Form } from 'react-bootstrap';
@@ -31,6 +42,7 @@ import {
 } from '../../utils/LabelBadge';
 import type { ILabel } from '../../db/labels';
 import { labelsApi } from '../../app/api';
+import BarcodeScannerModal from '../barcodeScanner/BarcodeScannerModal';
 
 const sortFieldLabels: Record<string, string> = {
     inventoryNumber: 'Inventar-Nr.',
@@ -46,6 +58,12 @@ interface ItemFilterProps {
 
 export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const [showScanner, setShowScanner] = useState(false);
+
+    const handleBarcodeDetected = async (code: string) => {
+        dispatch(setSearchTerm(code));
+    };
 
     return (
         <ItemFilterWrapper>
@@ -57,6 +75,10 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                         <span>Item</span>
                     </PrimaryButton>
                 )}
+                <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
+                    <IconContainer icon={ScanLine} />
+                    <span>Scan</span>
+                </SecondaryButton>
                 {packModeState.packMode && (
                     <PlanNameInput
                         type="text"
@@ -76,6 +98,14 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                     <span>{packModeState.packMode ? 'Cancel' : 'Pack'}</span>
                 </SecondaryButton>
             </AddEntityButtons>
+
+            <BarcodeScannerModal
+                show={showScanner}
+                onClose={() => setShowScanner(false)}
+                onDetected={handleBarcodeDetected}
+                helpText="Kamera auf den Barcode halten. Der erkannte Code wird in die Suche übernommen."
+                readerId="item-filter-barcode-reader"
+            />
         </ItemFilterWrapper>
     );
 };

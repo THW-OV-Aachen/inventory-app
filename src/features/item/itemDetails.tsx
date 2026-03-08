@@ -1,4 +1,4 @@
-import { Box, FileText, Layers, MapPin, Pen, ChevronLeft } from 'lucide-react';
+import { Box, FileText, Layers, MapPin, Pen, ChevronLeft, Trash2 } from 'lucide-react';
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -26,8 +26,6 @@ function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
     const day = d.getDate();
 
-    // Set to first of month to avoid rollover issues, then advance months,
-    // then clamp day to the number of days in that month.
     d.setDate(1);
     d.setMonth(d.getMonth() + months);
     const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -36,11 +34,10 @@ function addMonths(date: Date, months: number): Date {
 }
 
 const ItemDetails = () => {
-    const {id} = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
     const navigate = useNavigate();
 
-    // Fetch the item from Dexie by ID.
     useEffect(() => {
         const fetchItem = async () => {
             const itemId = id ? parseInt(id, 10) : null;
@@ -53,9 +50,18 @@ const ItemDetails = () => {
         fetchItem();
     }, [id]);
 
-    // Placeholder for future document attachments.
     const handleAdditionalDocs = () => {
         alert('Additional Docs clicked!');
+    };
+
+    const handleDelete = async () => {
+        if (!item?.id) return;
+
+        const confirmed = window.confirm(`Möchtest du "${item.name}" wirklich löschen?`);
+        if (!confirmed) return;
+
+        await db.items.delete(item.id);
+        navigate('/items');
     };
 
     if (!item) return <p className="text-center mt-4">Loading item...</p>;
@@ -70,6 +76,7 @@ const ItemDetails = () => {
                     <StyledBackButton onClick={() => navigate(-1)}>
                         <ChevronLeft size={20} />
                     </StyledBackButton>
+
                     <Title>
                         {item.isSet === true ? (
                             <Layers size={20} color={theme.colors.text.muted} />
@@ -80,10 +87,18 @@ const ItemDetails = () => {
                         )}
                         {item.name}
                     </Title>
-                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
-                        <IconContainer icon={Pen} />
-                        <span>Bearbeiten</span>
-                    </HeaderEditButton>
+
+                    <HeaderActions>
+                        <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                            <IconContainer icon={Pen} />
+                            <span>Bearbeiten</span>
+                        </HeaderEditButton>
+
+                        <HeaderDeleteButton onClick={handleDelete}>
+                            <IconContainer icon={Trash2} />
+                            <span>Löschen</span>
+                        </HeaderDeleteButton>
+                    </HeaderActions>
                 </HeaderContent>
             </StyledHeader>
 
@@ -225,15 +240,49 @@ const HeaderContent = styled.div`
     }
 `;
 
+const HeaderActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+    margin-left: auto;
+`;
+
 const HeaderEditButton = styled(Button)`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.xs};
-    margin-left: auto;
     height: 36px;
     padding: 0 ${theme.spacing.md};
     font-size: ${theme.typography.fontSize.sm};
     box-shadow: ${theme.shadows.sm};
+
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
+        }
+    }
+`;
+
+const HeaderDeleteButton = styled(Button)`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.xs};
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    box-shadow: ${theme.shadows.sm};
+    background: ${theme.colors.status.error.main};
+    color: white;
 
     &:hover {
         box-shadow: ${theme.shadows.md};

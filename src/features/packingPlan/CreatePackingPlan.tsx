@@ -28,6 +28,7 @@ const StyledContainer = styled(Container)`
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
+
     @media (min-width: ${theme.breakpoints.lg}) {
         max-width: 960px;
         margin: 0 auto;
@@ -242,13 +243,11 @@ const ItemOption = styled.div<{ $selected: boolean }>`
     padding: ${theme.spacing.md};
     cursor: pointer;
     border-bottom: 1px solid ${theme.colors.border.default};
-    background-color: ${({ $selected }) =>
-        $selected ? theme.colors.primaryLight : theme.colors.background.white};
+    background-color: ${({ $selected }) => ($selected ? theme.colors.primaryLight : theme.colors.background.white)};
     transition: ${theme.transitions.default};
 
     &:hover {
-        background-color: ${({ $selected }) =>
-            $selected ? theme.colors.primaryLight : theme.colors.background.light};
+        background-color: ${({ $selected }) => ($selected ? theme.colors.primaryLight : theme.colors.background.light)};
     }
 
     &:last-child {
@@ -292,7 +291,6 @@ const ModalButton = styled(Button)`
     font-size: ${theme.typography.fontSize.sm};
 `;
 
-// Labels for scenario types used in the scenario picker.
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
@@ -313,7 +311,7 @@ const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
 };
 
 interface TempPackingPlanItem {
-    itemId: string;
+    Iid: number;
     quantity: number;
 }
 
@@ -332,19 +330,17 @@ const CreatePackingPlan = () => {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
-    // Local modal state for adding items to the plan.
     const [showAddItemModal, setShowAddItemModal] = useState(false);
-    const [selectedItemId, setSelectedItemId] = useState<string>('');
+    const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [tempItems, setTempItems] = useState<TempPackingPlanItem[]>([]);
 
-    // Load items for the add-to-plan modal search list.
     const allInventoryItems = inventoryApi.useItems();
 
-    const handleChange = (key: string, value: any) => {
+    const handleChange = (key: string, value: string | EmergencyScenarioType) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
-        // Clear error when user starts typing
+
         if (errors[key]) {
             setErrors((prev) => {
                 const newErrors = { ...prev };
@@ -370,62 +366,61 @@ const CreatePackingPlan = () => {
     };
 
     const handleAddTempItem = () => {
-        // Add selected item to the temporary list before saving the plan.
-        if (!selectedItemId || quantity < 1) {
+        if (selectedItemId === null || quantity < 1) {
             alert('Please select an item and enter a valid quantity.');
             return;
         }
 
-        // Check if item already exists
-        if (tempItems.some((item) => item.itemId === selectedItemId)) {
+        if (tempItems.some((item) => item.Iid === selectedItemId)) {
             alert('This item is already added.');
             return;
         }
 
-        setTempItems((prev) => [...prev, { itemId: selectedItemId, quantity }]);
+        setTempItems((prev) => [...prev, { Iid: selectedItemId, quantity }]);
         setShowAddItemModal(false);
-        setSelectedItemId('');
+        setSelectedItemId(null);
         setQuantity(1);
         setSearchTerm('');
     };
 
-    const handleRemoveTempItem = (itemId: string) => {
-        setTempItems((prev) => prev.filter((item) => item.itemId !== itemId));
+    const handleRemoveTempItem = (Iid: number) => {
+        setTempItems((prev) => prev.filter((item) => item.Iid !== Iid));
     };
 
-    const handleUpdateTempQuantity = (itemId: string, newQuantity: number) => {
+    const handleUpdateTempQuantity = (Iid: number, newQuantity: number) => {
         if (newQuantity < 1) return;
-        setTempItems((prev) =>
-            prev.map((item) => (item.itemId === itemId ? { ...item, quantity: newQuantity } : item))
-        );
+
+        setTempItems((prev) => prev.map((item) => (item.Iid === Iid ? { ...item, quantity: newQuantity } : item)));
     };
 
-    const getItemDetails = (itemId: string): IItem | undefined => {
-        return allInventoryItems.find((item) => item.id === itemId);
+    const getItemDetails = (Iid: number): IItem | undefined => {
+        return allInventoryItems.find((item) => item.id === Iid);
     };
 
     const filteredInventoryItems = allInventoryItems.filter((item) => {
         if (!searchTerm) return true;
+
         const term = searchTerm.toLowerCase();
+
         return (
             item.name.toLowerCase().includes(term) ||
-            item.id.toLowerCase().includes(term) ||
-            (item.inventoryNumber && item.inventoryNumber.toLowerCase().includes(term)) ||
-            (item.location && item.location.toLowerCase().includes(term))
+            item.itemId.toLowerCase().includes(term) ||
+            (item.inventoryNumber ? item.inventoryNumber.toLowerCase().includes(term) : false) ||
+            (item.location ? item.location.toLowerCase().includes(term) : false)
         );
     });
 
     const availableItems = filteredInventoryItems.filter(
-        (item) => !tempItems.some((tempItem) => tempItem.itemId === item.id)
+        (item) => !tempItems.some((tempItem) => tempItem.Iid === item.id)
     );
 
     const handleSave = async () => {
-        // Create the plan first, then append items in order.
         if (!validateForm()) {
             return;
         }
 
         setIsSaving(true);
+
         try {
             const planId = await packingPlanApi.addPackingPlan({
                 name: formData.name.trim(),
@@ -433,11 +428,10 @@ const CreatePackingPlan = () => {
                 description: formData.description.trim() || undefined,
             });
 
-            // Add all temporary items to the plan
             for (let i = 0; i < tempItems.length; i++) {
                 await packingPlanApi.addPackingPlanItem({
                     packingPlanId: planId,
-                    itemId: tempItems[i].itemId,
+                    Iid: tempItems[i].Iid,
                     requiredQuantity: tempItems[i].quantity,
                     order: i,
                 });
@@ -452,8 +446,6 @@ const CreatePackingPlan = () => {
         }
     };
 
-    const RequiredStar = () => <span style={{ color: 'red' }}> *</span>;
-
     const renderError = (key: string) => (errors[key] ? <ErrorText>{errors[key]}</ErrorText> : null);
 
     return (
@@ -463,13 +455,11 @@ const CreatePackingPlan = () => {
                     <ChevronLeft size={20} />
                 </StyledBackButton>
             </StyledHeader>
+
             <StyledContentWrapper>
                 <StyledCard>
                     <StyledFormGroup>
-                        <Label htmlFor="name">
-                            Name
-                            <RequiredStar />
-                        </Label>
+                        <Label htmlFor="name">Name</Label>
                         <Input
                             id="name"
                             name="name"
@@ -482,10 +472,7 @@ const CreatePackingPlan = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="scenarioType">
-                            Scenario Type
-                            <RequiredStar />
-                        </Label>
+                        <Label htmlFor="scenarioType">Scenario Type</Label>
                         <Select
                             id="scenarioType"
                             name="scenarioType"
@@ -529,19 +516,20 @@ const CreatePackingPlan = () => {
                         ) : (
                             <ItemsList>
                                 {tempItems.map((tempItem) => {
-                                    const item = getItemDetails(tempItem.itemId);
+                                    const item = getItemDetails(tempItem.Iid);
                                     if (!item) return null;
 
                                     return (
-                                        <ItemRow key={tempItem.itemId}>
+                                        <ItemRow key={tempItem.Iid}>
                                             <ItemInfo>
                                                 <ItemName>{item.name}</ItemName>
                                                 <ItemMeta>
-                                                    ID: {item.id}
+                                                    ID: {item.itemId}
                                                     {item.inventoryNumber && ` • Inv: ${item.inventoryNumber}`}
                                                     {item.location && ` • Location: ${item.location}`}
                                                 </ItemMeta>
                                             </ItemInfo>
+
                                             <QuantityInput
                                                 type="number"
                                                 min="1"
@@ -549,12 +537,13 @@ const CreatePackingPlan = () => {
                                                 onChange={(e) => {
                                                     const newQty = parseInt(e.target.value, 10);
                                                     if (!isNaN(newQty) && newQty > 0) {
-                                                        handleUpdateTempQuantity(tempItem.itemId, newQty);
+                                                        handleUpdateTempQuantity(tempItem.Iid, newQty);
                                                     }
                                                 }}
                                             />
+
                                             <DeleteButton
-                                                onClick={() => handleRemoveTempItem(tempItem.itemId)}
+                                                onClick={() => handleRemoveTempItem(tempItem.Iid)}
                                                 title="Remove item"
                                             >
                                                 <IconContainer icon={Trash2} />
@@ -586,6 +575,7 @@ const CreatePackingPlan = () => {
                                 <IconContainer icon={X} />
                             </CloseButton>
                         </ModalHeader>
+
                         <ModalContent>
                             <SearchInput
                                 type="text"
@@ -593,6 +583,7 @@ const CreatePackingPlan = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
+
                             <ItemsSelect>
                                 {availableItems.length === 0 ? (
                                     <EmptyMessage>
@@ -610,7 +601,7 @@ const CreatePackingPlan = () => {
                                             <div>
                                                 <ItemOptionName>{item.name}</ItemOptionName>
                                                 <ItemOptionMeta>
-                                                    ID: {item.id}
+                                                    ID: {item.itemId}
                                                     {item.inventoryNumber && ` • ${item.inventoryNumber}`}
                                                     {item.location && ` • ${item.location}`}
                                                 </ItemOptionMeta>
@@ -619,7 +610,8 @@ const CreatePackingPlan = () => {
                                     ))
                                 )}
                             </ItemsSelect>
-                            {selectedItemId && (
+
+                            {selectedItemId !== null && (
                                 <QuantitySection>
                                     <Label htmlFor="quantity">Quantity</Label>
                                     <QuantityInput
@@ -632,6 +624,7 @@ const CreatePackingPlan = () => {
                                 </QuantitySection>
                             )}
                         </ModalContent>
+
                         <ModalButtons>
                             <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
                                 Cancel
@@ -639,7 +632,7 @@ const CreatePackingPlan = () => {
                             <ModalButton
                                 $variant="primary"
                                 onClick={handleAddTempItem}
-                                disabled={!selectedItemId || quantity < 1}
+                                disabled={selectedItemId === null || quantity < 1}
                             >
                                 Add Item
                             </ModalButton>
@@ -652,4 +645,3 @@ const CreatePackingPlan = () => {
 };
 
 export default CreatePackingPlan;
-
