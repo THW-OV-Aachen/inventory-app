@@ -88,15 +88,15 @@ const ItemDetails = () => {
                     </Title>
 
                     <HeaderActions>
-                        <HeaderDeleteButton onClick={handleDelete}>
-                            <IconContainer icon={Trash2} />
-                            <span>Löschen</span>
-                        </HeaderDeleteButton>
-
                         <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
                             <IconContainer icon={Pen} />
                             <span>Bearbeiten</span>
                         </HeaderEditButton>
+                        
+                        <HeaderDeleteButton onClick={handleDelete}>
+                            <IconContainer icon={Trash2} />
+                            <span>Löschen</span>
+                        </HeaderDeleteButton>                        
                     </HeaderActions>
                 </HeaderContent>
             </StyledHeader>
