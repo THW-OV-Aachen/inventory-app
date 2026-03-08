@@ -475,6 +475,7 @@ const ModifyItem = () => {
                                                     )}
                                                     <IconContainer
                                                         icon={Trash}
+                                                        color={theme.colors.status.error.main}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setLabelToDelete(label);

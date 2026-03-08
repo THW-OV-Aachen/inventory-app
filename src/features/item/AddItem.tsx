@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { Check, ChevronLeft, X } from 'lucide-react';
+import { Check, ChevronLeft, X, Trash } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { type ILabel } from '../../db/labels';
@@ -451,7 +451,8 @@ const AddItem = () => {
                                                         <IconContainer icon={Check} />
                                                     )}
                                                     <IconContainer
-                                                        icon={X}
+                                                        icon={Trash}
+                                                        color={theme.colors.status.error.main}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setLabelToDelete(label);

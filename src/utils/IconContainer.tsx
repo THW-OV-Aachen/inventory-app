@@ -2,6 +2,7 @@ const IconContainer = (props: {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     width?: string;
     height?: string;
+    color?: string;
     onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
     if (!props.icon) return null;
@@ -18,7 +19,7 @@ const IconContainer = (props: {
             }}
             onClick={props.onClick}
         >
-            <props.icon width="100%" height="100%" />
+            <props.icon width="100%" height="100%" color={props.color} />
         </div>
     );
 };
