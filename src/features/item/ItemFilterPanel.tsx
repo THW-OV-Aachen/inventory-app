@@ -31,6 +31,17 @@ import {
 } from '../../store/slices/searchSlice';
 import type { SortField } from '../../app/api';
 import { usePackMode } from './usePackMode';
+import {
+    LabelBadge,
+    LabelSelectorWrapper,
+    LabelSearchInput,
+    LabelDropdown,
+    LabelOption,
+    NoLabels,
+    SelectedLabels,
+} from '../../utils/LabelBadge';
+import type { ILabel } from '../../db/labels';
+import { labelsApi } from '../../app/api';
 import BarcodeScannerModal from '../barcodeScanner/BarcodeScannerModal';
 
 const sortFieldLabels: Record<string, string> = {
@@ -241,6 +252,109 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     }
 `;
 
+import { store } from '../../store/store';
+
+export const removeLabel = (labelId: string) => {
+    const activeFilter = store.getState().search.filters?.labels || [];
+    const newFilter = activeFilter.filter((l) => l !== labelId);
+    store.dispatch(updateFilter({ labels: newFilter }));
+};
+
+const LabelSelector = () => {
+    const dispatch = useDispatch();
+    const filters = useSelector((state: RootState) => state.search.filters);
+    const selectedLabels = filters?.labels || [];
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [allLabels, setAllLabels] = useState<ILabel[]>([]);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const fetchLabels = async () => {
+            const labels = await labelsApi.getAllLabels();
+            setAllLabels(labels);
+        };
+        fetchLabels();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isDropdownOpen]);
+
+    const filteredLabels = allLabels.filter((label) => label.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    function handleLabelClick(id: string): void {
+        let newSelectedLabels: string[] = [];
+        if (selectedLabels.includes(id)) {
+            newSelectedLabels = selectedLabels.filter((labelId) => labelId !== id);
+        } else {
+            newSelectedLabels = [...selectedLabels, id];
+        }
+        dispatch(updateFilter({ labels: newSelectedLabels }));
+    }
+
+    return (
+        <LabelSelectorWrapper>
+            <DropdownContainer ref={dropdownRef}>
+                <LabelSearchInput
+                    type="text"
+                    placeholder="Labels suchen..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsDropdownOpen(true)}
+                />
+                {isDropdownOpen && (
+                    <LabelDropdown>
+                        {filteredLabels.length > 0 ? (
+                            filteredLabels.map((label) => (
+                                <LabelOption
+                                    key={label.id}
+                                    onClick={() => handleLabelClick(label.id)}
+                                    $isSelected={selectedLabels.includes(label.id)}
+                                    color={label.color}
+                                >
+                                    {label.name}
+                                    {selectedLabels.includes(label.id) && <IconContainer icon={Check} />}
+                                </LabelOption>
+                            ))
+                        ) : (
+                            <NoLabels>Keine Labels gefunden</NoLabels>
+                        )}
+                    </LabelDropdown>
+                )}
+            </DropdownContainer>
+            {selectedLabels.length > 0 && (
+                <SelectedLabels>
+                    {selectedLabels.map((labelId) => {
+                        const label = allLabels.find((l) => l.id === labelId);
+                        return label ? (
+                            <LabelBadge key={labelId} onClick={() => removeLabel(labelId)} color={label.color}>
+                                {label.name} <IconContainer icon={X} />
+                            </LabelBadge>
+                        ) : null;
+                    })}
+                </SelectedLabels>
+            )}
+        </LabelSelectorWrapper>
+    );
+};
+
+const DropdownContainer = styled.div`
+    position: relative;
+`;
+
 const ItemSortButton = () => {
     const dispatch = useDispatch();
     const searchState = useSelector((state: RootState) => state.search);
@@ -392,6 +506,10 @@ const ItemSortButton = () => {
                                     <option value="isSet">Satz</option>
                                     <option value="isPart">Teil</option>
                                 </Form.Select>
+                            </FilterOptionLabel>
+                            <FilterOptionLabel>
+                                <span>Labels</span>
+                                <LabelSelector />
                             </FilterOptionLabel>
                             <FilterOptionLabel>
                                 <span>Ort</span>

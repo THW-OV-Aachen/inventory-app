@@ -20,6 +20,7 @@ import {
     ContentWrapper,
 } from '../../styles/components';
 import { mapStatusToTheme, mapDamageLevelToStatus } from '../../styles/utils';
+import { LabelBadge } from '../../utils/LabelBadge';
 
 function addMonths(date: Date, months: number): Date {
     const d = new Date(date.getTime());
@@ -79,7 +80,7 @@ const ItemDetails = () => {
                     <Title>
                         {item.isSet === true ? (
                             <Layers size={20} color={theme.colors.text.muted} />
-                        ) : item.isSet === false ? (
+                        ) : item.isSet === false ?(
                             <Box size={20} color={theme.colors.text.muted} />
                         ) : (
                             ''
@@ -92,11 +93,11 @@ const ItemDetails = () => {
                             <IconContainer icon={Pen} />
                             <span>Bearbeiten</span>
                         </HeaderEditButton>
-                        
+
                         <HeaderDeleteButton onClick={handleDelete}>
                             <IconContainer icon={Trash2} />
                             <span>Löschen</span>
-                        </HeaderDeleteButton>                        
+                        </HeaderDeleteButton>
                     </HeaderActions>
                 </HeaderContent>
             </StyledHeader>
@@ -134,7 +135,7 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
-                    <InfoLabel>Informationen</InfoLabel>
+                    <InfoLabel>Weitere Informationen</InfoLabel>
                     <InfoValue>Sachnummer: {item.itemId || '-'}</InfoValue>
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
@@ -144,7 +145,24 @@ const ItemDetails = () => {
                 </StyledDetailsCard>
 
                 <StyledDetailsCard>
-                    <InfoLabel>Wartung</InfoLabel>
+                    <InfoLabel>Labels</InfoLabel>
+                    <InfoValue>
+                        {item.labels && item.labels.length > 0 ? (
+                            <LabelContainer>
+                                {item.labels.map((label) => (
+                                    <LabelBadge key={label.id} color={label.color}>
+                                        {label.name}
+                                    </LabelBadge>
+                                ))}
+                            </LabelContainer>
+                        ) : (
+                            '-'
+                        )}
+                    </InfoValue>
+                </StyledDetailsCard>
+
+                <StyledDetailsCard>
+                    <InfoLabel>Wartungsinformationen</InfoLabel>
                     <InfoValue>
                         Letzte Inspektion:{' '}
                         {item.lastInspection
@@ -375,4 +393,10 @@ const ButtonContainer = styled.div`
             width: unset;
         }
     }
+`;
+
+const LabelContainer = styled.div`
+    display: flex;
+    gap: ${theme.spacing.xs};
+    flex-wrap: wrap;
 `;

@@ -10,9 +10,7 @@ export const Card = styled.div<{ $withLeftBorder?: boolean; $leftBorderColor?: s
     box-shadow: ${theme.shadows.sm};
     box-sizing: border-box;
     ${({ $withLeftBorder, $leftBorderColor }) =>
-        $withLeftBorder
-            ? `border-left: 4px solid ${$leftBorderColor || theme.colors.status.neutral.main};`
-            : ''}
+        $withLeftBorder ? `border-left: 4px solid ${$leftBorderColor || theme.colors.status.neutral.main};` : ''}
 `;
 
 // Form Input
@@ -128,7 +126,7 @@ export const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'ghos
     font-weight: ${theme.typography.fontWeight.semibold};
     cursor: pointer;
     transition: ${theme.transitions.default};
-    
+
     ${({ $variant = 'primary' }) => {
         switch ($variant) {
             case 'primary':
@@ -186,11 +184,11 @@ export const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'ghos
                 `;
         }
     }}
-    
+
     &:active:not(:disabled) {
         transform: translateY(0);
     }
-    
+
     &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -230,7 +228,7 @@ export const StatusBadge = styled.span<{ $status?: 'good' | 'warning' | 'error' 
     border-radius: ${theme.borderRadius.xl};
     font-size: ${theme.typography.fontSize.xs};
     font-weight: ${theme.typography.fontWeight.semibold};
-    
+
     ${({ $status = 'neutral' }) => {
         const statusColors = theme.colors.status[$status];
         return `
@@ -482,4 +480,3 @@ export const CardsContainer = styled.div`
     box-sizing: border-box;
     padding: 0 ${theme.spacing.lg};
 `;
-

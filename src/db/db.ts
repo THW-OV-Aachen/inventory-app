@@ -1,9 +1,11 @@
 import Dexie, { type Table } from 'dexie';
 import type { IItem } from './items';
+import type { ILabel } from './labels';
 import type { IPackingPlan, IPackingPlanItem } from './packingPlans';
 
 export class InventoryDb extends Dexie {
     public items!: Table<IItem, number>;
+    public labels!: Table<ILabel, string>;
     public packingPlans!: Table<IPackingPlan, string>;
     public packingPlanItems!: Table<IPackingPlanItem, string>;
 
@@ -96,6 +98,31 @@ export class InventoryDb extends Dexie {
             ].join(','),
             packingPlans: '&id,scenarioType,createdAt',
             packingPlanItems: '&id,packingPlanId,Iid,order',
+        });
+
+        this.version(5).stores({
+            items: [
+                '++id',
+                'itemId',
+                '&inventoryNumber',
+                'deviceNumber',
+                'name',
+                'isSet',
+                'art',
+                'amountTarget',
+                'amountActual',
+                'availability',
+                'damageLevel',
+                'lastInspection',
+                'inspectionIntervalMonths',
+                'location',
+                'level',
+                'remark',
+                'labels',
+            ].join(','),
+            packingPlans: '&id,scenarioType,createdAt',
+            packingPlanItems: '&id,packingPlanId,Iid,order',
+            labels: ['++id', 'name', 'color'].join(','),
         });
     }
 }

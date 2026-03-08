@@ -43,6 +43,7 @@ const ItemOverview = () => {
         const fetchItems = async () => {
             setIsLoading(true);
             try {
+                console.log('filters', filters);
                 const result = await inventoryApi.fetchItemsPaginatedWithFilter(
                     { page: currentPage, pageSize },
                     searchTerm || '',

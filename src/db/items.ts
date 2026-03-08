@@ -1,5 +1,6 @@
 import type { unstable_InstrumentRequestHandlerFunction } from 'react-router';
 import * as yup from 'yup';
+import type { ILabel } from './labels';
 
 export const DamageLevelType = {
     NONE: 'none',
@@ -29,6 +30,7 @@ export interface IItem {
     location: string;
     level: number;
     remark?: string;
+    labels?: ILabel[];
 }
 
 export const ItemValidationSchema = yup.object().shape({

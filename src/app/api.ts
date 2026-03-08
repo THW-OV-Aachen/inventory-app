@@ -1,6 +1,7 @@
 import { DamageLevelType, type IItem } from '../db/items';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
+import type { ILabel } from '../db/labels';
 
 export type Scope = 'user' | 'editor' | 'admin';
 export interface PaginationParams {
@@ -11,6 +12,7 @@ export interface FilterParams {
     damageLevel?: DamageLevelType | null;
     type?: 'isSet' | 'isPart' | null;
     location?: string | null;
+    labels?: string[] | null;
 }
 
 interface DamageOrFilter {
@@ -93,7 +95,12 @@ export const inventoryApi = {
         const offset = (page - 1) * pageSize;
 
         try {
-            const hasFilters = filters && (filters.damageLevel || filters.type || filters.location);
+            const hasFilters =
+                filters &&
+                (filters.damageLevel ||
+                    filters.type ||
+                    filters.location ||
+                    (filters.labels && filters.labels.length > 0));
 
             if (!searchTerm && !hasFilters) {
                 return await this.fetchItemsPaginated(params);
@@ -119,7 +126,12 @@ export const inventoryApi = {
                 const matchesLocation =
                     !filters?.location || (item.location || '').toLowerCase().includes(filters.location.toLowerCase());
 
-                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation;
+                const matchesLabels =
+                    !filters?.labels ||
+                    !filters.labels.length ||
+                    filters.labels.every((labelId) => item.labels?.some((itemLabel) => itemLabel.id === labelId));
+
+                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation && matchesLabels;
             });
 
             const totalItems = filteredItems.length;
@@ -233,6 +245,67 @@ export const inventoryApi = {
         );
 
         return result ?? { totalCount: 0, firstThreeEntries: [] };
+    },
+
+    useCountItemsWithLabel(labelId: string | undefined) {
+        const count = useLiveQuery(
+            async () => {
+                if (!labelId) return 0;
+                const allItems = await db.items.toArray();
+                return allItems.filter(item => item.labels?.some(l => l.id === labelId)).length;
+            },
+            [labelId]
+        );
+        return count ?? 0;
+    },
+
+    async removeLabelFromAllItems(labelId: string): Promise<void> {
+        try {
+            const allItems = await db.items.toArray();
+            const itemsToUpdate = allItems.filter((item) => item.labels?.some((label) => label.id === labelId));
+
+            if (itemsToUpdate.length > 0) {
+                const updates = itemsToUpdate.map((item) => {
+                    const newLabels = item.labels?.filter((label) => label.id !== labelId);
+                    return {
+                        ...item,
+                        labels: newLabels,
+                    };
+                });
+                await db.items.bulkPut(updates);
+            }
+        } catch (error) {
+            console.error(`Failed to remove label ${labelId} from all items:`, error);
+            throw error;
+        }
+    },
+};
+
+export const labelsApi = {
+    async getAllLabels(): Promise<ILabel[]> {
+        try {
+            const labels = await db.labels.orderBy('id').toArray();
+            return labels;
+        } catch (error) {
+            console.error('Failed to fetch all labels: ', error);
+            throw error;
+        }
+    },
+    async addLabel(label: ILabel): Promise<void> {
+        try {
+            await db.labels.put(label);
+        } catch (error) {
+            console.error('Failed to add label: ', error);
+            throw error;
+        }
+    },
+    async deleteLabel(labelId: string): Promise<void> {
+        try {
+            await db.labels.delete(labelId);
+        } catch (error) {
+            console.error('Failed to delete label: ', error);
+            throw error;
+        }
     },
 };
 
