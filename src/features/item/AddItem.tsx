@@ -486,7 +486,7 @@ const AddItem = () => {
                         {selectedLabels.length > 0 && (
                             <SelectedLabels>
                                 {selectedLabels.map((label) => {
-                                    const foundLabel = allLabels.find((l) => l === label);
+                                    const foundLabel = allLabels.find((l) => l.id === label.id);
                                     function removeLabel(labelId: string): void {
                                         const newSelectedLabels = selectedLabels.filter((l) => l.id !== labelId);
                                         setSelectedLabels(newSelectedLabels);
