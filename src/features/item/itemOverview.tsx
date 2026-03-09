@@ -879,6 +879,8 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         & > #isSet {
             font-size: 14px;
             color: var(--color-font-secondary);
+            display: flex;
+            align-items: center;
         }
 
         & > #isSet {
