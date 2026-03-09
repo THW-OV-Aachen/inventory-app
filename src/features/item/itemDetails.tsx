@@ -21,7 +21,7 @@ import {
 } from '../../styles/components';
 import { mapStatusToTheme, mapDamageLevelToStatus } from '../../styles/utils';
 import { LabelBadge } from '../../utils/LabelBadge';
-import { addMonths } from '../../utils/date';
+import { calculateNextInspectionDate, isDatePastOrToday, formatDate } from '../../utils/date';
 
 
 const ItemDetails = () => {
@@ -157,11 +157,7 @@ const ItemDetails = () => {
                     <InfoValue>
                         Letzte Inspektion:{' '}
                         {item.lastInspection
-                            ? Intl.DateTimeFormat('de-DE', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                              }).format(new Date(item.lastInspection))
+                            ? formatDate(new Date(item.lastInspection))
                             : '-'}
                     </InfoValue>
                     <InfoValue>
@@ -170,13 +166,24 @@ const ItemDetails = () => {
                     </InfoValue>
                     <InfoValue>
                         Berechnete nächste Inspektion:{' '}
-                        {item.lastInspection && item.inspectionIntervalMonths
-                            ? Intl.DateTimeFormat('de-DE', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                              }).format(addMonths(new Date(item.lastInspection), item.inspectionIntervalMonths))
-                            : '-'}
+                        {(() => {
+                            const nextDate = calculateNextInspectionDate(
+                                item.lastInspection,
+                                item.inspectionIntervalMonths
+                            );
+                            if (!nextDate) return '-';
+
+                            const isPastOrToday = isDatePastOrToday(nextDate);
+                            const formattedDate = formatDate(nextDate);
+
+                            return isPastOrToday ? (
+                                <span style={{ color: theme.colors.status.error.main }}>
+                                    {formattedDate}
+                                </span>
+                            ) : (
+                                formattedDate
+                            );
+                        })()}
                     </InfoValue>
                 </StyledDetailsCard>
 
@@ -346,9 +353,7 @@ const InfoLabel = styled(Label)`
 `;
 
 const InfoValue = styled(DataValue)`
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: block;
 `;
 
 const StyledDetailsCard = styled(Card)`

@@ -9,7 +9,8 @@ import Sidebar from './features/sidebar/Sidebar';
 const LayoutWrapper = styled.div`
     position: relative;
     display: flex;
-    height: calc(100vh - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+    height: calc(100vh - env(safe-area-inset-top, 0px)); /* Fallback */
+    height: calc(100dvh - env(safe-area-inset-top, 0px));
     width: 100vw;
 
     background: transparent;
