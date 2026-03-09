@@ -451,6 +451,66 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
+                        <Label htmlFor="inventoryNumber">Inventarnummer</Label>
+                        <Input
+                            id="inventoryNumber"
+                            name="inventoryNumber"
+                            type="text"
+                            placeholder="Inventarnummer eingeben"
+                            value={formData.inventoryNumber ?? ''}
+                            onChange={(e) => handleChange('inventoryNumber', e.target.value)}
+                            onBlur={() => handleBlur('inventoryNumber')}
+                        />
+                        {renderError('inventoryNumber')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
+                        <Label htmlFor="deviceNumber">Gerätenummer</Label>
+                        <Input
+                            id="deviceNumber"
+                            name="deviceNumber"
+                            type="text"
+                            placeholder="Gerätenummer eingeben"
+                            value={formData.deviceNumber ?? ''}
+                            onChange={(e) => handleChange('deviceNumber', e.target.value)}
+                            onBlur={() => handleBlur('deviceNumber')}
+                        />
+                        {renderError('deviceNumber')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
+                        <Label htmlFor="damageLevel">Schaden</Label>
+                        <Select
+                            id="damageLevel"
+                            name="damageLevel"
+                            value={formData.damageLevel ?? 'none'}
+                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
+                            onBlur={() => handleBlur('damageLevel')}
+                        >
+                            <option value="none">{DamageLevelTranslation.none}</option>
+                            <option value="minor">{DamageLevelTranslation.minor}</option>
+                            <option value="major">{DamageLevelTranslation.major}</option>
+                            <option value="total">{DamageLevelTranslation.total}</option>
+                        </Select>
+                        {renderError('damageLevel')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
+                        <Label htmlFor="isSet">Typ</Label>
+                        <Select
+                            id="isSet"
+                            name="isSet"
+                            value={formData.isSet ? 'yes' : 'no'}
+                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
+                            onBlur={() => handleBlur('isSet')}
+                        >
+                            <option value="yes">Satz</option>
+                            <option value="no">(Einzelnes) Teil</option>
+                        </Select>
+                        {renderError('isSet')}
+                    </StyledFormGroup>
+
+                    <StyledFormGroup>
                         <Label htmlFor="labels">Labels</Label>
                         <DropdownContainer ref={dropdownRef}>
                             <LabelSearchInput
@@ -572,66 +632,6 @@ const ModifyItem = () => {
                                 </ModalBox>
                             </ModalOverlay>
                         )}
-                    </StyledFormGroup>
-
-                    <StyledFormGroup>
-                        <Label htmlFor="inventoryNumber">Inventarnummer</Label>
-                        <Input
-                            id="inventoryNumber"
-                            name="inventoryNumber"
-                            type="text"
-                            placeholder="Inventarnummer eingeben"
-                            value={formData.inventoryNumber ?? ''}
-                            onChange={(e) => handleChange('inventoryNumber', e.target.value)}
-                            onBlur={() => handleBlur('inventoryNumber')}
-                        />
-                        {renderError('inventoryNumber')}
-                    </StyledFormGroup>
-
-                    <StyledFormGroup>
-                        <Label htmlFor="deviceNumber">Gerätenummer</Label>
-                        <Input
-                            id="deviceNumber"
-                            name="deviceNumber"
-                            type="text"
-                            placeholder="Gerätenummer eingeben"
-                            value={formData.deviceNumber ?? ''}
-                            onChange={(e) => handleChange('deviceNumber', e.target.value)}
-                            onBlur={() => handleBlur('deviceNumber')}
-                        />
-                        {renderError('deviceNumber')}
-                    </StyledFormGroup>
-
-                    <StyledFormGroup>
-                        <Label htmlFor="damageLevel">Schaden</Label>
-                        <Select
-                            id="damageLevel"
-                            name="damageLevel"
-                            value={formData.damageLevel ?? 'none'}
-                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
-                            onBlur={() => handleBlur('damageLevel')}
-                        >
-                            <option value="none">{DamageLevelTranslation.none}</option>
-                            <option value="minor">{DamageLevelTranslation.minor}</option>
-                            <option value="major">{DamageLevelTranslation.major}</option>
-                            <option value="total">{DamageLevelTranslation.total}</option>
-                        </Select>
-                        {renderError('damageLevel')}
-                    </StyledFormGroup>
-
-                    <StyledFormGroup>
-                        <Label htmlFor="isSet">Typ</Label>
-                        <Select
-                            id="isSet"
-                            name="isSet"
-                            value={formData.isSet ? 'yes' : 'no'}
-                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
-                            onBlur={() => handleBlur('isSet')}
-                        >
-                            <option value="yes">Satz</option>
-                            <option value="no">(Einzelnes) Teil</option>
-                        </Select>
-                        {renderError('isSet')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
