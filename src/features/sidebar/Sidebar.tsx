@@ -27,7 +27,7 @@ const SidebarWrapper = styled.aside<{ $open: boolean }>`
         height: unset;
         width: 100vw;
 
-        position: absolute;
+        position: fixed;
         bottom: 0;
 
         box-shadow: 0 -4px 12px rgba(var(--color-font-primary-rgb), 0.05);
