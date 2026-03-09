@@ -21,17 +21,8 @@ import {
 } from '../../styles/components';
 import { mapStatusToTheme, mapDamageLevelToStatus } from '../../styles/utils';
 import { LabelBadge } from '../../utils/LabelBadge';
+import { addMonths } from '../../utils/date';
 
-function addMonths(date: Date, months: number): Date {
-    const d = new Date(date.getTime());
-    const day = d.getDate();
-
-    d.setDate(1);
-    d.setMonth(d.getMonth() + months);
-    const daysInTargetMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    d.setDate(Math.min(day, daysInTargetMonth));
-    return d;
-}
 
 const ItemDetails = () => {
     const { id } = useParams<{ id: string }>();
