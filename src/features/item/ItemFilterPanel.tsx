@@ -565,6 +565,16 @@ const SortFilterDropdown = styled.div`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     min-width: 250px;
     z-index: 1000;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait),
+        only screen and (max-width: 812px) {
+        max-height: 60vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        /* Ensure touch events are strictly caught by the dropdown */
+        touch-action: pan-y;
+    }
 `;
 
 const DropdownHeader = styled.div`
