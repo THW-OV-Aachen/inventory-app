@@ -18,3 +18,27 @@ export function calculateNextInspectionDate(
     }
     return addMonths(new Date(lastInspection), inspectionIntervalMonths);
 }
+
+/**
+ * Checks if a given date is in the past or is today (ignoring the time of day).
+ */
+export function isDatePastOrToday(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const dateOnly = new Date(date.getTime());
+    dateOnly.setHours(0, 0, 0, 0);
+
+    return dateOnly.getTime() <= today.getTime();
+}
+
+/**
+ * Common formatting function for dates (e.g. DD.MM.YYYY)
+ */
+export function formatDate(date: Date): string {
+    return Intl.DateTimeFormat('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    }).format(date);
+}

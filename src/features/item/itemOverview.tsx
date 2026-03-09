@@ -19,7 +19,7 @@ import { EmergencyScenarioType } from '../../db/packingPlans';
 
 import { usePackMode } from './usePackMode';
 import QuantitySpinner from '../../components/QuantitySpinner';
-import { calculateNextInspectionDate } from '../../utils/date';
+import { calculateNextInspectionDate, isDatePastOrToday, formatDate } from '../../utils/date';
 import { theme } from '../../styles/theme';
 const ItemOverview = () => {
     const navigate = useNavigate();
@@ -458,16 +458,11 @@ const ItemOverview = () => {
                                             {(() => {
                                                 const nextDate = calculateNextInspectionDate(item.lastInspection, item.inspectionIntervalMonths);
                                                 if (!nextDate) return '-';
-                                                const now = new Date();
-                                                now.setHours(0, 0, 0, 0);
-                                                const isPast = nextDate.getTime() < now.getTime();
+                                                
+                                                const isPast = isDatePastOrToday(nextDate);
                                                 return (
                                                     <span style={{ color: isPast ? theme.colors.status.error.main : 'inherit', fontWeight: isPast ? 600 : 400 }}>
-                                                        {Intl.DateTimeFormat('de-DE', {
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric',
-                                                        }).format(nextDate)}
+                                                        {formatDate(nextDate)}
                                                     </span>
                                                 );
                                             })()}
