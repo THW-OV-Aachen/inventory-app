@@ -45,6 +45,7 @@ import { labelsApi } from '../../app/api';
 import BarcodeScannerModal from '../barcodeScanner/BarcodeScannerModal';
 
 const sortFieldLabels: Record<string, string> = {
+    nextInspection: 'Nächste Inspektion',
     inventoryNumber: 'Inventar-Nr.',
     name: 'Name',
     damageLevel: 'Zustand',
@@ -395,7 +396,12 @@ const ItemSortButton = () => {
 
     const handleFieldSelect = (field: SortField) => {
         if (sortField === field) {
-            dispatch(setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc'));
+            if (field === 'nextInspection') {
+                dispatch(setSortField(null));
+                dispatch(setSortDirection('asc'));
+            } else {
+                dispatch(setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc'));
+            }
         } else {
             dispatch(setSortField(field));
             dispatch(setSortDirection('asc'));

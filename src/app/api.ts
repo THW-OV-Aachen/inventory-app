@@ -318,6 +318,7 @@ export type SortField =
     | 'damageLevel'
     | 'location'
     | 'inventoryNumber'
-    | 'deviceNumber';
+    | 'deviceNumber'
+    | 'nextInspection';
 
 export type SortDirection = 'asc' | 'desc';

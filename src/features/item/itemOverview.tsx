@@ -19,6 +19,8 @@ import { EmergencyScenarioType } from '../../db/packingPlans';
 
 import { usePackMode } from './usePackMode';
 import QuantitySpinner from '../../components/QuantitySpinner';
+import { calculateNextInspectionDate } from '../../utils/date';
+import { theme } from '../../styles/theme';
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -70,7 +72,10 @@ const ItemOverview = () => {
     const handleSort = (field: SortField) => {
         // Cycle: asc -> desc -> off for the current sort field.
         if (sortField === field) {
-            if (sortDirection === 'asc') {
+            if (field === 'nextInspection') {
+                dispatch(setSortField(null));
+                dispatch(setSortDirection('asc'));
+            } else if (sortDirection === 'asc') {
                 dispatch(setSortDirection('desc'));
             } else {
                 dispatch(setSortField(null));
@@ -128,6 +133,13 @@ const ItemOverview = () => {
                     aValue = a.deviceNumber ?? '';
                     bValue = b.deviceNumber ?? '';
                     break;
+                case 'nextInspection': {
+                    const aDate = calculateNextInspectionDate(a.lastInspection, a.inspectionIntervalMonths);
+                    const bDate = calculateNextInspectionDate(b.lastInspection, b.inspectionIntervalMonths);
+                    aValue = aDate ? aDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
+                    bValue = bDate ? bDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
+                    break;
+                }
                 default:
                     return 0;
             }
@@ -237,7 +249,7 @@ const ItemOverview = () => {
                 </LoadingContainer>
             ) : (
                 <>
-                    <Table>
+                    <Table $showNextInspection={sortField === 'nextInspection'}>
                         <TableHeader>
                             <HeaderCell onClick={() => handleSort('inventoryNumber')}>
                                 <HeaderContent>
@@ -303,6 +315,17 @@ const ItemOverview = () => {
                                     />
                                 </HeaderContent>
                             </HeaderCell>
+                            {sortField === 'nextInspection' && (
+                                <HeaderCell onClick={() => handleSort('nextInspection')}>
+                                    <HeaderContent>
+                                        <span>Nächste Inspektion</span>
+                                        <SortIndicator
+                                            active={sortField === 'nextInspection'}
+                                            sortDirection={sortDirection}
+                                        />
+                                    </HeaderContent>
+                                </HeaderCell>
+                            )}
                         </TableHeader>
                         {sortedItems.map((item) => {
                             const damageLevel = DamageLevelStyles[item.damageLevel as DamageLevelType];
@@ -328,6 +351,7 @@ const ItemOverview = () => {
                                     key={item.id}
                                     onClick={onRowClick}
                                     role="button"
+                                    $showNextInspection={sortField === 'nextInspection'}
                                     tabIndex={0}
                                     aria-pressed={packMode ? isSelected : undefined}
                                     onKeyDown={(e) => {
@@ -403,6 +427,7 @@ const ItemOverview = () => {
                                             }
                                         })()}
                                     </TableCell>
+
                                     <TableCell id="itemId" $hideOnMobile>
                                         {item.itemId ?? '-'}
                                     </TableCell>
@@ -428,6 +453,26 @@ const ItemOverview = () => {
                                             (item.deviceNumber ?? '-')
                                         )}
                                     </TableCell>
+                                    {sortField === 'nextInspection' && (
+                                        <TableCell id="nextInspection">
+                                            {(() => {
+                                                const nextDate = calculateNextInspectionDate(item.lastInspection, item.inspectionIntervalMonths);
+                                                if (!nextDate) return '-';
+                                                const now = new Date();
+                                                now.setHours(0, 0, 0, 0);
+                                                const isPast = nextDate.getTime() < now.getTime();
+                                                return (
+                                                    <span style={{ color: isPast ? theme.colors.status.error.main : 'inherit', fontWeight: isPast ? 600 : 400 }}>
+                                                        {Intl.DateTimeFormat('de-DE', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric',
+                                                        }).format(nextDate)}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </TableCell>
+                                    )}
                                     {packMode && (
                                         <PackControlsCell id="packControls">
                                             <PackControlsLabel>
@@ -708,9 +753,9 @@ const CellAmount = styled.div<{ $hideOnMobile?: boolean }>`
     }
 `;
 
-const Table = styled.div`
+const Table = styled.div<{ $showNextInspection?: boolean }>`
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(${(p) => (p.$showNextInspection ? 9 : 8)}, 1fr);
     border-radius: 8px;
     overflow-x: auto;
 
@@ -763,7 +808,7 @@ const TableHeader = styled(TableRowBase)`
     }
 `;
 
-const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string; $mobileShadowColor: string }>`
+const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string; $mobileShadowColor: string; $showNextInspection?: boolean }>`
     & > * {
         background-color: white;
     }
@@ -786,7 +831,7 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
             'inventoryNumber damageLevel'
-            'name name'
+            ${(p) => (p.$showNextInspection ? "'name nextInspection'" : "'name name'")}
             'location isSet'
             'packControls packControls';
         gap: 12px;
@@ -844,6 +889,12 @@ const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: st
         & > #isSet {
             justify-self: end;
             grid-area: isSet;
+        }
+
+        & > #nextInspection {
+            grid-area: nextInspection;
+            justify-self: end;
+            font-size: 14px;
         }
 
         & > #packControls {
