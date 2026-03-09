@@ -141,18 +141,12 @@ const LinkList = styled(SidebarSection)`
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         flex-direction: row;
         padding: 0;
-        gap: 32px;
-
-        justify-content: safe center;
-        overflow-x: auto;
-
-        scroll-behavior: smooth;
-
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        &::-webkit-scrollbar {
-            display: none;
-        }
+        gap: 0;
+        
+        /* Spread exactly across width without scrolling */
+        justify-content: space-around;
+        width: 100vw;
+        overflow-x: hidden;
     }
 `;
 
@@ -192,8 +186,9 @@ const NavLink = styled(Link)<{ $active?: boolean; $sidebarOpen: boolean }>`
     }
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding: 16px;
-        flex-shrink: 0;
+        flex: 1; /* allow each item to take up equal width */
+        justify-content: center;
+        padding: 16px 0;
         border-radius: 0;
         padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
