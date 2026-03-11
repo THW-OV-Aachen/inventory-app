@@ -282,7 +282,11 @@ const QuantitySection = styled.div`
 const ModalButtons = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
-    justify-content: flex-end;
+    width: 100%;
+    
+    & > * {
+        flex: 1;
+    }
 `;
 
 const ModalButton = styled(Button)`
@@ -294,17 +298,17 @@ const ModalButton = styled(Button)`
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -354,11 +358,11 @@ const CreatePackingPlan = () => {
         const newErrors: Record<string, string> = {};
 
         if (!formData.name.trim()) {
-            newErrors.name = 'Name is required.';
+            newErrors.name = 'Name ist erforderlich.';
         }
 
         if (!formData.scenarioType) {
-            newErrors.scenarioType = 'Scenario type is required.';
+            newErrors.scenarioType = 'Szenario ist erforderlich.';
         }
 
         setErrors(newErrors);
@@ -367,12 +371,12 @@ const CreatePackingPlan = () => {
 
     const handleAddTempItem = () => {
         if (selectedItemId === null || quantity < 1) {
-            alert('Please select an item and enter a valid quantity.');
+            alert('Bitte wählen Sie einen Artikel und geben Sie eine gültige Menge ein.');
             return;
         }
 
         if (tempItems.some((item) => item.Iid === selectedItemId)) {
-            alert('This item is already added.');
+            alert('Dieser Artikel wurde bereits hinzugefügt.');
             return;
         }
 
@@ -440,7 +444,7 @@ const CreatePackingPlan = () => {
             navigate(`/packing-plans/${planId}`);
         } catch (error) {
             console.error('Failed to create packing plan:', error);
-            alert('Failed to create packing plan.');
+            alert('Fehler beim Erstellen des Packplans.');
         } finally {
             setIsSaving(false);
         }
@@ -464,7 +468,7 @@ const CreatePackingPlan = () => {
                             id="name"
                             name="name"
                             type="text"
-                            placeholder="e.g. Flood Aachen"
+                            placeholder="z.B. Hochwasser"
                             value={formData.name}
                             onChange={(e) => handleChange('name', e.target.value)}
                         />
@@ -472,7 +476,7 @@ const CreatePackingPlan = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="scenarioType">Scenario Type</Label>
+                        <Label htmlFor="scenarioType">Szenario</Label>
                         <Select
                             id="scenarioType"
                             name="scenarioType"
@@ -489,11 +493,11 @@ const CreatePackingPlan = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">Beschreibung</Label>
                         <Textarea
                             id="description"
                             name="description"
-                            placeholder="Optional description of the packing plan..."
+                            placeholder="Füge eine Beschreibung hinzu..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             rows={4}
@@ -502,16 +506,16 @@ const CreatePackingPlan = () => {
 
                     <ItemsSection>
                         <ItemsHeader>
-                            <Label>Items ({tempItems.length})</Label>
+                            <Label>Artikel ({tempItems.length})</Label>
                             <AddItemButton $variant="primary" onClick={() => setShowAddItemModal(true)}>
                                 <IconContainer icon={Plus} />
-                                <span>Add Item</span>
+                                <span>Artikel hinzufügen</span>
                             </AddItemButton>
                         </ItemsHeader>
 
                         {tempItems.length === 0 ? (
                             <EmptyItemsMessage>
-                                <p>No items added yet.</p>
+                                <p>Noch keine Artikel hinzugefügt.</p>
                             </EmptyItemsMessage>
                         ) : (
                             <ItemsList>
@@ -525,8 +529,8 @@ const CreatePackingPlan = () => {
                                                 <ItemName>{item.name}</ItemName>
                                                 <ItemMeta>
                                                     ID: {item.itemId}
-                                                    {item.inventoryNumber && ` • Inv: ${item.inventoryNumber}`}
-                                                    {item.location && ` • Location: ${item.location}`}
+                                                    {item.inventoryNumber && ` • Inventarnr.: ${item.inventoryNumber}`}
+                                                    {item.location && ` • Ort: ${item.location}`}
                                                 </ItemMeta>
                                             </ItemInfo>
 
@@ -544,7 +548,7 @@ const CreatePackingPlan = () => {
 
                                             <DeleteButton
                                                 onClick={() => handleRemoveTempItem(tempItem.Iid)}
-                                                title="Remove item"
+                                                title="Artikel entfernen"
                                             >
                                                 <IconContainer icon={Trash2} />
                                             </DeleteButton>
@@ -557,10 +561,10 @@ const CreatePackingPlan = () => {
 
                     <StyledButtonGroup>
                         <StyledButton $variant="ghost" onClick={() => navigate(-1)} disabled={isSaving}>
-                            Cancel
+                            Abbrechen
                         </StyledButton>
                         <StyledButton $variant="primary" onClick={handleSave} disabled={isSaving}>
-                            {isSaving ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Speichern...' : 'Speichern'}
                         </StyledButton>
                     </StyledButtonGroup>
                 </StyledCard>
@@ -570,7 +574,7 @@ const CreatePackingPlan = () => {
                 <ModalOverlay onClick={() => setShowAddItemModal(false)}>
                     <ModalBox onClick={(e) => e.stopPropagation()}>
                         <ModalHeader>
-                            <ModalTitle>Add Item to Packing Plan</ModalTitle>
+                            <ModalTitle>Artikel zum Packplan hinzufügen</ModalTitle>
                             <CloseButton onClick={() => setShowAddItemModal(false)}>
                                 <IconContainer icon={X} />
                             </CloseButton>
@@ -579,7 +583,7 @@ const CreatePackingPlan = () => {
                         <ModalContent>
                             <SearchInput
                                 type="text"
-                                placeholder="Search items by name, ID, inventory number, or location..."
+                                placeholder="Suche Artikel nach Name, ID, Inventarnummer oder Ort..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -588,8 +592,8 @@ const CreatePackingPlan = () => {
                                 {availableItems.length === 0 ? (
                                     <EmptyMessage>
                                         {searchTerm
-                                            ? 'No items found matching your search.'
-                                            : 'No available items to add.'}
+                                            ? 'Keine Artikel gefunden, die der Suche entsprechen.'
+                                            : 'Keine Artikel zum Hinzufügen vorhanden.'}
                                     </EmptyMessage>
                                 ) : (
                                     availableItems.map((item) => (
@@ -613,7 +617,7 @@ const CreatePackingPlan = () => {
 
                             {selectedItemId !== null && (
                                 <QuantitySection>
-                                    <Label htmlFor="quantity">Quantity</Label>
+                                    <Label htmlFor="quantity">Menge</Label>
                                     <QuantityInput
                                         id="quantity"
                                         type="number"
@@ -627,14 +631,14 @@ const CreatePackingPlan = () => {
 
                         <ModalButtons>
                             <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
-                                Cancel
+                                Abbrechen
                             </ModalButton>
                             <ModalButton
                                 $variant="primary"
                                 onClick={handleAddTempItem}
                                 disabled={selectedItemId === null || quantity < 1}
                             >
-                                Add Item
+                                Artikel hinzufügen
                             </ModalButton>
                         </ModalButtons>
                     </ModalBox>

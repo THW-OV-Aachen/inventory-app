@@ -55,17 +55,17 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -91,14 +91,14 @@ const PackingPlanDetails = () => {
     const handleAddItem = async () => {
         // Add a new item row to the plan (after basic checks).
         if (!planId || !selectedItemId || quantity < 1) {
-            alert('Please select an item and enter a valid quantity.');
+            alert('Bitte wählen Sie einen Artikel und geben Sie eine gültige Menge ein.');
             return;
         }
 
         // Check if item already exists in plan
         const existingItem = planItems.find((item) => item.Iid.toString() === selectedItemId);
         if (existingItem) {
-            alert('This item is already in the packing plan.');
+            alert('Dieser Artikel befindet sich bereits im Packplan.');
             return;
         }
 
@@ -116,34 +116,34 @@ const PackingPlanDetails = () => {
             setSearchTerm('');
         } catch (error) {
             console.error('Failed to add item:', error);
-            alert('Failed to add item to packing plan.');
+            alert('Fehler beim Hinzufügen des Artikels zum Packplan.');
         }
     };
 
     const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
         // Update required quantity for an existing plan item.
         if (newQuantity < 1) {
-            alert('Quantity must be at least 1.');
+            alert('Die Menge muss mindestens 1 betragen.');
             return;
         }
         try {
             await packingPlanApi.updatePackingPlanItem(itemId, { requiredQuantity: newQuantity });
         } catch (error) {
             console.error('Failed to update quantity:', error);
-            alert('Failed to update quantity.');
+            alert('Fehler beim Aktualisieren der Menge.');
         }
     };
 
     const handleDeleteItem = async (itemId: string) => {
         // Remove an item row from the plan.
-        if (!window.confirm('Are you sure you want to remove this item from the packing plan?')) {
+        if (!window.confirm('Sind Sie sicher, dass Sie diesen Artikel aus dem Packplan entfernen möchten?')) {
             return;
         }
         try {
             await packingPlanApi.deletePackingPlanItem(itemId);
         } catch (error) {
             console.error('Failed to delete item:', error);
-            alert('Failed to remove item from packing plan.');
+            alert('Fehler beim Entfernen des Artikels aus dem Packplan.');
         }
     };
 
@@ -219,7 +219,7 @@ const PackingPlanDetails = () => {
     if (!plan) {
         return (
             <StyledContainer>
-                <LoadingMessage>Loading packing plan...</LoadingMessage>
+                <LoadingMessage>Lade Packplan...</LoadingMessage>
             </StyledContainer>
         );
     }
@@ -270,31 +270,31 @@ const PackingPlanDetails = () => {
                 <InfoCard>
                     <InfoRow>
                         <div style={{ flex: 1 }}>
-                            <InfoLabel>Scenario Type</InfoLabel>
+                            <InfoLabel>Szenario</InfoLabel>
                             <InfoValue>{scenarioLabel}</InfoValue>
                         </div>
                     </InfoRow>
                 </InfoCard>
 
                 <DetailsCard>
-                    <InfoLabel>Description</InfoLabel>
+                    <InfoLabel>Beschreibung</InfoLabel>
                     <InfoValue style={{ whiteSpace: 'pre-wrap' }}>
-                        {plan.description || <span style={{ whiteSpace: 'normal', fontStyle: 'italic', color: theme.colors.text.muted }}>No description</span>}
+                        {plan.description || <span style={{ whiteSpace: 'normal', fontStyle: 'italic', color: theme.colors.text.muted }}>Keine Beschreibung vorhanden</span>}
                     </InfoValue>
                 </DetailsCard>
 
                 <ItemsSection>
                     <ItemsHeader>
-                        <InfoLabel>Items ({planItems.length})</InfoLabel>
+                        <InfoLabel>Artikel ({planItems.length})</InfoLabel>
                         <ItemsHeaderActions>
                             {packMode ? (
                                 <>
                                     <PackProgress>
-                                        {packedCount}/{planItems.length} packed
+                                        {packedCount}/{planItems.length} gepackt
                                     </PackProgress>
                                     <PackButton $variant="primary" onClick={() => setPackMode(false)}>
                                         <IconContainer icon={Check} />
-
+                                        <span>Speichern</span>
                                     </PackButton>
                                 </>
                             ) : (
@@ -311,11 +311,11 @@ const PackingPlanDetails = () => {
                                         }
                                     >
                                         <IconContainer icon={Plus} />
-                                        <span>Add Item</span>
+                                        <span>Artikel hinzufügen</span>
                                     </AddItemButton>
                                     <PackButton $variant="ghost" onClick={() => setPackMode(true)}>
                                         <IconContainer icon={Package} />
-                                        <span>Pack</span>
+                                        <span>Packen</span>
                                     </PackButton>
                                 </>
                             )}
@@ -324,7 +324,7 @@ const PackingPlanDetails = () => {
 
                     {planItems.length === 0 ? (
                         <EmptyItemsMessage>
-                            <p>No items in this packing plan yet.</p>
+                            <p>Noch keine Artikel in diesem Packplan vorhanden.</p>
                         </EmptyItemsMessage>
                     ) : (
                         <ItemsList>
@@ -351,8 +351,8 @@ const PackingPlanDetails = () => {
                                             </ItemName>
                                             <ItemMeta>
                                                 ID: {itemId}
-                                                {inventoryNumber && ` • Inv: ${inventoryNumber}`}
-                                                {location && ` • Location: ${location}`}
+                                                {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
+                                                {location && ` • Ort: ${location}`}
                                                 {missingNote}
                                             </ItemMeta>
                                         </ItemInfo>
@@ -400,7 +400,7 @@ const PackingPlanDetails = () => {
                 >
                     <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <ModalHeader>
-                            <ModalTitle>Packing Plan löschen?</ModalTitle>
+                            <ModalTitle>Packplan löschen?</ModalTitle>
                             <CloseButton
                                 type="button"
                                 onClick={() => {
@@ -414,8 +414,7 @@ const PackingPlanDetails = () => {
                         </ModalHeader>
 
                         <ModalText>
-                            Diese Aktion kann nicht rückgängig gemacht werden. Der Plan und alle zugehörigen Positionen
-                            werden gelöscht.
+                            Diese Aktion kann nicht rückgängig gemacht werden.
                         </ModalText>
 
                         <ModalButtons>
@@ -446,7 +445,7 @@ const PackingPlanDetails = () => {
                         <ModalContent>
                             <SearchInput
                                 type="text"
-                                placeholder="Search items by name, ID, inventory number, or location..."
+                                placeholder="Suche Artikel nach Name, ID, Inventarnummer oder Ort..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -454,8 +453,8 @@ const PackingPlanDetails = () => {
                                 {availableItems.length === 0 ? (
                                     <EmptyMessage>
                                         {searchTerm
-                                            ? 'No items found matching your search.'
-                                            : 'No available items to add.'}
+                                            ? 'Keine Artikel gefunden, die der Suche entsprechen.'
+                                            : 'Keine Artikel zum Hinzufügen vorhanden.'}
                                     </EmptyMessage>
                                 ) : (
                                     availableItems.map((item) => (
@@ -571,7 +570,6 @@ const HeaderEditButton = styled(Button)`
     }
 `;
 
-// Shared button styling for this view (keeps all non-header action buttons visually consistent)
 const DetailActionButton = styled(Button)`
     box-sizing: border-box;
     height: 36px;
@@ -580,6 +578,28 @@ const DetailActionButton = styled(Button)`
     gap: ${theme.spacing.xs};
     min-width: 132px;
     border: 1px solid transparent;
+
+    display: flex;
+    align-items: center;
+    box-shadow: ${theme.shadows.sm};
+    margin-left: auto;
+    
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        min-width: auto;
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
+        }
+    }
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -687,10 +707,6 @@ const ItemsHeaderActions = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.sm};
-
-    & > ${DetailActionButton} {
-        min-width: 132px;
-    }
 `;
 
 const AddItemButton = styled(DetailActionButton)``;
@@ -787,7 +803,7 @@ const ItemMeta = styled.div`
 `;
 
 const QuantityInput = styled(Input)`
-    width: 80px;
+    width: 50px;
     padding: ${theme.spacing.sm};
     text-align: center;
 `;
@@ -934,15 +950,16 @@ const QuantitySection = styled.div`
 const ModalButtons = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
-    justify-content: flex-end;
-
-    & > ${DetailActionButton} {
-        min-width: 132px;
+    width: 100%;
+    
+    & > * {
+        flex: 1;
     }
 `;
 
 const ModalButton = styled(DetailActionButton)`
     padding: 0 ${theme.spacing.lg};
+    min-width: 0;
 `;
 
 const DangerModalButton = styled(ModalButton)`

@@ -83,17 +83,17 @@ const ErrorText = styled.small`
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -143,11 +143,11 @@ const EditPackingPlan = () => {
         const newErrors: Record<string, string> = {};
 
         if (!formData.name.trim()) {
-            newErrors.name = 'Name is required.';
+            newErrors.name = 'Name ist erforderlich.';
         }
 
         if (!formData.scenarioType) {
-            newErrors.scenarioType = 'Scenario type is required.';
+            newErrors.scenarioType = 'Szenario ist erforderlich.';
         }
 
         setErrors(newErrors);
@@ -171,7 +171,7 @@ const EditPackingPlan = () => {
             navigate(-1);
         } catch (error) {
             console.error('Failed to update packing plan:', error);
-            alert('Failed to update packing plan.');
+            alert('Fehler beim Aktualisieren des Packplans.');
         } finally {
             setIsSaving(false);
         }
@@ -197,7 +197,7 @@ const EditPackingPlan = () => {
                             id="name"
                             name="name"
                             type="text"
-                            placeholder="e.g. Flood Aachen"
+                            placeholder="z.B. Hochwasser"
                             value={formData.name}
                             onChange={(e) => handleChange('name', e.target.value)}
                         />
@@ -205,7 +205,7 @@ const EditPackingPlan = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="scenarioType">Scenario Type</Label>
+                        <Label htmlFor="scenarioType">Szenario</Label>
                         <Select
                             id="scenarioType"
                             name="scenarioType"
@@ -222,11 +222,11 @@ const EditPackingPlan = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">Beschreibung</Label>
                         <Textarea
                             id="description"
                             name="description"
-                            placeholder="Optional description of the packing plan..."
+                            placeholder="Füge eine Beschreibung hinzu..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             rows={4}
@@ -235,10 +235,10 @@ const EditPackingPlan = () => {
 
                     <StyledButtonGroup>
                         <StyledButton $variant="ghost" onClick={() => navigate(-1)} disabled={isSaving}>
-                            Cancel
+                            Abbrechen
                         </StyledButton>
                         <StyledButton $variant="primary" onClick={handleSave} disabled={isSaving}>
-                            {isSaving ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Speichern...' : 'Speichern'}
                         </StyledButton>
                     </StyledButtonGroup>
                 </StyledCard>

@@ -28,17 +28,17 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -60,7 +60,7 @@ const PackingPlanOverview = () => {
                     <StyledBackButton onClick={() => navigate(-1)}>
                         <ChevronLeft size={20} />
                     </StyledBackButton>
-                    <Title>Packing Plans</Title>
+                    <Title>Packpläne</Title>
                 </HeaderLeft>
                 <HeaderRight>
                     <CreateButton $variant="primary" onClick={() =>
@@ -71,7 +71,7 @@ const PackingPlanOverview = () => {
                                             })
                                         }>
                         <IconContainer icon={Plus} />
-                        <span>Create Plan</span>
+                        <span>Packplan erstellen</span>
                     </CreateButton>
                 </HeaderRight>
             </Header>
@@ -81,9 +81,9 @@ const PackingPlanOverview = () => {
                     <EmptyIconWrapper>
                         <IconContainer icon={FileText} />
                     </EmptyIconWrapper>
-                    <EmptyStateTitle>No packing plans yet</EmptyStateTitle>
+                    <EmptyStateTitle>Keine Packpläne vorhanden</EmptyStateTitle>
                     <EmptyStateText>
-                        No packing plans have been created yet.
+                        Erstelle deinen ersten Packplan, um dich auf den nächsten Notfall vorzubereiten.
                     </EmptyStateText>
                 </EmptyState>
             ) : (
@@ -169,7 +169,7 @@ const PlanCardItem = ({
             </PlanCardHeader>
             <PlanMeta>
                 <PlanMetaItem>
-                    <PlanMetaLabel>Scenario:</PlanMetaLabel>
+                    <PlanMetaLabel>Szenario:</PlanMetaLabel>
                     <PlanMetaValue>{scenarioLabel}</PlanMetaValue>
                 </PlanMetaItem>
                 {plan.description && (
@@ -178,7 +178,7 @@ const PlanCardItem = ({
             </PlanMeta>
             <PlanFooter>
                 <PlanDate>
-                    Created:{' '}
+                    Erstellt am {' '}
                     {new Date(plan.createdAt).toLocaleDateString('en-US', {
                         day: '2-digit',
                         month: '2-digit',
