@@ -53,6 +53,21 @@ export const usePackMode = (initialActive = false) => {
         }));
     };
 
+    const preselectItems = (items: { id: string; quantity: number }[]) => {
+        setSelectedItemIds((prev) => {
+            const next = new Set(prev);
+            items.forEach((i) => next.add(i.id));
+            return next;
+        });
+        setQtyByItemId((prev) => {
+            const next = { ...prev };
+            items.forEach((i) => {
+                next[i.id] = i.quantity;
+            });
+            return next;
+        });
+    };
+
     return {
         packMode,
         selectedItemIds,
@@ -62,6 +77,7 @@ export const usePackMode = (initialActive = false) => {
         togglePackMode,
         toggleItem,
         setQuantity,
+        preselectItems,
         // Clear selection but keep pack mode active.
         clear: () => {
             setSelectedItemIds(new Set());

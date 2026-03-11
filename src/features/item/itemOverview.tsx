@@ -49,11 +49,35 @@ const ItemOverview = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        if (navState?.preselectedItems && selectedItemIds.size === 0) {
-            navState.preselectedItems.forEach((item: any) => {
-                toggleItem(item.itemId.toString(), item.quantity ?? 1);
-            });
-        }
+        const loadPreselected = async () => {
+            if (navState?.preselectedItems && selectedItemIds.size === 0) {
+                const itemsToSelect = navState.preselectedItems.map((item: any) => ({
+                    id: item.itemId.toString(),
+                    quantity: item.quantity ?? 1
+                }));
+                if (itemsToSelect.length > 0) {
+                    packModeState.preselectItems(itemsToSelect);
+                }
+            } else if (navState?.planId && selectedItemIds.size === 0) {
+                try {
+                    const existingItems = await db.packingPlanItems
+                        .where('packingPlanId')
+                        .equals(navState.planId)
+                        .toArray();
+                    const itemsToSelect = existingItems.map(item => ({
+                        id: item.Iid.toString(),
+                        quantity: item.requiredQuantity
+                    }));
+                    if (itemsToSelect.length > 0) {
+                        packModeState.preselectItems(itemsToSelect);
+                    }
+                } catch (error) {
+                    console.error('Failed to load existing plan items', error);
+                }
+            }
+        };
+
+        loadPreselected();
 
         if (navState?.planName && packModeState.setPlanName) {
             packModeState.setPlanName(navState.planName);
@@ -272,6 +296,14 @@ const ItemOverview = () => {
             const existingByItemId = new Map(existingItems.map((i) => [i.Iid.toString(), i]));
 
             const newItems: IPackingPlanItem[] = [];
+            const updatePromises: any[] = [];
+            const itemsToDelete: string[] = [];
+
+            existingItems.forEach((existing) => {
+                if (!selectedItemIds.has(existing.Iid.toString())) {
+                    itemsToDelete.push(existing.id);
+                }
+            });
 
             Array.from(selectedItemIds).forEach((itemId, index) => {
                 const qty = qtyByItemId[itemId] ?? 1;
@@ -279,9 +311,13 @@ const ItemOverview = () => {
 
                 if (existing) {
                     // Update quantity of already-present item
-                    db.packingPlanItems.update(existing.id, {
-                        requiredQuantity: existing.requiredQuantity + qty,
-                    });
+                    if (existing.requiredQuantity !== qty) {
+                        updatePromises.push(
+                            db.packingPlanItems.update(existing.id, {
+                                requiredQuantity: qty,
+                            })
+                        );
+                    }
                 } else {
                     newItems.push({
                         id: createId('planItem'),
@@ -297,9 +333,19 @@ const ItemOverview = () => {
             if (newItems.length > 0) {
                 await db.packingPlanItems.bulkAdd(newItems);
             }
+            if (updatePromises.length > 0) {
+                await Promise.all(updatePromises);
+            }
+            if (itemsToDelete.length > 0) {
+                await db.packingPlanItems.bulkDelete(itemsToDelete);
+            }
 
             packModeState.togglePackMode();
-            navigate(`/packing-plans/${targetPlanId}`);
+            if (existingPlanId) {
+                navigate(-1);
+            } else {
+                navigate(`/packing-plans/${targetPlanId}`, { replace: true });
+            }
         } catch (error) {
             console.error('Error saving packing plan:', error);
             alert('Failed to save packing plan. Please try again.');
