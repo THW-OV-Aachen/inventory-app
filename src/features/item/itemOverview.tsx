@@ -960,6 +960,8 @@ const TableRow = styled(TableRowBase)<{
         & > #isSet {
             font-size: 14px;
             color: var(--color-font-secondary);
+            display: flex;
+            align-items: center;
         }
 
         & > #isSet {

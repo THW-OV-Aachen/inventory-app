@@ -438,8 +438,10 @@ const ItemSortButton = () => {
                 </SortButton>
 
                 {isOpen && (
-                    <SortFilterDropdown>
-                        <DropdownHeader>
+                    <>
+                        <DropdownBackgroundOverlay onClick={() => setIsOpen(false)} />
+                        <SortFilterDropdown>
+                            <DropdownHeader>
                             <span>Sortieren nach</span>
                             <ClearButton
                                 onClick={() => {
@@ -528,6 +530,7 @@ const ItemSortButton = () => {
                             </FilterOptionLabel>
                         </DropdownContent>
                     </SortFilterDropdown>
+                    </>
                 )}
             </SortButtonWrapper>
         </>
@@ -574,6 +577,23 @@ const SortFilterDropdown = styled.div`
         -webkit-overflow-scrolling: touch;
         /* Ensure touch events are strictly caught by the dropdown */
         touch-action: pan-y;
+    }
+`;
+
+const DropdownBackgroundOverlay = styled.div`
+    display: none;
+    
+    @media only screen and (max-device-width: 812px) and (orientation: portrait),
+        only screen and (max-width: 812px) {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999; /* Just below the dropdown (which is 1000) */
+        background: transparent;
+        cursor: default;
     }
 `;
 
