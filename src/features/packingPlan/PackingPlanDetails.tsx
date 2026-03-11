@@ -276,12 +276,12 @@ const PackingPlanDetails = () => {
                     </InfoRow>
                 </InfoCard>
 
-                {plan.description && (
-                    <DetailsCard>
-                        <InfoLabel>Description</InfoLabel>
-                        <InfoValue>{plan.description}</InfoValue>
-                    </DetailsCard>
-                )}
+                <DetailsCard>
+                    <InfoLabel>Description</InfoLabel>
+                    <InfoValue style={{ whiteSpace: 'pre-wrap' }}>
+                        {plan.description || <span style={{ whiteSpace: 'normal', fontStyle: 'italic', color: theme.colors.text.muted }}>No description</span>}
+                    </InfoValue>
+                </DetailsCard>
 
                 <ItemsSection>
                     <ItemsHeader>
@@ -294,7 +294,7 @@ const PackingPlanDetails = () => {
                                     </PackProgress>
                                     <PackButton $variant="primary" onClick={() => setPackMode(false)}>
                                         <IconContainer icon={Check} />
-                                        <span>Save</span>
+
                                     </PackButton>
                                 </>
                             ) : (

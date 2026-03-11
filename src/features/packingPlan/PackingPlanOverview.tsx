@@ -230,6 +230,11 @@ const PlanDescription = styled.p`
     color: ${theme.colors.text.secondary};
     margin: 0;
     line-height: 1.5;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 `;
 
 const PlanFooter = styled.div`
