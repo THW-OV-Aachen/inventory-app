@@ -77,8 +77,9 @@ const PackingPlanDetails = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeletingPlan, setIsDeletingPlan] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
-    const [quantity, setQuantity] = useState<number>(1);
+    const [quantity, setQuantity] = useState<string>('1');
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [editingQuantities, setEditingQuantities] = useState<Record<string, string>>({});
     const [packMode, setPackMode] = useState(false);
     const [packedItemIds, setPackedItemIds] = useState<Set<string>>(new Set());
     const navigate = useNavigate();
@@ -90,7 +91,8 @@ const PackingPlanDetails = () => {
 
     const handleAddItem = async () => {
         // Add a new item row to the plan (after basic checks).
-        if (!planId || !selectedItemId || quantity < 1) {
+        const qtyNum = parseInt(quantity, 10);
+        if (!planId || !selectedItemId || isNaN(qtyNum) || qtyNum < 1) {
             alert('Bitte wählen Sie einen Artikel und geben Sie eine gültige Menge ein.');
             return;
         }
@@ -107,12 +109,12 @@ const PackingPlanDetails = () => {
             await packingPlanApi.addPackingPlanItem({
                 packingPlanId: planId,
                 Iid: Number(selectedItemId),
-                requiredQuantity: quantity,
+                requiredQuantity: qtyNum,
                 order: maxOrder + 1,
             });
             setShowAddItemModal(false);
             setSelectedItemId('');
-            setQuantity(1);
+            setQuantity('1');
             setSearchTerm('');
         } catch (error) {
             console.error('Failed to add item:', error);
@@ -120,17 +122,35 @@ const PackingPlanDetails = () => {
         }
     };
 
-    const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
-        // Update required quantity for an existing plan item.
-        if (newQuantity < 1) {
-            alert('Die Menge muss mindestens 1 betragen.');
-            return;
+    // Sync editing quantities with plan items
+    useEffect(() => {
+        if (planItems.length > 0) {
+            setEditingQuantities(prev => {
+                const next = { ...prev };
+                planItems.forEach(item => {
+                    // Initialize with current value if not already being edited
+                    if (next[item.id] === undefined) {
+                        next[item.id] = item.requiredQuantity.toString();
+                    }
+                });
+                return next;
+            });
         }
-        try {
-            await packingPlanApi.updatePackingPlanItem(itemId, { requiredQuantity: newQuantity });
-        } catch (error) {
-            console.error('Failed to update quantity:', error);
-            alert('Fehler beim Aktualisieren der Menge.');
+    }, [planItems]);
+
+    const handleUpdateQuantity = async (itemId: string, newValue: string) => {
+        // Update local editing state
+        setEditingQuantities(prev => ({ ...prev, [itemId]: newValue }));
+
+        const newQuantity = parseInt(newValue, 10);
+        // Only update DB if it's a valid positive number
+        if (!isNaN(newQuantity) && newQuantity >= 1) {
+            try {
+                await packingPlanApi.updatePackingPlanItem(itemId, { requiredQuantity: newQuantity });
+            } catch (error) {
+                console.error('Failed to update quantity:', error);
+                // We keep the local value as is, but could potentially revert if needed
+            }
         }
     };
 
@@ -356,17 +376,25 @@ const PackingPlanDetails = () => {
                                                 {missingNote}
                                             </ItemMeta>
                                         </ItemInfo>
-                                        <QuantityInput
-                                            type="number"
-                                            min="1"
-                                            value={planItem.requiredQuantity}
-                                            onChange={(e) => {
-                                                const newQty = parseInt(e.target.value, 10);
-                                                if (!isNaN(newQty) && newQty > 0) {
-                                                    handleUpdateQuantity(planItem.id, newQty);
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <QuantityInput
+                                                type="number"
+                                                min="1"
+                                                value={editingQuantities[planItem.id] || ''}
+                                                $isError={(() => {
+                                                    const item = getItemDetails(planItem.Iid);
+                                                    return !!item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability;
+                                                })()}
+                                                onChange={(e) => handleUpdateQuantity(planItem.id, e.target.value)}
+                                            />
+                                            {(() => {
+                                                const item = getItemDetails(planItem.Iid);
+                                                if (item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability) {
+                                                    return <QuantityWarning>Max: {item.availability}</QuantityWarning>;
                                                 }
-                                            }}
-                                        />
+                                                return null;
+                                            })()}
+                                        </div>
                                         {packMode ? (
                                             <PackCheckboxWrapper>
                                                 <Checkbox
@@ -477,27 +505,38 @@ const PackingPlanDetails = () => {
                             </ItemsSelect>
                             {selectedItemId && (
                                 <QuantitySection>
-                                    <Label htmlFor="quantity">Quantity</Label>
+                                    <Label htmlFor="quantity">Menge</Label>
                                     <QuantityInput
                                         id="quantity"
                                         type="number"
                                         min="1"
                                         value={quantity}
-                                        onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                                        $isError={(() => {
+                                            const item = getItemDetails(Number(selectedItemId));
+                                            return !!item && parseInt(quantity, 10) > item.availability;
+                                        })()}
+                                        onChange={(e) => setQuantity(e.target.value)}
                                     />
+                                    {(() => {
+                                        const item = getItemDetails(Number(selectedItemId));
+                                        if (item && parseInt(quantity, 10) > item.availability) {
+                                            return <QuantityWarning>Max: {item.availability} verfügbar</QuantityWarning>;
+                                        }
+                                        return null;
+                                    })()}
                                 </QuantitySection>
                             )}
                         </ModalContent>
                         <ModalButtons>
                             <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
-                                Cancel
+                                Abbrechen
                             </ModalButton>
                             <ModalButton
                                 $variant="primary"
                                 onClick={handleAddItem}
-                                disabled={!selectedItemId || quantity < 1}
+                                disabled={!selectedItemId || !quantity || parseInt(quantity, 10) < 1}
                             >
-                                Add Item
+                                Artikel hinzufügen
                             </ModalButton>
                         </ModalButtons>
                     </ModalBox>
@@ -802,10 +841,22 @@ const ItemMeta = styled.div`
     color: ${theme.colors.text.muted};
 `;
 
-const QuantityInput = styled(Input)`
-    width: 50px;
+const QuantityInput = styled(Input)<{ $isError?: boolean }>`
+    width: 65px;
     padding: ${theme.spacing.sm};
     text-align: center;
+    ${({ $isError }) => $isError && `
+        color: ${theme.colors.status.error.main};
+        border-color: ${theme.colors.status.error.main};
+        background-color: ${theme.colors.status.error.light};
+    `}
+`;
+
+const QuantityWarning = styled.div`
+    color: ${theme.colors.status.error.main};
+    font-size: 10px;
+    margin-top: 2px;
+    font-weight: ${theme.typography.fontWeight.medium};
 `;
 
 const DeleteButton = styled.button`

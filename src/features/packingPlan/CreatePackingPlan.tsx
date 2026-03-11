@@ -141,10 +141,22 @@ const ItemMeta = styled.div`
     color: ${theme.colors.text.muted};
 `;
 
-const QuantityInput = styled(Input)`
+const QuantityInput = styled(Input)<{ $isError?: boolean }>`
     width: 80px;
     padding: ${theme.spacing.sm};
     text-align: center;
+    ${({ $isError }) => $isError && `
+        color: ${theme.colors.status.error.main};
+        border-color: ${theme.colors.status.error.main};
+        background-color: ${theme.colors.status.error.light};
+    `}
+`;
+
+const QuantityWarning = styled.div`
+    color: ${theme.colors.status.error.main};
+    font-size: 10px;
+    margin-top: 2px;
+    font-weight: ${theme.typography.fontWeight.medium};
 `;
 
 const DeleteButton = styled.button`
@@ -316,7 +328,7 @@ const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
 
 interface TempPackingPlanItem {
     Iid: number;
-    quantity: number;
+    quantity: string;
 }
 
 const CreatePackingPlan = () => {
@@ -336,7 +348,7 @@ const CreatePackingPlan = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showAddItemModal, setShowAddItemModal] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-    const [quantity, setQuantity] = useState<number>(1);
+    const [quantity, setQuantity] = useState<string>('1');
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [tempItems, setTempItems] = useState<TempPackingPlanItem[]>([]);
 
@@ -370,7 +382,8 @@ const CreatePackingPlan = () => {
     };
 
     const handleAddTempItem = () => {
-        if (selectedItemId === null || quantity < 1) {
+        const qtyNum = parseInt(quantity, 10);
+        if (selectedItemId === null || isNaN(qtyNum) || qtyNum < 1) {
             alert('Bitte wählen Sie einen Artikel und geben Sie eine gültige Menge ein.');
             return;
         }
@@ -383,7 +396,7 @@ const CreatePackingPlan = () => {
         setTempItems((prev) => [...prev, { Iid: selectedItemId, quantity }]);
         setShowAddItemModal(false);
         setSelectedItemId(null);
-        setQuantity(1);
+        setQuantity('1');
         setSearchTerm('');
     };
 
@@ -391,9 +404,7 @@ const CreatePackingPlan = () => {
         setTempItems((prev) => prev.filter((item) => item.Iid !== Iid));
     };
 
-    const handleUpdateTempQuantity = (Iid: number, newQuantity: number) => {
-        if (newQuantity < 1) return;
-
+    const handleUpdateTempQuantity = (Iid: number, newQuantity: string) => {
         setTempItems((prev) => prev.map((item) => (item.Iid === Iid ? { ...item, quantity: newQuantity } : item)));
     };
 
@@ -433,10 +444,13 @@ const CreatePackingPlan = () => {
             });
 
             for (let i = 0; i < tempItems.length; i++) {
+                const qtyNum = parseInt(tempItems[i].quantity, 10);
+                if (isNaN(qtyNum) || qtyNum < 1) continue; // Skip invalid quantities
+
                 await packingPlanApi.addPackingPlanItem({
                     packingPlanId: planId,
                     Iid: tempItems[i].Iid,
-                    requiredQuantity: tempItems[i].quantity,
+                    requiredQuantity: qtyNum,
                     order: i,
                 });
             }
@@ -534,17 +548,20 @@ const CreatePackingPlan = () => {
                                                 </ItemMeta>
                                             </ItemInfo>
 
-                                            <QuantityInput
-                                                type="number"
-                                                min="1"
-                                                value={tempItem.quantity}
-                                                onChange={(e) => {
-                                                    const newQty = parseInt(e.target.value, 10);
-                                                    if (!isNaN(newQty) && newQty > 0) {
-                                                        handleUpdateTempQuantity(tempItem.Iid, newQty);
-                                                    }
-                                                }}
-                                            />
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <QuantityInput
+                                                    type="number"
+                                                    min="1"
+                                                    value={tempItem.quantity}
+                                                    $isError={!!item && parseInt(tempItem.quantity, 10) > item.availability}
+                                                    onChange={(e) => {
+                                                        handleUpdateTempQuantity(tempItem.Iid, e.target.value);
+                                                    }}
+                                                />
+                                                {item && parseInt(tempItem.quantity, 10) > item.availability && (
+                                                    <QuantityWarning>Max: {item.availability}</QuantityWarning>
+                                                )}
+                                            </div>
 
                                             <DeleteButton
                                                 onClick={() => handleRemoveTempItem(tempItem.Iid)}
@@ -623,8 +640,19 @@ const CreatePackingPlan = () => {
                                         type="number"
                                         min="1"
                                         value={quantity}
-                                        onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                                        $isError={(() => {
+                                            const item = getItemDetails(selectedItemId);
+                                            return !!item && parseInt(quantity, 10) > item.availability;
+                                        })()}
+                                        onChange={(e) => setQuantity(e.target.value)}
                                     />
+                                    {(() => {
+                                        const item = getItemDetails(selectedItemId);
+                                        if (item && parseInt(quantity, 10) > item.availability) {
+                                            return <QuantityWarning>Max: {item.availability} verfügbar</QuantityWarning>;
+                                        }
+                                        return null;
+                                    })()}
                                 </QuantitySection>
                             )}
                         </ModalContent>
@@ -636,7 +664,7 @@ const CreatePackingPlan = () => {
                             <ModalButton
                                 $variant="primary"
                                 onClick={handleAddTempItem}
-                                disabled={selectedItemId === null || quantity < 1}
+                                disabled={selectedItemId === null || !quantity || parseInt(quantity, 10) < 1}
                             >
                                 Artikel hinzufügen
                             </ModalButton>
