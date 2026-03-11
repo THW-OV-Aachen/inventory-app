@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DamageLevelType } from '../../db/items';
 import styled from 'styled-components';
@@ -46,7 +46,7 @@ import BarcodeScannerModal from '../barcodeScanner/BarcodeScannerModal';
 
 const sortFieldLabels: Record<string, string> = {
     nextInspection: 'Nächste Inspektion',
-    inventoryNumber: 'Inventar-Nr.',
+    inventoryNumber: 'Inventarnummer',
     name: 'Name',
     damageLevel: 'Zustand',
     location: 'Ort',
@@ -60,6 +60,8 @@ interface ItemFilterProps {
 export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const location = useLocation();
+    const isExistingPlan = !!(location.state as any)?.planId;
     const [showScanner, setShowScanner] = useState(false);
 
     const handleBarcodeDetected = async (code: string) => {
@@ -73,30 +75,32 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                 {!packModeState.packMode && (
                     <PrimaryButton onClick={() => navigate('/items/add')}>
                         <IconContainer icon={Plus} />
-                        <span>Item</span>
+                        <span>Artikel</span>
                     </PrimaryButton>
                 )}
                 <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
                     <IconContainer icon={ScanLine} />
-                    <span>Scan</span>
+                    <span>Scannen</span>
                 </SecondaryButton>
                 {packModeState.packMode && (
                     <PlanNameInput
                         type="text"
-                        placeholder="Plan name..."
+                        placeholder="Name des Packplans..."
                         value={packModeState.planName}
                         onChange={(e) => packModeState.setPlanName(e.target.value)}
+                        disabled={isExistingPlan}
+                        title={isExistingPlan ? "Name kann bei bestehendem Plan nicht hier geändert werden" : ""}
                     />
                 )}
                 {packModeState.packMode && onSavePackingPlan && (
                     <PrimaryButton onClick={onSavePackingPlan} disabled={packModeState.selectedItemIds.size === 0}>
                         <IconContainer icon={Save} />
-                        <span>Save</span>
+                        <span>Speichern</span>
                     </PrimaryButton>
                 )}
                 <SecondaryButton onClick={packModeState.togglePackMode}>
                     <IconContainer icon={Package} />
-                    <span>{packModeState.packMode ? 'Cancel' : 'Pack'}</span>
+                    <span>{packModeState.packMode ? 'Abbrechen' : 'Packen'}</span>
                 </SecondaryButton>
             </AddEntityButtons>
 

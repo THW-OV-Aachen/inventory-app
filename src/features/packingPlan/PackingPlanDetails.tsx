@@ -326,6 +326,7 @@ const PackingPlanDetails = () => {
                                                 state: {
                                                     packMode: true, // automatically activate pack mode
                                                     planId: planId, // remember which packing plan to add to
+                                                    planName: plan.name, // Pass the plan name
                                                 },
                                             })
                                         }
