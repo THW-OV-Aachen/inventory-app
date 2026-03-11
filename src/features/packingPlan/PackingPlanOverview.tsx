@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Droplets, Flame, Wind, Search, FileText, ChevronLeft } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
-import type { IPackingPlan, EmergencyScenarioType } from '../../db/packingPlans';
+import type { EmergencyScenarioType } from '../../db/packingPlans';
 import { Card, Container, BackButton } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
@@ -66,7 +66,9 @@ const PackingPlanOverview = () => {
 
             {packingPlans.length === 0 ? (
                 <EmptyState>
-                    <IconContainer icon={FileText} />
+                    <EmptyIconWrapper>
+                        <IconContainer icon={FileText} />
+                    </EmptyIconWrapper>
                     <EmptyStateTitle>No packing plans yet</EmptyStateTitle>
                     <EmptyStateText>
                         No packing plans have been created yet.
@@ -249,11 +251,11 @@ const EmptyState = styled.div`
     padding: ${theme.spacing.xxl} ${theme.spacing.xl};
     text-align: center;
     gap: ${theme.spacing.lg};
+`;
 
-    ${IconContainer} {
-        color: ${theme.colors.text.muted};
-        opacity: 0.5;
-    }
+const EmptyIconWrapper = styled.div`
+    color: ${theme.colors.text.muted};
+    opacity: 0.5;
 `;
 
 const EmptyStateTitle = styled.h2`

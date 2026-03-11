@@ -633,8 +633,6 @@ const InfoValue = styled(DataValue)`
     gap: 6px;
 `;
 
-const StyledButton = styled(DetailActionButton)``;
-
 const HeaderDangerActionButton = styled(Button)`
     display: flex;
     align-items: center;
