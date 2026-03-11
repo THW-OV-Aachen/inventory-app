@@ -114,7 +114,7 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                     onClick={packModeState.togglePackMode}
                     $noCollapse
                 >
-                    <IconContainer icon={Package} />
+                    <IconContainer icon={packModeState.packMode ? X : Package} />
                     <span>{packModeState.packMode ? 'Abbrechen' : 'Packen'}</span>
                 </SecondaryButton>
             </PackActionsRow>

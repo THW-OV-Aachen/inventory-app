@@ -359,7 +359,12 @@ const PackingPlanDetails = () => {
                                 const isPacked = packedItemIds.has(planItem.Iid.toString());
 
                                 return (
-                                    <ItemRow key={planItem.id} data-packed={isPacked ? 'true' : 'false'}>
+                                    <ItemRow 
+                                        key={planItem.id} 
+                                        data-packed={isPacked ? 'true' : 'false'}
+                                        onClick={() => packMode && togglePacked(planItem.Iid.toString())}
+                                        $isPackMode={packMode}
+                                    >
                                         <ItemInfo>
                                             <ItemName>
                                                 <span>{itemName}</span>
@@ -402,6 +407,7 @@ const PackingPlanDetails = () => {
                                                     type="checkbox"
                                                     checked={isPacked}
                                                     onChange={() => togglePacked(planItem.Iid.toString())}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                             </PackCheckboxWrapper>
                                         ) : (
@@ -776,7 +782,7 @@ const PackProgress = styled.div`
     white-space: nowrap;
 `;
 
-const ItemRow = styled.div`
+const ItemRow = styled.div<{ $isPackMode?: boolean }>`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
@@ -784,6 +790,7 @@ const ItemRow = styled.div`
     background-color: ${theme.colors.background.light};
     border-radius: ${theme.borderRadius.md};
     border: 1px solid ${theme.colors.border.default};
+    cursor: ${props => props.$isPackMode ? 'pointer' : 'default'};
 
     &[data-packed='true'] {
         background-color: ${theme.colors.status.good.light};
