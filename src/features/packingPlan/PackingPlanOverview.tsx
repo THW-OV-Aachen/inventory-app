@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Droplets, Flame, Wind, Search, FileText, ChevronLeft } from 'lucide-react';
+import { Droplets, Flame, Wind, Search, FileText, ChevronLeft, Plus } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import type { EmergencyScenarioType } from '../../db/packingPlans';
-import { Card, Container, BackButton } from '../../styles/components';
+import { Card, Container, BackButton, Button } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
 
@@ -62,6 +62,18 @@ const PackingPlanOverview = () => {
                     </StyledBackButton>
                     <Title>Packing Plans</Title>
                 </HeaderLeft>
+                <HeaderRight>
+                    <CreateButton $variant="primary" onClick={() =>
+                                            navigate('/items', {
+                                                state: {
+                                                    packMode: true, 
+                                                },
+                                            })
+                                        }>
+                        <IconContainer icon={Plus} />
+                        <span>Create Plan</span>
+                    </CreateButton>
+                </HeaderRight>
             </Header>
 
             {packingPlans.length === 0 ? (
@@ -132,9 +144,8 @@ const Header = styled.div`
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: ${theme.spacing.md};
+        flex-direction: row;
+        align-items: center;
     }
 `;
 
@@ -159,6 +170,32 @@ const Title = styled.h1`
     margin: 0;
     flex: 1;
     min-width: 0;
+`;
+
+const HeaderRight = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+`;
+
+const CreateButton = styled(Button)`
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    gap: ${theme.spacing.xs};
+    box-shadow: ${theme.shadows.sm};
+    
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
+        }
+    }
 `;
 
 const PlansGrid = styled.div`
