@@ -179,7 +179,7 @@ const PlanCardItem = ({
             <PlanFooter>
                 <PlanDate>
                     Erstellt am {' '}
-                    {new Date(plan.createdAt).toLocaleDateString('en-US', {
+                    {new Date(plan.createdAt).toLocaleDateString('de-DE', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -253,7 +253,8 @@ const CreateButton = styled(Button)`
     }
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding: 0 ${theme.spacing.sm};
+        width: 36px;
+        padding: 0;
         span {
             display: none;
         }

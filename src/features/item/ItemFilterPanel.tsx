@@ -70,18 +70,26 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
 
     return (
         <ItemFilterWrapper>
-            <ItemFilterSearchbar />
-            <AddEntityButtons>
-                {!packModeState.packMode && (
-                    <PrimaryButton onClick={() => navigate('/items/add')}>
-                        <IconContainer icon={Plus} />
-                        <span>Artikel</span>
-                    </PrimaryButton>
-                )}
-                <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
-                    <IconContainer icon={ScanLine} />
-                    <span>Scannen</span>
-                </SecondaryButton>
+            <MainFilterRow>
+                <ItemFilterSearchbar />
+                <MainActions>
+                    {!packModeState.packMode && (
+                        <PrimaryButton onClick={() => navigate('/items/add')}>
+                            <IconContainer icon={Plus} />
+                            <span>Artikel</span>
+                        </PrimaryButton>
+                    )}
+                    <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
+                        <IconContainer icon={ScanLine} />
+                        <span>Scannen</span>
+                    </SecondaryButton>
+                </MainActions>
+            </MainFilterRow>
+
+            <PackActionsRow 
+                $centered={!packModeState.packMode} 
+                $isPackMode={packModeState.packMode}
+            >
                 {packModeState.packMode && (
                     <PlanNameInput
                         type="text"
@@ -93,22 +101,29 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                     />
                 )}
                 {packModeState.packMode && onSavePackingPlan && (
-                    <PrimaryButton onClick={onSavePackingPlan} disabled={packModeState.selectedItemIds.size === 0}>
+                    <PrimaryButton 
+                        onClick={onSavePackingPlan} 
+                        disabled={packModeState.selectedItemIds.size === 0}
+                        $noCollapse
+                    >
                         <IconContainer icon={Save} />
                         <span>Speichern</span>
                     </PrimaryButton>
                 )}
-                <SecondaryButton onClick={packModeState.togglePackMode}>
+                <SecondaryButton 
+                    onClick={packModeState.togglePackMode}
+                    $noCollapse
+                >
                     <IconContainer icon={Package} />
                     <span>{packModeState.packMode ? 'Abbrechen' : 'Packen'}</span>
                 </SecondaryButton>
-            </AddEntityButtons>
+            </PackActionsRow>
 
             <BarcodeScannerModal
                 show={showScanner}
                 onClose={() => setShowScanner(false)}
                 onDetected={handleBarcodeDetected}
-                helpText="Kamera auf den Barcode halten. Der erkannte Code wird in die Suche übernommen."
+                helpText="Halte die Kamera auf den Barcode. Der erkannte Code wird in die Suche übernommen."
                 readerId="item-filter-barcode-reader"
             />
         </ItemFilterWrapper>
@@ -151,30 +166,61 @@ const SearchInputWrapper = styled.div`
     }
 `;
 
-const AddEntityButtons = styled.div`
-    display: contents;
+const MainFilterRow = styled.div`
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        display: flex;
-        flex-direction: row;
         gap: 4px;
     }
 `;
 
-const AddButton = styled.button`
+const MainActions = styled.div`
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    flex-shrink: 0;
+`;
+
+const PackActionsRow = styled.div<{ $centered?: boolean; $isPackMode?: boolean }>`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: ${({ $centered }) => ($centered ? 'center' : 'flex-end')};
+    gap: 4px;
+    width: 100%;
+    margin-top: 4px;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        margin-top: 2px;
+        ${({ $isPackMode }) => $isPackMode && `
+            justify-content: space-between;
+            & > * {
+                flex: 1;
+            }
+            & > input {
+                flex: 2;
+            }
+        `}
+    }
+`;
+
+const AddButton = styled.button<{ $noCollapse?: boolean }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     height: 36px;
     padding: 0 18px;
-    border-radius: 46px;
+    border-radius: ${theme.borderRadius.lg};
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 
     &:hover {
         transform: translateY(-1px);
@@ -182,6 +228,13 @@ const AddButton = styled.button`
 
     &:active {
         transform: translateY(0);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 10px;
+        span {
+            display: ${({ $noCollapse }) => $noCollapse ? 'inline' : 'none'};
+        }
     }
 `;
 
@@ -212,7 +265,7 @@ const PlanNameInput = styled.input`
     border: 1px solid #e2e8f0;
     background-color: white;
     font-size: 12px;
-    min-width: 200px;
+    min-width: 150px;
     flex: 1;
     max-width: 300px;
 
@@ -222,8 +275,8 @@ const PlanNameInput = styled.input`
     }
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        width: 100%;
-        max-width: 100%;
+        min-width: 80px;
+        flex: 1;
     }
 `;
 
@@ -233,27 +286,20 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     z-index: 100;
 
     display: flex;
-    flex-direction: row;
-
+    flex-direction: column;
     gap: 4px;
 
     padding: ${theme.spacing.lg};
-
     border-radius: 6px;
-
     border: 1px solid var(--color-bg-accent);
     background-color: var(--color-bg);
-
     margin-bottom: ${theme.spacing.lg};
-
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-    align-items: center;
-
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        flex-direction: column;
-        gap: 8px;
+        padding: 8px;
+        gap: 2px;
     }
 `;
 
