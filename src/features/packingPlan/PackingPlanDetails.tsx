@@ -345,7 +345,7 @@ const PackingPlanDetails = () => {
                                                 {isPacked && (
                                                     <PackedBadge>
                                                         <IconContainer icon={CheckCircle2} />
-                                                        Packed
+                                                        gepackt
                                                     </PackedBadge>
                                                 )}
                                             </ItemName>

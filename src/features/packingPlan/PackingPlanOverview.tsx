@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Droplets, Flame, Wind, Search, FileText, ChevronLeft, Plus } from 'lucide-react';
+import { Droplets, Flame, Wind, Search, FileText, ChevronLeft, Plus, CheckCircle2 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import type { EmergencyScenarioType } from '../../db/packingPlans';
 import { Card, Container, BackButton, Button } from '../../styles/components';
@@ -93,31 +93,13 @@ const PackingPlanOverview = () => {
                         const scenarioLabel = getScenarioLabel(plan.scenarioType);
 
                         return (
-                            <PlanCard key={plan.id} onClick={() => handlePlanClick(plan.id)}>
-                                <PlanCardHeader>
-                                    <IconContainer icon={Icon} />
-                                    <PlanTitle>{plan.name}</PlanTitle>
-                                </PlanCardHeader>
-                                <PlanMeta>
-                                    <PlanMetaItem>
-                                        <PlanMetaLabel>Scenario:</PlanMetaLabel>
-                                        <PlanMetaValue>{scenarioLabel}</PlanMetaValue>
-                                    </PlanMetaItem>
-                                    {plan.description && (
-                                        <PlanDescription>{plan.description}</PlanDescription>
-                                    )}
-                                </PlanMeta>
-                                <PlanFooter>
-                                    <PlanDate>
-                                        Created:{' '}
-                                        {new Date(plan.createdAt).toLocaleDateString('en-US', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                        })}
-                                    </PlanDate>
-                                </PlanFooter>
-                            </PlanCard>
+                            <PlanCardItem 
+                                key={plan.id} 
+                                plan={plan} 
+                                Icon={Icon} 
+                                scenarioLabel={scenarioLabel} 
+                                onClick={() => handlePlanClick(plan.id)} 
+                            />
                         );
                     })}
                 </PlansGrid>
@@ -126,7 +108,87 @@ const PackingPlanOverview = () => {
     );
 };
 
-export default PackingPlanOverview;
+import type { ComponentType, SVGProps } from 'react';
+
+const PlanCardItem = ({ 
+    plan, 
+    Icon, 
+    scenarioLabel, 
+    onClick 
+}: { 
+    plan: { id: string, name: string, description?: string, createdAt: string, scenarioType: EmergencyScenarioType }, 
+    Icon: ComponentType<SVGProps<SVGSVGElement>>, 
+    scenarioLabel: string, 
+    onClick: () => void 
+}) => {
+    const planItems = packingPlanApi.usePackingPlanItems(plan.id);
+
+    // Get packed state
+    const packedStorageKey = `packingPlan:${plan.id}:packedItemIds`;
+    const packedItemsSet = new Set<string>();
+    
+    try {
+        const raw = localStorage.getItem(packedStorageKey);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                parsed.forEach(id => {
+                    if (typeof id === 'string') packedItemsSet.add(id);
+                });
+            }
+        }
+    } catch {
+        // safely ignore missing parsing errors
+    }
+
+    // Count how many valid plan items are packed
+    const totalCount = planItems.length;
+    const packedCount = planItems.filter((item) => packedItemsSet.has(item.Iid.toString())).length;
+    const isFullyPacked = totalCount > 0 && packedCount === totalCount;
+    const isPartiallyPacked = packedCount > 0 && !isFullyPacked;
+
+    return (
+        <PlanCard onClick={onClick}>
+            <PlanCardHeader>
+                <IconContainer icon={Icon} />
+                <PlanTitle>
+                    {plan.name}
+                    {isFullyPacked && (
+                        <PackedBadge $variant="full">
+                            <IconContainer icon={CheckCircle2} />
+                            gepackt
+                        </PackedBadge>
+                    )}
+                    {isPartiallyPacked && (
+                        <PackedBadge $variant="partial">
+                            <IconContainer icon={CheckCircle2} />
+                            angefangen
+                        </PackedBadge>
+                    )}
+                </PlanTitle>
+            </PlanCardHeader>
+            <PlanMeta>
+                <PlanMetaItem>
+                    <PlanMetaLabel>Scenario:</PlanMetaLabel>
+                    <PlanMetaValue>{scenarioLabel}</PlanMetaValue>
+                </PlanMetaItem>
+                {plan.description && (
+                    <PlanDescription>{plan.description}</PlanDescription>
+                )}
+            </PlanMeta>
+            <PlanFooter>
+                <PlanDate>
+                    Created:{' '}
+                    {new Date(plan.createdAt).toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                    })}
+                </PlanDate>
+            </PlanFooter>
+        </PlanCard>
+    );
+};
 
 // ─── Styled Components ────────────────────────────────────
 
@@ -235,6 +297,32 @@ const PlanTitle = styled.h3`
     color: ${theme.colors.text.primary};
     margin: 0;
     flex: 1;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+`;
+
+const PackedBadge = styled.span<{ $variant?: 'partial' | 'full' }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: ${props => props.$variant === 'partial' 
+        ? theme.colors.status.good.light 
+        : theme.colors.status.good.main};
+    color: ${props => props.$variant === 'partial'
+        ? theme.colors.status.good.dark
+        : 'white'};
+    font-size: ${theme.typography.fontSize.xs};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    margin-left: auto;
+
+    & svg {
+        color: ${props => props.$variant === 'partial'
+            ? theme.colors.status.good.dark
+            : 'white'};
+    }
 `;
 
 const PlanMeta = styled.div`
@@ -314,4 +402,6 @@ const EmptyStateText = styled.p`
     margin: 0;
     line-height: 1.6;
 `;
+
+export default PackingPlanOverview;
 
