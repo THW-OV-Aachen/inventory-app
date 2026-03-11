@@ -13,6 +13,7 @@ import {
     X,
     Trash2,
     Package,
+    Check,
     CheckCircle2,
 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
@@ -292,16 +293,12 @@ const PackingPlanDetails = () => {
                                         {packedCount}/{planItems.length} packed
                                     </PackProgress>
                                     <PackButton $variant="primary" onClick={() => setPackMode(false)}>
-                                        <IconContainer icon={X} />
+                                        <IconContainer icon={Check} />
                                         <span>Save</span>
                                     </PackButton>
                                 </>
                             ) : (
                                 <>
-                                    <PackButton $variant="ghost" onClick={() => setPackMode(true)}>
-                                        <IconContainer icon={Package} />
-                                        <span>Pack</span>
-                                    </PackButton>
                                     <AddItemButton
                                         $variant="primary"
                                         onClick={() =>
@@ -316,6 +313,10 @@ const PackingPlanDetails = () => {
                                         <IconContainer icon={Plus} />
                                         <span>Add Item</span>
                                     </AddItemButton>
+                                    <PackButton $variant="ghost" onClick={() => setPackMode(true)}>
+                                        <IconContainer icon={Package} />
+                                        <span>Pack</span>
+                                    </PackButton>
                                 </>
                             )}
                         </ItemsHeaderActions>
