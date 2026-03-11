@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Droplets, Flame, Wind, Search, FileText, ChevronLeft } from 'lucide-react';
+import { Droplets, Flame, Wind, Search, FileText, ChevronLeft, Plus, CheckCircle2 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
-import type { IPackingPlan, EmergencyScenarioType } from '../../db/packingPlans';
-import { Card, Container, BackButton } from '../../styles/components';
+import type { EmergencyScenarioType } from '../../db/packingPlans';
+import { Card, Container, BackButton, Button } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
 
@@ -28,17 +28,17 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -60,16 +60,30 @@ const PackingPlanOverview = () => {
                     <StyledBackButton onClick={() => navigate(-1)}>
                         <ChevronLeft size={20} />
                     </StyledBackButton>
-                    <Title>Packing Plans</Title>
+                    <Title>Packpläne</Title>
                 </HeaderLeft>
+                <HeaderRight>
+                    <CreateButton $variant="primary" onClick={() =>
+                                            navigate('/items', {
+                                                state: {
+                                                    packMode: true, 
+                                                },
+                                            })
+                                        }>
+                        <IconContainer icon={Plus} />
+                        <span>Packplan erstellen</span>
+                    </CreateButton>
+                </HeaderRight>
             </Header>
 
             {packingPlans.length === 0 ? (
                 <EmptyState>
-                    <IconContainer icon={FileText} />
-                    <EmptyStateTitle>No packing plans yet</EmptyStateTitle>
+                    <EmptyIconWrapper>
+                        <IconContainer icon={FileText} />
+                    </EmptyIconWrapper>
+                    <EmptyStateTitle>Keine Packpläne vorhanden</EmptyStateTitle>
                     <EmptyStateText>
-                        No packing plans have been created yet.
+                        Erstelle deinen ersten Packplan, um dich auf den nächsten Notfall vorzubereiten.
                     </EmptyStateText>
                 </EmptyState>
             ) : (
@@ -79,31 +93,13 @@ const PackingPlanOverview = () => {
                         const scenarioLabel = getScenarioLabel(plan.scenarioType);
 
                         return (
-                            <PlanCard key={plan.id} onClick={() => handlePlanClick(plan.id)}>
-                                <PlanCardHeader>
-                                    <IconContainer icon={Icon} />
-                                    <PlanTitle>{plan.name}</PlanTitle>
-                                </PlanCardHeader>
-                                <PlanMeta>
-                                    <PlanMetaItem>
-                                        <PlanMetaLabel>Scenario:</PlanMetaLabel>
-                                        <PlanMetaValue>{scenarioLabel}</PlanMetaValue>
-                                    </PlanMetaItem>
-                                    {plan.description && (
-                                        <PlanDescription>{plan.description}</PlanDescription>
-                                    )}
-                                </PlanMeta>
-                                <PlanFooter>
-                                    <PlanDate>
-                                        Created:{' '}
-                                        {new Date(plan.createdAt).toLocaleDateString('en-US', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                        })}
-                                    </PlanDate>
-                                </PlanFooter>
-                            </PlanCard>
+                            <PlanCardItem 
+                                key={plan.id} 
+                                plan={plan} 
+                                Icon={Icon} 
+                                scenarioLabel={scenarioLabel} 
+                                onClick={() => handlePlanClick(plan.id)} 
+                            />
                         );
                     })}
                 </PlansGrid>
@@ -112,7 +108,87 @@ const PackingPlanOverview = () => {
     );
 };
 
-export default PackingPlanOverview;
+import type { ComponentType, SVGProps } from 'react';
+
+const PlanCardItem = ({ 
+    plan, 
+    Icon, 
+    scenarioLabel, 
+    onClick 
+}: { 
+    plan: { id: string, name: string, description?: string, createdAt: string, scenarioType: EmergencyScenarioType }, 
+    Icon: ComponentType<SVGProps<SVGSVGElement>>, 
+    scenarioLabel: string, 
+    onClick: () => void 
+}) => {
+    const planItems = packingPlanApi.usePackingPlanItems(plan.id);
+
+    // Get packed state
+    const packedStorageKey = `packingPlan:${plan.id}:packedItemIds`;
+    const packedItemsSet = new Set<string>();
+    
+    try {
+        const raw = localStorage.getItem(packedStorageKey);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                parsed.forEach(id => {
+                    if (typeof id === 'string') packedItemsSet.add(id);
+                });
+            }
+        }
+    } catch {
+        // safely ignore missing parsing errors
+    }
+
+    // Count how many valid plan items are packed
+    const totalCount = planItems.length;
+    const packedCount = planItems.filter((item) => packedItemsSet.has(item.Iid.toString())).length;
+    const isFullyPacked = totalCount > 0 && packedCount === totalCount;
+    const isPartiallyPacked = packedCount > 0 && !isFullyPacked;
+
+    return (
+        <PlanCard onClick={onClick}>
+            <PlanCardHeader>
+                <IconContainer icon={Icon} />
+                <PlanTitle>
+                    {plan.name}
+                    {isFullyPacked && (
+                        <PackedBadge $variant="full">
+                            <IconContainer icon={CheckCircle2} />
+                            gepackt
+                        </PackedBadge>
+                    )}
+                    {isPartiallyPacked && (
+                        <PackedBadge $variant="partial">
+                            <IconContainer icon={CheckCircle2} />
+                            angefangen
+                        </PackedBadge>
+                    )}
+                </PlanTitle>
+            </PlanCardHeader>
+            <PlanMeta>
+                <PlanMetaItem>
+                    <PlanMetaLabel>Szenario:</PlanMetaLabel>
+                    <PlanMetaValue>{scenarioLabel}</PlanMetaValue>
+                </PlanMetaItem>
+                {plan.description && (
+                    <PlanDescription>{plan.description}</PlanDescription>
+                )}
+            </PlanMeta>
+            <PlanFooter>
+                <PlanDate>
+                    Erstellt am {' '}
+                    {new Date(plan.createdAt).toLocaleDateString('de-DE', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                    })}
+                </PlanDate>
+            </PlanFooter>
+        </PlanCard>
+    );
+};
 
 // ─── Styled Components ────────────────────────────────────
 
@@ -130,9 +206,8 @@ const Header = styled.div`
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: ${theme.spacing.md};
+        flex-direction: row;
+        align-items: center;
     }
 `;
 
@@ -157,6 +232,33 @@ const Title = styled.h1`
     margin: 0;
     flex: 1;
     min-width: 0;
+`;
+
+const HeaderRight = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+`;
+
+const CreateButton = styled(Button)`
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    gap: ${theme.spacing.xs};
+    box-shadow: ${theme.shadows.sm};
+    
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        width: 36px;
+        padding: 0;
+        span {
+            display: none;
+        }
+    }
 `;
 
 const PlansGrid = styled.div`
@@ -196,6 +298,32 @@ const PlanTitle = styled.h3`
     color: ${theme.colors.text.primary};
     margin: 0;
     flex: 1;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+`;
+
+const PackedBadge = styled.span<{ $variant?: 'partial' | 'full' }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: ${props => props.$variant === 'partial' 
+        ? theme.colors.status.good.light 
+        : theme.colors.status.good.main};
+    color: ${props => props.$variant === 'partial'
+        ? theme.colors.status.good.dark
+        : 'white'};
+    font-size: ${theme.typography.fontSize.xs};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    margin-left: auto;
+
+    & svg {
+        color: ${props => props.$variant === 'partial'
+            ? theme.colors.status.good.dark
+            : 'white'};
+    }
 `;
 
 const PlanMeta = styled.div`
@@ -228,6 +356,11 @@ const PlanDescription = styled.p`
     color: ${theme.colors.text.secondary};
     margin: 0;
     line-height: 1.5;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 `;
 
 const PlanFooter = styled.div`
@@ -249,11 +382,11 @@ const EmptyState = styled.div`
     padding: ${theme.spacing.xxl} ${theme.spacing.xl};
     text-align: center;
     gap: ${theme.spacing.lg};
+`;
 
-    ${IconContainer} {
-        color: ${theme.colors.text.muted};
-        opacity: 0.5;
-    }
+const EmptyIconWrapper = styled.div`
+    color: ${theme.colors.text.muted};
+    opacity: 0.5;
 `;
 
 const EmptyStateTitle = styled.h2`
@@ -270,4 +403,6 @@ const EmptyStateText = styled.p`
     margin: 0;
     line-height: 1.6;
 `;
+
+export default PackingPlanOverview;
 

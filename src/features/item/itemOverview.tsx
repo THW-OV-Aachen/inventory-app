@@ -21,12 +21,20 @@ import { usePackMode } from './usePackMode';
 import QuantitySpinner from '../../components/QuantitySpinner';
 import { calculateNextInspectionDate, isDatePastOrToday, formatDate } from '../../utils/date';
 import { theme } from '../../styles/theme';
+
+import { useLocation } from 'react-router-dom';
+
 const ItemOverview = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const location = useLocation();
+    const navState = location.state as any;
 
     // Pack mode adds multi-select + quantity controls for creating packing plans.
-    const packModeState = usePackMode();
+    const packModeState = usePackMode(
+        Boolean(navState?.packMode || navState?.planId) // ← initialize as active
+    );
+
     const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
@@ -39,6 +47,65 @@ const ItemOverview = () => {
     const [totalItems, setTotalItems] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const loadPreselected = async () => {
+            if (navState?.preselectedItems && selectedItemIds.size === 0) {
+                const itemsToSelect = navState.preselectedItems.map((item: any) => ({
+                    id: item.itemId.toString(),
+                    quantity: item.quantity ?? 1
+                }));
+                if (itemsToSelect.length > 0) {
+                    packModeState.preselectItems(itemsToSelect);
+                }
+            } else if (navState?.planId && selectedItemIds.size === 0) {
+                try {
+                    const existingItems = await db.packingPlanItems
+                        .where('packingPlanId')
+                        .equals(navState.planId)
+                        .toArray();
+                    const itemsToSelect = existingItems.map(item => ({
+                        id: item.Iid.toString(),
+                        quantity: item.requiredQuantity
+                    }));
+                    if (itemsToSelect.length > 0) {
+                        packModeState.preselectItems(itemsToSelect);
+                    }
+                } catch (error) {
+                    console.error('Failed to load existing plan items', error);
+                }
+            }
+        };
+
+        loadPreselected();
+
+        if (navState?.planName && packModeState.setPlanName) {
+            packModeState.setPlanName(navState.planName);
+        }
+    }, []);
+
+    // Separate effect for fetching items so pagination doesn't reset selections
+    useEffect(() => {
+        const fetchItems = async () => {
+            setIsLoading(true);
+            try {
+                const result = await inventoryApi.fetchItemsPaginatedWithFilter(
+                    { page: currentPage, pageSize },
+                    searchTerm || '',
+                    filters || {}
+                );
+                setItems(result.data);
+                setTotalItems(result.pagination.totalItems);
+                setTotalPages(result.pagination.totalPages);
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchItems();
+    }, [currentPage, searchTerm, filters]);
 
     // Fetch items with pagination + search/filter state from Redux.
     useEffect(() => {
@@ -136,8 +203,8 @@ const ItemOverview = () => {
                 case 'nextInspection': {
                     const aDate = calculateNextInspectionDate(a.lastInspection, a.inspectionIntervalMonths);
                     const bDate = calculateNextInspectionDate(b.lastInspection, b.inspectionIntervalMonths);
-                    aValue = aDate ? aDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
-                    bValue = bDate ? bDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
+                    aValue = aDate ? aDate.getTime() : sortDirection === 'asc' ? Infinity : -Infinity;
+                    bValue = bDate ? bDate.getTime() : sortDirection === 'asc' ? Infinity : -Infinity;
                     break;
                 }
                 default:
@@ -188,50 +255,97 @@ const ItemOverview = () => {
     };
 
     const handleSavePackingPlan = async () => {
-        // Create a packing plan from the current pack-mode selection.
         if (selectedItemIds.size === 0) {
             alert('Please select at least one item to pack.');
             return;
         }
 
-        if (!planName.trim()) {
+        const existingPlanId = navState?.planId;
+
+        // If adding to an existing plan, skip name validation
+        if (!existingPlanId && !planName.trim()) {
             alert('Please enter a plan name.');
             return;
         }
 
         try {
-            // Create IPackingPlan
             const now = new Date().toISOString();
-            const packingPlan: IPackingPlan = {
-                id: createId('plan'),
-                name: planName.trim(),
-                scenarioType: EmergencyScenarioType.CUSTOM,
-                description: '',
-                createdAt: now,
-                updatedAt: now,
-            };
+            let targetPlanId: string;
 
-            // Insert packing plan
-            await db.packingPlans.add(packingPlan);
+            if (existingPlanId) {
+                targetPlanId = existingPlanId;
 
-            // Create IPackingPlanItem[] for selected items
-            const packingPlanItems: IPackingPlanItem[] = Array.from(selectedItemIds).map((itemId, index) => ({
-                id: createId('planItem'),
-                packingPlanId: packingPlan.id,
-                Iid: Number(itemId),
-                requiredQuantity: qtyByItemId[itemId] ?? 1,
-                notes: '',
-                order: index,
-            }));
+                await db.packingPlans.update(existingPlanId, { updatedAt: now });
+            } else {
+                // Creating a new plan
+                const packingPlan: IPackingPlan = {
+                    id: createId('plan'),
+                    name: planName.trim(),
+                    scenarioType: EmergencyScenarioType.CUSTOM,
+                    description: '',
+                    createdAt: now,
+                    updatedAt: now,
+                };
+                await db.packingPlans.add(packingPlan);
+                targetPlanId = packingPlan.id;
+            }
 
-            // Bulk insert packing plan items
-            await db.packingPlanItems.bulkAdd(packingPlanItems);
+            // Get existing items in the plan to avoid duplicates / merge quantities
+            const existingItems = await db.packingPlanItems.where('packingPlanId').equals(targetPlanId).toArray();
 
-            // Reset pack mode
+            const existingByItemId = new Map(existingItems.map((i) => [i.Iid.toString(), i]));
+
+            const newItems: IPackingPlanItem[] = [];
+            const updatePromises: any[] = [];
+            const itemsToDelete: string[] = [];
+
+            existingItems.forEach((existing) => {
+                if (!selectedItemIds.has(existing.Iid.toString())) {
+                    itemsToDelete.push(existing.id);
+                }
+            });
+
+            Array.from(selectedItemIds).forEach((itemId, index) => {
+                const qty = qtyByItemId[itemId] ?? 1;
+                const existing = existingByItemId.get(itemId);
+
+                if (existing) {
+                    // Update quantity of already-present item
+                    if (existing.requiredQuantity !== qty) {
+                        updatePromises.push(
+                            db.packingPlanItems.update(existing.id, {
+                                requiredQuantity: qty,
+                            })
+                        );
+                    }
+                } else {
+                    newItems.push({
+                        id: createId('planItem'),
+                        packingPlanId: targetPlanId,
+                        Iid: Number(itemId),
+                        requiredQuantity: qty,
+                        notes: '',
+                        order: existingItems.length + index,
+                    });
+                }
+            });
+
+            if (newItems.length > 0) {
+                await db.packingPlanItems.bulkAdd(newItems);
+            }
+            if (updatePromises.length > 0) {
+                await Promise.all(updatePromises);
+            }
+            if (itemsToDelete.length > 0) {
+                await db.packingPlanItems.bulkDelete(itemsToDelete);
+            }
+
             packModeState.togglePackMode();
-
-             // Navigate to the created packing plan (no confirmation popup)
-            navigate(`/packing-plans/${packingPlan.id}`);
+            if (existingPlanId) {
+                navigate(-1);
+            } else {
+                navigate(`/packing-plans/${targetPlanId}`, { replace: true });
+            }
         } catch (error) {
             console.error('Error saving packing plan:', error);
             alert('Failed to save packing plan. Please try again.');
@@ -456,12 +570,20 @@ const ItemOverview = () => {
                                     {sortField === 'nextInspection' && (
                                         <TableCell id="nextInspection">
                                             {(() => {
-                                                const nextDate = calculateNextInspectionDate(item.lastInspection, item.inspectionIntervalMonths);
+                                                const nextDate = calculateNextInspectionDate(
+                                                    item.lastInspection,
+                                                    item.inspectionIntervalMonths
+                                                );
                                                 if (!nextDate) return '-';
-                                                
+
                                                 const isPast = isDatePastOrToday(nextDate);
                                                 return (
-                                                    <span style={{ color: isPast ? theme.colors.status.error.main : 'inherit', fontWeight: isPast ? 600 : 400 }}>
+                                                    <span
+                                                        style={{
+                                                            color: isPast ? theme.colors.status.error.main : 'inherit',
+                                                            fontWeight: isPast ? 600 : 400,
+                                                        }}
+                                                    >
                                                         {formatDate(nextDate)}
                                                     </span>
                                                 );
@@ -803,7 +925,12 @@ const TableHeader = styled(TableRowBase)`
     }
 `;
 
-const TableRow = styled(TableRowBase)<{ $mobileBgColor: string; $mobileColor: string; $mobileShadowColor: string; $showNextInspection?: boolean }>`
+const TableRow = styled(TableRowBase)<{
+    $mobileBgColor: string;
+    $mobileColor: string;
+    $mobileShadowColor: string;
+    $showNextInspection?: boolean;
+}>`
     & > * {
         background-color: white;
     }

@@ -13,6 +13,7 @@ import {
     X,
     Trash2,
     Package,
+    Check,
     CheckCircle2,
 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
@@ -54,17 +55,17 @@ const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
 const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
     switch (scenarioType) {
         case 'flood':
-            return 'Flood';
+            return 'Hochwasser';
         case 'fire':
-            return 'Fire';
+            return 'Feuer';
         case 'storm':
-            return 'Storm';
+            return 'Sturm';
         case 'earthquake':
-            return 'Earthquake';
+            return 'Erdbeben';
         case 'search_rescue':
-            return 'Search & Rescue';
+            return 'Suche & Rettung';
         case 'custom':
-            return 'Custom';
+            return 'Benutzerdefiniert';
         default:
             return scenarioType;
     }
@@ -76,8 +77,9 @@ const PackingPlanDetails = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeletingPlan, setIsDeletingPlan] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
-    const [quantity, setQuantity] = useState<number>(1);
+    const [quantity, setQuantity] = useState<string>('1');
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [editingQuantities, setEditingQuantities] = useState<Record<string, string>>({});
     const [packMode, setPackMode] = useState(false);
     const [packedItemIds, setPackedItemIds] = useState<Set<string>>(new Set());
     const navigate = useNavigate();
@@ -89,15 +91,16 @@ const PackingPlanDetails = () => {
 
     const handleAddItem = async () => {
         // Add a new item row to the plan (after basic checks).
-        if (!planId || !selectedItemId || quantity < 1) {
-            alert('Please select an item and enter a valid quantity.');
+        const qtyNum = parseInt(quantity, 10);
+        if (!planId || !selectedItemId || isNaN(qtyNum) || qtyNum < 1) {
+            alert('Bitte wählen Sie einen Artikel und geben Sie eine gültige Menge ein.');
             return;
         }
 
         // Check if item already exists in plan
         const existingItem = planItems.find((item) => item.Iid.toString() === selectedItemId);
         if (existingItem) {
-            alert('This item is already in the packing plan.');
+            alert('Dieser Artikel befindet sich bereits im Packplan.');
             return;
         }
 
@@ -106,43 +109,61 @@ const PackingPlanDetails = () => {
             await packingPlanApi.addPackingPlanItem({
                 packingPlanId: planId,
                 Iid: Number(selectedItemId),
-                requiredQuantity: quantity,
+                requiredQuantity: qtyNum,
                 order: maxOrder + 1,
             });
             setShowAddItemModal(false);
             setSelectedItemId('');
-            setQuantity(1);
+            setQuantity('1');
             setSearchTerm('');
         } catch (error) {
             console.error('Failed to add item:', error);
-            alert('Failed to add item to packing plan.');
+            alert('Fehler beim Hinzufügen des Artikels zum Packplan.');
         }
     };
 
-    const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
-        // Update required quantity for an existing plan item.
-        if (newQuantity < 1) {
-            alert('Quantity must be at least 1.');
-            return;
+    // Sync editing quantities with plan items
+    useEffect(() => {
+        if (planItems.length > 0) {
+            setEditingQuantities(prev => {
+                const next = { ...prev };
+                planItems.forEach(item => {
+                    // Initialize with current value if not already being edited
+                    if (next[item.id] === undefined) {
+                        next[item.id] = item.requiredQuantity.toString();
+                    }
+                });
+                return next;
+            });
         }
-        try {
-            await packingPlanApi.updatePackingPlanItem(itemId, { requiredQuantity: newQuantity });
-        } catch (error) {
-            console.error('Failed to update quantity:', error);
-            alert('Failed to update quantity.');
+    }, [planItems]);
+
+    const handleUpdateQuantity = async (itemId: string, newValue: string) => {
+        // Update local editing state
+        setEditingQuantities(prev => ({ ...prev, [itemId]: newValue }));
+
+        const newQuantity = parseInt(newValue, 10);
+        // Only update DB if it's a valid positive number
+        if (!isNaN(newQuantity) && newQuantity >= 1) {
+            try {
+                await packingPlanApi.updatePackingPlanItem(itemId, { requiredQuantity: newQuantity });
+            } catch (error) {
+                console.error('Failed to update quantity:', error);
+                // We keep the local value as is, but could potentially revert if needed
+            }
         }
     };
 
     const handleDeleteItem = async (itemId: string) => {
         // Remove an item row from the plan.
-        if (!window.confirm('Are you sure you want to remove this item from the packing plan?')) {
+        if (!window.confirm('Sind Sie sicher, dass Sie diesen Artikel aus dem Packplan entfernen möchten?')) {
             return;
         }
         try {
             await packingPlanApi.deletePackingPlanItem(itemId);
         } catch (error) {
             console.error('Failed to delete item:', error);
-            alert('Failed to remove item from packing plan.');
+            alert('Fehler beim Entfernen des Artikels aus dem Packplan.');
         }
     };
 
@@ -157,41 +178,30 @@ const PackingPlanDetails = () => {
         return `packingPlan:${planId}:packedItemIds`;
     }, [planId]);
 
-    // Hydrate packed state from localStorage when plan changes.
     useEffect(() => {
         if (!packedStorageKey) return;
         try {
             const raw = localStorage.getItem(packedStorageKey);
-            if (!raw) {
-                setPackedItemIds(new Set());
-                return;
-            }
+            if (!raw) return;
             const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed)) {
-                setPackedItemIds(new Set());
-                return;
-            }
+            if (!Array.isArray(parsed)) return;
             setPackedItemIds(new Set(parsed.filter((x) => typeof x === 'string')));
-        } catch {
-            setPackedItemIds(new Set());
-        }
+        } catch {}
     }, [packedStorageKey]);
 
-    // Persist packed state to localStorage (best effort).
     useEffect(() => {
         if (!packedStorageKey) return;
+        if (packedItemIds.size === 0) return;
         try {
             localStorage.setItem(packedStorageKey, JSON.stringify(Array.from(packedItemIds)));
-        } catch {
-            // ignore quota / privacy mode issues; pack mode will still work in-memory
-        }
+        } catch {}
     }, [packedItemIds, packedStorageKey]);
 
-    // If plan contents change, drop any packed ids that no longer exist in the plan.
     useEffect(() => {
-        if (!planId) return;
+        if (!planId || planItems.length === 0) return;
         const itemIdsInPlan = new Set(planItems.map((pi) => pi.Iid.toString()));
         setPackedItemIds((prev) => {
+            if (prev.size === 0) return prev;
             const next = new Set(Array.from(prev).filter((id) => itemIdsInPlan.has(id)));
             return next.size === prev.size ? prev : next;
         });
@@ -229,7 +239,7 @@ const PackingPlanDetails = () => {
     if (!plan) {
         return (
             <StyledContainer>
-                <LoadingMessage>Loading packing plan...</LoadingMessage>
+                <LoadingMessage>Lade Packplan...</LoadingMessage>
             </StyledContainer>
         );
     }
@@ -280,43 +290,54 @@ const PackingPlanDetails = () => {
                 <InfoCard>
                     <InfoRow>
                         <div style={{ flex: 1 }}>
-                            <InfoLabel>Scenario Type</InfoLabel>
+                            <InfoLabel>Szenario</InfoLabel>
                             <InfoValue>{scenarioLabel}</InfoValue>
                         </div>
                     </InfoRow>
                 </InfoCard>
 
-                {plan.description && (
-                    <DetailsCard>
-                        <InfoLabel>Description</InfoLabel>
-                        <InfoValue>{plan.description}</InfoValue>
-                    </DetailsCard>
-                )}
+                <DetailsCard>
+                    <InfoLabel>Beschreibung</InfoLabel>
+                    <InfoValue style={{ whiteSpace: 'pre-wrap' }}>
+                        {plan.description || <span style={{ whiteSpace: 'normal', fontStyle: 'italic', color: theme.colors.text.muted }}>Keine Beschreibung vorhanden</span>}
+                    </InfoValue>
+                </DetailsCard>
 
                 <ItemsSection>
                     <ItemsHeader>
-                        <InfoLabel>Items ({planItems.length})</InfoLabel>
+                        <InfoLabel>Artikel ({planItems.length})</InfoLabel>
                         <ItemsHeaderActions>
                             {packMode ? (
                                 <>
                                     <PackProgress>
-                                        {packedCount}/{planItems.length} packed
+                                        {packedCount}/{planItems.length} gepackt
                                     </PackProgress>
                                     <PackButton $variant="primary" onClick={() => setPackMode(false)}>
-                                        <IconContainer icon={X} />
-                                        <span>Save</span>
+                                        <IconContainer icon={Check} />
+                                        <span>Speichern</span>
                                     </PackButton>
                                 </>
                             ) : (
                                 <>
+                                    <AddItemButton
+                                        $variant="primary"
+                                        onClick={() =>
+                                            navigate('/items', {
+                                                state: {
+                                                    packMode: true, // automatically activate pack mode
+                                                    planId: planId, // remember which packing plan to add to
+                                                    planName: plan.name, // Pass the plan name
+                                                },
+                                            })
+                                        }
+                                    >
+                                        <IconContainer icon={Plus} />
+                                        <span>Artikel hinzufügen</span>
+                                    </AddItemButton>
                                     <PackButton $variant="ghost" onClick={() => setPackMode(true)}>
                                         <IconContainer icon={Package} />
-                                        <span>Pack</span>
+                                        <span>Packen</span>
                                     </PackButton>
-                                    <AddItemButton $variant="primary" onClick={() => setShowAddItemModal(true)}>
-                                        <IconContainer icon={Plus} />
-                                        <span>Add Item</span>
-                                    </AddItemButton>
                                 </>
                             )}
                         </ItemsHeaderActions>
@@ -324,7 +345,7 @@ const PackingPlanDetails = () => {
 
                     {planItems.length === 0 ? (
                         <EmptyItemsMessage>
-                            <p>No items in this packing plan yet.</p>
+                            <p>Noch keine Artikel in diesem Packplan vorhanden.</p>
                         </EmptyItemsMessage>
                     ) : (
                         <ItemsList>
@@ -338,41 +359,55 @@ const PackingPlanDetails = () => {
                                 const isPacked = packedItemIds.has(planItem.Iid.toString());
 
                                 return (
-                                    <ItemRow key={planItem.id} data-packed={isPacked ? 'true' : 'false'}>
+                                    <ItemRow 
+                                        key={planItem.id} 
+                                        data-packed={isPacked ? 'true' : 'false'}
+                                        onClick={() => packMode && togglePacked(planItem.Iid.toString())}
+                                        $isPackMode={packMode}
+                                    >
                                         <ItemInfo>
                                             <ItemName>
                                                 <span>{itemName}</span>
                                                 {isPacked && (
                                                     <PackedBadge>
                                                         <IconContainer icon={CheckCircle2} />
-                                                        Packed
+                                                        gepackt
                                                     </PackedBadge>
                                                 )}
                                             </ItemName>
                                             <ItemMeta>
                                                 ID: {itemId}
-                                                {inventoryNumber && ` • Inv: ${inventoryNumber}`}
-                                                {location && ` • Location: ${location}`}
+                                                {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
+                                                {location && ` • Ort: ${location}`}
                                                 {missingNote}
                                             </ItemMeta>
                                         </ItemInfo>
-                                        <QuantityInput
-                                            type="number"
-                                            min="1"
-                                            value={planItem.requiredQuantity}
-                                            onChange={(e) => {
-                                                const newQty = parseInt(e.target.value, 10);
-                                                if (!isNaN(newQty) && newQty > 0) {
-                                                    handleUpdateQuantity(planItem.id, newQty);
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <QuantityInput
+                                                type="number"
+                                                min="1"
+                                                value={editingQuantities[planItem.id] || ''}
+                                                $isError={(() => {
+                                                    const item = getItemDetails(planItem.Iid);
+                                                    return !!item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability;
+                                                })()}
+                                                onChange={(e) => handleUpdateQuantity(planItem.id, e.target.value)}
+                                            />
+                                            {(() => {
+                                                const item = getItemDetails(planItem.Iid);
+                                                if (item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability) {
+                                                    return <QuantityWarning>Max: {item.availability}</QuantityWarning>;
                                                 }
-                                            }}
-                                        />
+                                                return null;
+                                            })()}
+                                        </div>
                                         {packMode ? (
                                             <PackCheckboxWrapper>
                                                 <Checkbox
                                                     type="checkbox"
                                                     checked={isPacked}
                                                     onChange={() => togglePacked(planItem.Iid.toString())}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                             </PackCheckboxWrapper>
                                         ) : (
@@ -400,7 +435,7 @@ const PackingPlanDetails = () => {
                 >
                     <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <ModalHeader>
-                            <ModalTitle>Packing Plan löschen?</ModalTitle>
+                            <ModalTitle>Packplan löschen?</ModalTitle>
                             <CloseButton
                                 type="button"
                                 onClick={() => {
@@ -414,8 +449,7 @@ const PackingPlanDetails = () => {
                         </ModalHeader>
 
                         <ModalText>
-                            Diese Aktion kann nicht rückgängig gemacht werden. Der Plan und alle zugehörigen Positionen
-                            werden gelöscht.
+                            Diese Aktion kann nicht rückgängig gemacht werden.
                         </ModalText>
 
                         <ModalButtons>
@@ -446,7 +480,7 @@ const PackingPlanDetails = () => {
                         <ModalContent>
                             <SearchInput
                                 type="text"
-                                placeholder="Search items by name, ID, inventory number, or location..."
+                                placeholder="Suche Artikel nach Name, ID, Inventarnummer oder Ort..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -454,8 +488,8 @@ const PackingPlanDetails = () => {
                                 {availableItems.length === 0 ? (
                                     <EmptyMessage>
                                         {searchTerm
-                                            ? 'No items found matching your search.'
-                                            : 'No available items to add.'}
+                                            ? 'Keine Artikel gefunden, die der Suche entsprechen.'
+                                            : 'Keine Artikel zum Hinzufügen vorhanden.'}
                                     </EmptyMessage>
                                 ) : (
                                     availableItems.map((item) => (
@@ -478,27 +512,38 @@ const PackingPlanDetails = () => {
                             </ItemsSelect>
                             {selectedItemId && (
                                 <QuantitySection>
-                                    <Label htmlFor="quantity">Quantity</Label>
+                                    <Label htmlFor="quantity">Menge</Label>
                                     <QuantityInput
                                         id="quantity"
                                         type="number"
                                         min="1"
                                         value={quantity}
-                                        onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                                        $isError={(() => {
+                                            const item = getItemDetails(Number(selectedItemId));
+                                            return !!item && parseInt(quantity, 10) > item.availability;
+                                        })()}
+                                        onChange={(e) => setQuantity(e.target.value)}
                                     />
+                                    {(() => {
+                                        const item = getItemDetails(Number(selectedItemId));
+                                        if (item && parseInt(quantity, 10) > item.availability) {
+                                            return <QuantityWarning>Max: {item.availability} verfügbar</QuantityWarning>;
+                                        }
+                                        return null;
+                                    })()}
                                 </QuantitySection>
                             )}
                         </ModalContent>
                         <ModalButtons>
                             <ModalButton $variant="ghost" onClick={() => setShowAddItemModal(false)}>
-                                Cancel
+                                Abbrechen
                             </ModalButton>
                             <ModalButton
                                 $variant="primary"
                                 onClick={handleAddItem}
-                                disabled={!selectedItemId || quantity < 1}
+                                disabled={!selectedItemId || !quantity || parseInt(quantity, 10) < 1}
                             >
-                                Add Item
+                                Artikel hinzufügen
                             </ModalButton>
                         </ModalButtons>
                     </ModalBox>
@@ -571,7 +616,6 @@ const HeaderEditButton = styled(Button)`
     }
 `;
 
-// Shared button styling for this view (keeps all non-header action buttons visually consistent)
 const DetailActionButton = styled(Button)`
     box-sizing: border-box;
     height: 36px;
@@ -580,6 +624,28 @@ const DetailActionButton = styled(Button)`
     gap: ${theme.spacing.xs};
     min-width: 132px;
     border: 1px solid transparent;
+
+    display: flex;
+    align-items: center;
+    box-shadow: ${theme.shadows.sm};
+    margin-left: auto;
+    
+    &:hover {
+        box-shadow: ${theme.shadows.md};
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        min-width: auto;
+        padding: 0 ${theme.spacing.sm};
+        span {
+            display: none;
+        }
+    }
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -634,8 +700,6 @@ const InfoValue = styled(DataValue)`
     gap: 6px;
 `;
 
-const StyledButton = styled(DetailActionButton)``;
-
 const HeaderDangerActionButton = styled(Button)`
     display: flex;
     align-items: center;
@@ -689,10 +753,6 @@ const ItemsHeaderActions = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.sm};
-
-    & > ${DetailActionButton} {
-        min-width: 132px;
-    }
 `;
 
 const AddItemButton = styled(DetailActionButton)``;
@@ -722,7 +782,7 @@ const PackProgress = styled.div`
     white-space: nowrap;
 `;
 
-const ItemRow = styled.div`
+const ItemRow = styled.div<{ $isPackMode?: boolean }>`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
@@ -730,6 +790,7 @@ const ItemRow = styled.div`
     background-color: ${theme.colors.background.light};
     border-radius: ${theme.borderRadius.md};
     border: 1px solid ${theme.colors.border.default};
+    cursor: ${props => props.$isPackMode ? 'pointer' : 'default'};
 
     &[data-packed='true'] {
         background-color: ${theme.colors.status.good.light};
@@ -788,10 +849,22 @@ const ItemMeta = styled.div`
     color: ${theme.colors.text.muted};
 `;
 
-const QuantityInput = styled(Input)`
-    width: 80px;
+const QuantityInput = styled(Input)<{ $isError?: boolean }>`
+    width: 65px;
     padding: ${theme.spacing.sm};
     text-align: center;
+    ${({ $isError }) => $isError && `
+        color: ${theme.colors.status.error.main};
+        border-color: ${theme.colors.status.error.main};
+        background-color: ${theme.colors.status.error.light};
+    `}
+`;
+
+const QuantityWarning = styled.div`
+    color: ${theme.colors.status.error.main};
+    font-size: 10px;
+    margin-top: 2px;
+    font-weight: ${theme.typography.fontWeight.medium};
 `;
 
 const DeleteButton = styled.button`
@@ -936,15 +1009,16 @@ const QuantitySection = styled.div`
 const ModalButtons = styled.div`
     display: flex;
     gap: ${theme.spacing.sm};
-    justify-content: flex-end;
-
-    & > ${DetailActionButton} {
-        min-width: 132px;
+    width: 100%;
+    
+    & > * {
+        flex: 1;
     }
 `;
 
 const ModalButton = styled(DetailActionButton)`
     padding: 0 ${theme.spacing.lg};
+    min-width: 0;
 `;
 
 const DangerModalButton = styled(ModalButton)`

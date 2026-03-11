@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Eye, CircleQuestionMark, FolderSync } from 'lucide-react';
+import {CircleQuestionMark, FolderSync } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader';
 
 const MoreContainer = styled.div`
