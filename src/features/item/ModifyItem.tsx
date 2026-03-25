@@ -122,12 +122,6 @@ const StyledContentWrapper = styled(ContentWrapper)`
     padding: 0;
 `;
 
-const Subtitle = styled.div`
-    color: ${theme.colors.text.muted};
-    margin-bottom: 4px;
-    font-size: ${theme.typography.fontSize.sm};
-`;
-
 const StyledCard = styled(Card)`
     padding: ${theme.spacing.xl};
     box-shadow: ${theme.shadows.sm};
@@ -261,8 +255,6 @@ const ModifyItem = () => {
     useEffect(() => adjustTextareaHeight(), [formData.remark]);
 
     if (!item) return <p className="text-center mt-4">Loading item...</p>;
-
-    const itemReference = `Inventarnummer: ${item.inventoryNumber || '-'}`;
 
     // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
@@ -415,7 +407,6 @@ const ModifyItem = () => {
                 </Title>
             </StyledHeader>
             <StyledContentWrapper>
-                <Subtitle>{itemReference}</Subtitle>
                 <StyledCard>
                     <StyledFormGroup>
                         <Label htmlFor="name">
