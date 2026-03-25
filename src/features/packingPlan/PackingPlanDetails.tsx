@@ -15,11 +15,29 @@ import {
     Package,
     Check,
     CheckCircle2,
+    GripVertical,
 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import { inventoryApi } from '../../app/api';
-import type { EmergencyScenarioType } from '../../db/packingPlans';
+import type { EmergencyScenarioType, IPackingPlanItem } from '../../db/packingPlans';
 import type { IItem } from '../../db/items';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import IconContainer from '../../utils/IconContainer';
 import { theme } from '../../styles/theme';
 import {
@@ -82,12 +100,45 @@ const PackingPlanDetails = () => {
     const [editingQuantities, setEditingQuantities] = useState<Record<string, string>>({});
     const [packMode, setPackMode] = useState(false);
     const [packedItemIds, setPackedItemIds] = useState<Set<string>>(new Set());
+    const [localPlanItems, setLocalPlanItems] = useState<IPackingPlanItem[]>([]);
     const navigate = useNavigate();
 
-    // Live data for plan header, plan items, and inventory selection.
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     const plan = planId ? packingPlanApi.usePackingPlan(planId) : undefined;
     const planItems = planId ? packingPlanApi.usePackingPlanItems(planId) : [];
     const allInventoryItems = inventoryApi.useItems();
+
+    useEffect(() => {
+        setLocalPlanItems(planItems);
+    }, [planItems]);
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setLocalPlanItems((items) => {
+                const oldIndex = items.findIndex(i => i.id === active.id);
+                const newIndex = items.findIndex(i => i.id === over.id);
+                const newArray = arrayMove(items, oldIndex, newIndex);
+                
+                const updatedItems = newArray.map((item, i) => ({ ...item, order: i }));
+                
+                // Fire and forget save
+                const updates = updatedItems.map(item => ({ id: item.id, order: item.order }));
+                packingPlanApi.updatePackingPlanItemOrders(updates).catch(err => {
+                    console.error(err);
+                    alert('Fehler beim Speichern der neuen Reihenfolge.');
+                });
+
+                return updatedItems;
+            });
+        }
+    };
 
     const handleAddItem = async () => {
         // Add a new item row to the plan (after basic checks).
@@ -343,85 +394,37 @@ const PackingPlanDetails = () => {
                         </ItemsHeaderActions>
                     </ItemsHeader>
 
-                    {planItems.length === 0 ? (
+                    {localPlanItems.length === 0 ? (
                         <EmptyItemsMessage>
                             <p>Noch keine Artikel in diesem Packplan vorhanden.</p>
                         </EmptyItemsMessage>
                     ) : (
-                        <ItemsList>
-                            {planItems.map((planItem) => {
-                                const item = getItemDetails(planItem.Iid);
-                                const itemName = item?.name ?? 'Unknown item';
-                                const itemId = item?.id ?? planItem.Iid;
-                                const inventoryNumber = item?.inventoryNumber;
-                                const location = item?.location;
-                                const missingNote = item ? '' : ' • Item missing from inventory';
-                                const isPacked = packedItemIds.has(planItem.Iid.toString());
-
-                                return (
-                                    <ItemRow 
-                                        key={planItem.id} 
-                                        data-packed={isPacked ? 'true' : 'false'}
-                                        onClick={() => packMode && togglePacked(planItem.Iid.toString())}
-                                        $isPackMode={packMode}
-                                    >
-                                        <ItemInfo>
-                                            <ItemName>
-                                                <span>{itemName}</span>
-                                                {isPacked && (
-                                                    <PackedBadge>
-                                                        <IconContainer icon={CheckCircle2} />
-                                                        gepackt
-                                                    </PackedBadge>
-                                                )}
-                                            </ItemName>
-                                            <ItemMeta>
-                                                ID: {itemId}
-                                                {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
-                                                {location && ` • Ort: ${location}`}
-                                                {missingNote}
-                                            </ItemMeta>
-                                        </ItemInfo>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                            <QuantityInput
-                                                type="number"
-                                                min="1"
-                                                value={editingQuantities[planItem.id] || ''}
-                                                $isError={(() => {
-                                                    const item = getItemDetails(planItem.Iid);
-                                                    return !!item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability;
-                                                })()}
-                                                onChange={(e) => handleUpdateQuantity(planItem.id, e.target.value)}
-                                            />
-                                            {(() => {
-                                                const item = getItemDetails(planItem.Iid);
-                                                if (item && parseInt(editingQuantities[planItem.id] || '0', 10) > item.availability) {
-                                                    return <QuantityWarning>Max: {item.availability}</QuantityWarning>;
-                                                }
-                                                return null;
-                                            })()}
-                                        </div>
-                                        {packMode ? (
-                                            <PackCheckboxWrapper>
-                                                <Checkbox
-                                                    type="checkbox"
-                                                    checked={isPacked}
-                                                    onChange={() => togglePacked(planItem.Iid.toString())}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            </PackCheckboxWrapper>
-                                        ) : (
-                                            <DeleteButton
-                                                onClick={() => handleDeleteItem(planItem.id)}
-                                                title="Remove item"
-                                            >
-                                                <IconContainer icon={Trash2} />
-                                            </DeleteButton>
-                                        )}
-                                    </ItemRow>
-                                );
-                            })}
-                        </ItemsList>
+                        <DndContext 
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext 
+                                items={localPlanItems.map(i => i.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                <ItemsList>
+                                    {localPlanItems.map((planItem) => (
+                                        <SortableItemRow
+                                            key={planItem.id}
+                                            planItem={planItem}
+                                            itemDetails={getItemDetails(planItem.Iid)}
+                                            isPacked={packedItemIds.has(planItem.Iid.toString())}
+                                            packMode={packMode}
+                                            editingQuantity={editingQuantities[planItem.id] || ''}
+                                            onUpdateQuantity={handleUpdateQuantity}
+                                            onTogglePacked={togglePacked}
+                                            onDelete={handleDeleteItem}
+                                        />
+                                    ))}
+                                </ItemsList>
+                            </SortableContext>
+                        </DndContext>
                     )}
                 </ItemsSection>
             </StyledContentWrapper>
@@ -550,6 +553,117 @@ const PackingPlanDetails = () => {
                 </ModalOverlay>
             )}
         </StyledContainer>
+    );
+};
+
+interface SortableItemRowProps {
+    planItem: IPackingPlanItem;
+    itemDetails: IItem | undefined;
+    isPacked: boolean;
+    packMode: boolean;
+    editingQuantity: string;
+    onUpdateQuantity: (id: string, value: string) => void;
+    onTogglePacked: (id: string) => void;
+    onDelete: (id: string) => void;
+}
+
+const SortableItemRow = ({
+    planItem,
+    itemDetails,
+    isPacked,
+    packMode,
+    editingQuantity,
+    onUpdateQuantity,
+    onTogglePacked,
+    onDelete
+}: SortableItemRowProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: planItem.id, disabled: packMode });
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 1,
+    };
+
+    const itemName = itemDetails?.name ?? 'Unknown item';
+    const itemId = itemDetails?.id ?? planItem.Iid;
+    const inventoryNumber = itemDetails?.inventoryNumber;
+    const location = itemDetails?.location;
+    const missingNote = itemDetails ? '' : ' • Item missing from inventory';
+    const isError = itemDetails && parseInt(editingQuantity || '0', 10) > itemDetails.availability;
+
+    return (
+        <ItemRow 
+            ref={setNodeRef}
+            style={style}
+            data-packed={isPacked ? 'true' : 'false'}
+            onClick={() => packMode && onTogglePacked(planItem.Iid.toString())}
+            $isPackMode={packMode}
+            $isDragging={isDragging}
+        >
+            {!packMode && (
+                <DragHandle {...attributes} {...listeners} $isDragging={isDragging}>
+                    <IconContainer icon={GripVertical} width="20px" height="20px" />
+                </DragHandle>
+            )}
+            <ItemInfo>
+                <ItemName>
+                    <span>{itemName}</span>
+                    {isPacked && (
+                        <PackedBadge>
+                            <IconContainer icon={CheckCircle2} />
+                            gepackt
+                        </PackedBadge>
+                    )}
+                </ItemName>
+                <ItemMeta>
+                    ID: {itemId}
+                    {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
+                    {location && ` • Ort: ${location}`}
+                    {missingNote}
+                </ItemMeta>
+            </ItemInfo>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <QuantityInput
+                    type="number"
+                    min="1"
+                    value={editingQuantity}
+                    $isError={!!isError}
+                    onChange={(e) => onUpdateQuantity(planItem.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                />
+                {isError && (
+                    <QuantityWarning>Max: {itemDetails.availability}</QuantityWarning>
+                )}
+            </div>
+            {packMode ? (
+                <PackCheckboxWrapper>
+                    <Checkbox
+                        type="checkbox"
+                        checked={isPacked}
+                        onChange={() => onTogglePacked(planItem.Iid.toString())}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </PackCheckboxWrapper>
+            ) : (
+                <DeleteButton
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(planItem.id);
+                    }}
+                    title="Remove item"
+                >
+                    <IconContainer icon={Trash2} />
+                </DeleteButton>
+            )}
+        </ItemRow>
     );
 };
 
@@ -782,7 +896,32 @@ const PackProgress = styled.div`
     white-space: nowrap;
 `;
 
-const ItemRow = styled.div<{ $isPackMode?: boolean }>`
+const DragHandle = styled.div<{ $isDragging?: boolean }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: ${theme.colors.text.muted};
+    cursor: grab;
+    padding: ${theme.spacing.xs};
+    margin-left: -${theme.spacing.xs};
+    border-radius: ${theme.borderRadius.sm};
+    touch-action: none;
+
+    &:hover {
+        background-color: ${theme.colors.background.gray};
+        color: ${theme.colors.text.secondary};
+    }
+
+    &:active {
+        cursor: grabbing;
+    }
+    
+    ${props => props.$isDragging && `
+        opacity: 0;
+    `}
+`;
+
+const ItemRow = styled.div<{ $isPackMode?: boolean; $isDragging?: boolean; $isDragOver?: boolean }>`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
@@ -791,11 +930,19 @@ const ItemRow = styled.div<{ $isPackMode?: boolean }>`
     border-radius: ${theme.borderRadius.md};
     border: 1px solid ${theme.colors.border.default};
     cursor: ${props => props.$isPackMode ? 'pointer' : 'default'};
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 
     &[data-packed='true'] {
         background-color: ${theme.colors.status.good.light};
         border-color: ${theme.colors.status.good.main};
     }
+
+    ${props => props.$isDragging && `
+        opacity: 0.5;
+        border-style: dashed;
+        cursor: grabbing;
+        box-shadow: ${theme.shadows.md};
+    `}
 `;
 
 const Checkbox = styled.input`

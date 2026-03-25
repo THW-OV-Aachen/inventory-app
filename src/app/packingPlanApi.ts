@@ -105,6 +105,19 @@ export const packingPlanApi = {
         }
     },
 
+    async updatePackingPlanItemOrders(updates: { id: string; order: number }[]): Promise<void> {
+        try {
+            await db.transaction('rw', db.packingPlanItems, async () => {
+                for (const update of updates) {
+                    await db.packingPlanItems.update(update.id, { order: update.order });
+                }
+            });
+        } catch (error) {
+            console.error('Failed to bulk update packing plan item orders: ', error);
+            throw error;
+        }
+    },
+
     async deletePackingPlanItem(id: string): Promise<void> {
         try {
             await db.packingPlanItems.delete(id);
