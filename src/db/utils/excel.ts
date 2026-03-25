@@ -22,7 +22,27 @@ const getDamageKeyFromTranslation = (val: string): DamageLevelType => {
     return (entry ? entry[0] : 'none') as DamageLevelType;
 };
 
+const SCENARIO_TYPE_LABELS: Record<string, string> = {
+    flood: 'Hochwasser',
+    fire: 'Feuer',
+    storm: 'Sturm',
+    earthquake: 'Erdbeben',
+    search_rescue: 'Suche & Rettung',
+    custom: 'Benutzerdefiniert',
+};
+
+const getScenarioTypeFromLabel = (label: string): string => {
+    const entry = Object.entries(SCENARIO_TYPE_LABELS).find(([, v]) => v === label);
+    return entry ? entry[0] : label;
+};
+
 const EXCEL_COLUMNS: ColumnDefinition[] = [
+    {
+        header: 'Datenbank-ID',
+        key: 'id',
+        required: false,
+        importTransform: (v) => (v ? parseInt(v.toString(), 10) : undefined),
+    },
     {
         header: 'Ebene',
         key: 'level',
@@ -181,34 +201,42 @@ const LABEL_EXCEL_COLUMNS: LabelColumnDefinition[] = [
 
 interface PackingPlanColumnDefinition {
     header: string;
-    key: keyof IPackingPlan;
+    key: keyof IPackingPlan | 'status';
     required: boolean;
+    exportTransform?: (value: any, plan: IPackingPlan) => ExcelJS.CellValue;
     importTransform?: (value: ExcelJS.CellValue) => any;
 }
 
 const PACKING_PLAN_EXCEL_COLUMNS: PackingPlanColumnDefinition[] = [
     { header: 'ID', key: 'id', required: true, importTransform: (v) => v?.toString()?.trim() },
     { header: 'Name', key: 'name', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Scenario Type', key: 'scenarioType', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Description', key: 'description', required: false, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Created At', key: 'createdAt', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Updated At', key: 'updatedAt', required: true, importTransform: (v) => v?.toString()?.trim() },
+    {
+        header: 'Szenario Typ',
+        key: 'scenarioType',
+        required: true,
+        exportTransform: (v: string) => SCENARIO_TYPE_LABELS[v] ?? v,
+        importTransform: (v) => (v ? getScenarioTypeFromLabel(v.toString().trim()) : v),
+    },
+    { header: 'Beschreibung', key: 'description', required: false, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Erstellt am', key: 'createdAt', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Aktualisiert am', key: 'updatedAt', required: true, importTransform: (v) => v?.toString()?.trim() },
 ];
 
 interface PackingPlanItemColumnDefinition {
     header: string;
-    key: keyof IPackingPlanItem | 'Sachnummer';
+    key: Exclude<keyof IPackingPlanItem, 'Iid'> | 'Datenbank-ID' | 'isPacked';
     required: boolean;
     importTransform?: (value: ExcelJS.CellValue) => any;
 }
 
 const PACKING_PLAN_ITEM_EXCEL_COLUMNS: PackingPlanItemColumnDefinition[] = [
     { header: 'ID', key: 'id', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Packing Plan ID', key: 'packingPlanId', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Sachnummer', key: 'Sachnummer', required: true, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Required Quantity', key: 'requiredQuantity', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
-    { header: 'Notes', key: 'notes', required: false, importTransform: (v) => v?.toString()?.trim() },
-    { header: 'Order', key: 'order', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+    { header: 'Packplan ID', key: 'packingPlanId', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Datenbank-ID', key: 'Datenbank-ID', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+    { header: 'Menge', key: 'requiredQuantity', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+    { header: 'Notizen', key: 'notes', required: false, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Reihenfolge', key: 'order', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+    { header: 'Gepackt', key: 'isPacked', required: false, importTransform: (v) => v === 'Ja' },
 ];
 
 export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promise<Blob> {
@@ -242,29 +270,53 @@ export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promis
     });
 
     const packingPlansSheet = workbook.addWorksheet('PackingPlans');
-    packingPlansSheet.addRow(PACKING_PLAN_EXCEL_COLUMNS.map((col) => col.header));
+    packingPlansSheet.addRow([...PACKING_PLAN_EXCEL_COLUMNS.map((col) => col.header), 'Status']);
     const allPackingPlans = await packingPlanApi.getAllPackingPlans();
-    allPackingPlans.forEach((plan) => {
-        const rowValues = PACKING_PLAN_EXCEL_COLUMNS.map((col) => plan[col.key]);
-        packingPlansSheet.addRow(rowValues);
-    });
 
     const packingPlanItemsSheet = workbook.addWorksheet('PackingPlanItems');
     packingPlanItemsSheet.addRow(PACKING_PLAN_ITEM_EXCEL_COLUMNS.map((col) => col.header));
-    
-    const itemIdMap = new Map<number, string>();
-    items.forEach((item) => {
-        if (item.id && item.itemId) {
-            itemIdMap.set(item.id, item.itemId);
-        }
-    });
 
     for (const plan of allPackingPlans) {
         const planItems = await packingPlanApi.getPackingPlanItems(plan.id);
+
+        const packedStorageKey = `packingPlan:${plan.id}:packedItemIds`;
+        const packedItemsSet = new Set<string>();
+        try {
+            const raw = localStorage.getItem(packedStorageKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach((id: any) => {
+                        if (typeof id === 'string' || typeof id === 'number') {
+                            packedItemsSet.add(id.toString());
+                        }
+                    });
+                }
+            }
+        } catch {}
+
+        const totalCount = planItems.length;
+        const packedCount = planItems.filter((item) => packedItemsSet.has(item.Iid.toString())).length;
+        const isFullyPacked = totalCount > 0 && packedCount === totalCount;
+        const isPartiallyPacked = packedCount > 0 && !isFullyPacked;
+
+        let planStatus = 'Nicht angefangen';
+        if (isFullyPacked) planStatus = 'Gepackt';
+        else if (isPartiallyPacked) planStatus = 'Angefangen';
+
+        const planRowValues = PACKING_PLAN_EXCEL_COLUMNS.map((col) => {
+            if (col.key === 'status') return null;
+            const rawValue = plan[col.key as keyof IPackingPlan];
+            return col.exportTransform ? col.exportTransform(rawValue, plan) : rawValue;
+        });
+        planRowValues.push(planStatus);
+        packingPlansSheet.addRow(planRowValues);
+
         planItems.forEach((pItem) => {
-            const sachnummer = itemIdMap.get(pItem.Iid) || '';
+            const isPacked = packedItemsSet.has(pItem.Iid.toString());
             const rowValues = PACKING_PLAN_ITEM_EXCEL_COLUMNS.map((col) => {
-                if (col.key === 'Sachnummer') return sachnummer;
+                if (col.key === 'Datenbank-ID') return pItem.Iid;
+                if (col.key === 'isPacked') return isPacked ? 'Ja' : 'Nein';
                 return pItem[col.key as keyof IPackingPlanItem];
             });
             packingPlanItemsSheet.addRow(rowValues);
@@ -470,7 +522,9 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                 const colIdx = ppHeaderMap.get(col.header);
                 if (colIdx !== undefined) {
                     const cValue = row.getCell(colIdx).value;
-                    plan[col.key] = col.importTransform ? col.importTransform(cValue) : cValue;
+                    if (col.key !== 'status') {
+                        plan[col.key] = col.importTransform ? col.importTransform(cValue) : cValue;
+                    }
                 }
             }
             if (plan.id && plan.name) {
@@ -492,46 +546,52 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             if (text) ppiHeaderMap.set(text, colNumber);
         });
 
-        const allItems = await db.items.toArray();
-        const sachnummerToIid = new Map<string, number>();
-        for (const it of allItems) {
-            if (it.itemId && it.id !== undefined) {
-                sachnummerToIid.set(it.itemId, it.id);
-            }
-        }
-
         const planItemsToAdd: IPackingPlanItem[] = [];
+        const packedItemsByPlan = new Map<string, Set<string>>();
+
         for (let rowIdx = 2; rowIdx <= packingPlanItemsSheet.rowCount; rowIdx++) {
             const row = packingPlanItemsSheet.getRow(rowIdx);
             if (!row.hasValues) continue;
 
             const planItem: any = {};
-            let itemSachnummer = '';
+            let isItemPacked = false;
             for (const col of PACKING_PLAN_ITEM_EXCEL_COLUMNS) {
                 const colIdx = ppiHeaderMap.get(col.header);
                 if (colIdx !== undefined) {
                     const cValue = row.getCell(colIdx).value;
                     const parsed = col.importTransform ? col.importTransform(cValue) : cValue;
-                    if (col.key === 'Sachnummer') {
-                        itemSachnummer = parsed;
+                    if (col.key === 'isPacked') {
+                        isItemPacked = parsed;
+                    } else if (col.key === 'Datenbank-ID') {
+                        planItem.Iid = parsed;
                     } else {
                         planItem[col.key] = parsed;
                     }
                 }
             }
 
-            if (planItem.id && planItem.packingPlanId && itemSachnummer) {
-                const mappedIid = sachnummerToIid.get(itemSachnummer);
-                if (mappedIid !== undefined) {
-                    planItem.Iid = mappedIid;
-                    planItemsToAdd.push(planItem as IPackingPlanItem);
-                } else {
-                    console.warn(`Could not resolve Sachnummer ${itemSachnummer} for packing plan item ${planItem.id}`);
+            if (planItem.id && planItem.packingPlanId && planItem.Iid) {
+                planItemsToAdd.push(planItem as IPackingPlanItem);
+                
+                if (isItemPacked) {
+                    if (!packedItemsByPlan.has(planItem.packingPlanId)) {
+                        packedItemsByPlan.set(planItem.packingPlanId, new Set());
+                    }
+                    packedItemsByPlan.get(planItem.packingPlanId)!.add(planItem.Iid.toString());
                 }
             }
         }
         if (planItemsToAdd.length > 0) {
             await db.packingPlanItems.bulkPut(planItemsToAdd);
+        }
+
+        for (const [planId, packedSet] of packedItemsByPlan.entries()) {
+            const packedStorageKey = `packingPlan:${planId}:packedItemIds`;
+            try {
+                localStorage.setItem(packedStorageKey, JSON.stringify(Array.from(packedSet)));
+            } catch (error) {
+                console.error('Failed to save packed status to localStorage', error);
+            }
         }
     }
 }
