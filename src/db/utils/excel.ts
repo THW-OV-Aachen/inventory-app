@@ -61,6 +61,12 @@ const EXCEL_COLUMNS: ColumnDefinition[] = [
         header: 'Art',
         key: 'art',
         required: false,
+        exportTransform: (v, item) => {
+            if (v && v.trim()) return v.trim();
+            if (item.isSet === true) return 'Satz';
+            if (item.isSet === false) return 'Teil';
+            return '';
+        },
         importTransform: (v) => (v ? v.toString().trim() : undefined),
     },
     {
