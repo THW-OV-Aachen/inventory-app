@@ -419,7 +419,7 @@ const AddItem = () => {
                             id="itemId"
                             name="itemId"
                             type="text"
-                            placeholder="ID eingeben"
+                            placeholder="Sachnummer eingeben"
                             value={formData.itemId ?? ''}
                             onChange={(e) => handleChange('itemId', e.target.value)}
                             onBlur={() => handleBlur('itemId')}

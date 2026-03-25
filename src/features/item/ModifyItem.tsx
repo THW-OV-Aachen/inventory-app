@@ -410,7 +410,7 @@ const ModifyItem = () => {
                 </StyledBackButton>
                 <Title>
                     <Pen size={20} color={theme.colors.text.muted} />
-                    Bearbeiten: {item.name}
+                    {item.name}
                 </Title>
             </StyledHeader>
             <StyledContentWrapper>
@@ -442,7 +442,7 @@ const ModifyItem = () => {
                             id="itemId"
                             name="itemId"
                             type="text"
-                            placeholder="ID eingeben"
+                            placeholder="Sachnummer eingeben"
                             value={formData.itemId ?? ''}
                             onChange={(e) => handleChange('itemId', e.target.value)}
                             onBlur={() => handleBlur('itemId')}
