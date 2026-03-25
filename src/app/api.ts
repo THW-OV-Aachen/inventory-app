@@ -153,6 +153,50 @@ export const inventoryApi = {
             throw error;
         }
     },
+    async fetchAllFilteredItems(searchTerm: string, filters?: FilterParams): Promise<IItem[]> {
+        try {
+            const hasFilters =
+                filters &&
+                (filters.damageLevel ||
+                    filters.type ||
+                    filters.location ||
+                    (filters.labels && filters.labels.length > 0));
+
+            if (!searchTerm && !hasFilters) {
+                return await db.items.orderBy('id').toArray();
+            }
+
+            const allItems = await db.items.orderBy('id').toArray();
+
+            const term = searchTerm.toLowerCase();
+            return allItems.filter((item) => {
+                const matchesSearch =
+                    !searchTerm ||
+                    [item.name, item.location, item.itemId, item.inventoryNumber, item.deviceNumber].some(
+                        (field) => (field || '').toLowerCase().includes(term)
+                    );
+
+                const matchesDamageLevel = !filters?.damageLevel || item.damageLevel === filters.damageLevel;
+                
+                const matchesType =
+                    !filters?.type ||
+                    (filters.type === 'isSet' ? item.isSet === true : filters.type === 'isPart' ? item.isSet === false : true);
+
+                const matchesLocation =
+                    !filters?.location || (item.location || '').toLowerCase().includes(filters.location.toLowerCase());
+
+                const matchesLabels =
+                    !filters?.labels ||
+                    !filters.labels.length ||
+                    filters.labels.every((labelId) => item.labels?.some((itemLabel) => itemLabel.id === labelId));
+
+                return matchesSearch && matchesDamageLevel && matchesType && matchesLocation && matchesLabels;
+            });
+        } catch (error) {
+            console.error('Failed to fetch all filtered items: ', error);
+            throw error;
+        }
+    },
     useItems() {
         const items: IItem[] | undefined = useLiveQuery(() => db.items.orderBy('id').toArray(), []);
         return items ?? [];

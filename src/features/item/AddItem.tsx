@@ -20,6 +20,7 @@ import {
     BackButton,
     Header,
     ButtonGroup,
+    HelperText,
 } from '../../styles/components';
 import {
     LabelSearchInput,
@@ -345,11 +346,11 @@ const AddItem = () => {
             const cleanedItem: Omit<IItem, 'id'> = {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
-                isSet: formData.isSet ?? false,
+                isSet: formData.isSet,
                 art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
-                availability: formData.availability ?? 0,
+                availability: formData.damageLevel === 'total' ? 0 : (formData.availability ?? 0),
                 damageLevel: formData.damageLevel ?? 'none',
                 level: formData.level ?? 0,
 
@@ -419,7 +420,7 @@ const AddItem = () => {
                             id="itemId"
                             name="itemId"
                             type="text"
-                            placeholder="ID eingeben"
+                            placeholder="Sachnummer eingeben"
                             value={formData.itemId ?? ''}
                             onChange={(e) => handleChange('itemId', e.target.value)}
                             onBlur={() => handleBlur('itemId')}
@@ -456,12 +457,18 @@ const AddItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="damageLevel">Schaden</Label>
+                        <Label htmlFor="damageLevel">Schadenszustand</Label>
                         <Select
                             id="damageLevel"
                             name="damageLevel"
                             value={formData.damageLevel ?? 'none'}
-                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
+                            onChange={(e) => {
+                                const val = e.target.value as DamageLevelType;
+                                handleChange('damageLevel', val);
+                                if (val === 'total') {
+                                    handleChange('availability', 0);
+                                }
+                            }}
                             onBlur={() => handleBlur('damageLevel')}
                         >
                             <option value="none">{DamageLevelTranslation.none}</option>
@@ -477,14 +484,40 @@ const AddItem = () => {
                         <Select
                             id="isSet"
                             name="isSet"
-                            value={formData.isSet ? 'yes' : 'no'}
-                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
+                            value={formData.isSet === true ? 'yes' : formData.isSet === false ? 'no' : 'undefined'}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'yes') {
+                                    handleChange('isSet', true);
+                                    handleChange('art', 'Satz');
+                                } else if (val === 'no') {
+                                    handleChange('isSet', false);
+                                    handleChange('art', 'Teil');
+                                } else {
+                                    handleChange('isSet', undefined);
+                                    handleChange('art', '');
+                                }
+                            }}
                             onBlur={() => handleBlur('isSet')}
                         >
                             <option value="yes">Satz</option>
-                            <option value="no">(Einzelnes) Teil</option>
+                            <option value="no">Teil</option>
+                            <option value="undefined">Benutzerdefiniert</option>
                         </Select>
                         {renderError('isSet')}
+                        {formData.isSet !== true && formData.isSet !== false && (
+                            <Input
+                                id="art"
+                                name="art"
+                                type="text"
+                                placeholder="Benutzerdefinierter Typ"
+                                value={formData.art ?? ''}
+                                onChange={(e) => handleChange('art', e.target.value)}
+                                onBlur={() => handleBlur('art')}
+                                style={{ marginTop: '8px' }}
+                            />
+                        )}
+                        {renderError('art')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
@@ -658,7 +691,8 @@ const AddItem = () => {
                             name="availability"
                             type="number"
                             placeholder="Verfügbarkeit eingeben"
-                            value={formData.availability ?? ''}
+                            value={formData.damageLevel === 'total' ? 0 : (formData.availability ?? '')}
+                            disabled={formData.damageLevel === 'total'}
                             onChange={(e) => {
                                 const v = e.target.value;
                                 handleChange('availability', v === '' ? undefined : Number(v));
@@ -666,6 +700,12 @@ const AddItem = () => {
                             onBlur={() => handleBlur('availability')}
                         />
                         {renderError('availability')}
+                        {formData.damageLevel === 'total' && (
+                            <HelperText>
+                                Dieser Artikel ist zerstört. Ändere den Schadenszustand, um die Verfügbarkeit
+                                anzupassen.
+                            </HelperText>
+                        )}
                     </StyledFormGroup>
 
                     <StyledFormGroup>

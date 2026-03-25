@@ -45,7 +45,7 @@ const StatusBadge = (props: { damageLevelType: DamageLevelType; omitText?: boole
 };
 
 export const StatusBadgeWrapper = styled.span<{ $color: string; $bgColor: string; $omitText?: boolean }>`
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
     padding: 4px ${(p) => (p.$omitText ? '' : '10px')};

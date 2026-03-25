@@ -23,6 +23,7 @@ import {
     BackButton,
     Header,
     ButtonGroup,
+    HelperText,
 } from '../../styles/components';
 import {
     LabelSearchInput,
@@ -119,12 +120,6 @@ const Title = styled.h1`
 
 const StyledContentWrapper = styled(ContentWrapper)`
     padding: 0;
-`;
-
-const Subtitle = styled.div`
-    color: ${theme.colors.text.muted};
-    margin-bottom: 4px;
-    font-size: ${theme.typography.fontSize.sm};
 `;
 
 const StyledCard = styled(Card)`
@@ -261,8 +256,6 @@ const ModifyItem = () => {
 
     if (!item) return <p className="text-center mt-4">Loading item...</p>;
 
-    const itemReference = `Inventarnummer: ${item.inventoryNumber || '-'}`;
-
     // Validate a single field against the shared schema.
     const validateField = async (key: keyof IItem, value: string | number | boolean | ILabel[] | undefined) => {
         try {
@@ -353,11 +346,11 @@ const ModifyItem = () => {
             const updates: Partial<Omit<IItem, 'id'>> = {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
-                isSet: formData.isSet ?? false,
+                isSet: formData.isSet,
                 art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
-                availability: formData.availability ?? 0,
+                availability: formData.damageLevel === 'total' ? 0 : (formData.availability ?? 0),
                 damageLevel: formData.damageLevel ?? 'none',
                 level: formData.level ?? 0,
 
@@ -410,11 +403,10 @@ const ModifyItem = () => {
                 </StyledBackButton>
                 <Title>
                     <Pen size={20} color={theme.colors.text.muted} />
-                    Bearbeiten: {item.name}
+                    {item.name}
                 </Title>
             </StyledHeader>
             <StyledContentWrapper>
-                <Subtitle>{itemReference}</Subtitle>
                 <StyledCard>
                     <StyledFormGroup>
                         <Label htmlFor="name">
@@ -442,7 +434,7 @@ const ModifyItem = () => {
                             id="itemId"
                             name="itemId"
                             type="text"
-                            placeholder="ID eingeben"
+                            placeholder="Sachnummer eingeben"
                             value={formData.itemId ?? ''}
                             onChange={(e) => handleChange('itemId', e.target.value)}
                             onBlur={() => handleBlur('itemId')}
@@ -479,12 +471,18 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="damageLevel">Schaden</Label>
+                        <Label htmlFor="damageLevel">Schadenszustand</Label>
                         <Select
                             id="damageLevel"
                             name="damageLevel"
                             value={formData.damageLevel ?? 'none'}
-                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
+                            onChange={(e) => {
+                                const val = e.target.value as DamageLevelType;
+                                handleChange('damageLevel', val);
+                                if (val === 'total') {
+                                    handleChange('availability', 0);
+                                }
+                            }}
                             onBlur={() => handleBlur('damageLevel')}
                         >
                             <option value="none">{DamageLevelTranslation.none}</option>
@@ -500,14 +498,40 @@ const ModifyItem = () => {
                         <Select
                             id="isSet"
                             name="isSet"
-                            value={formData.isSet ? 'yes' : 'no'}
-                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
+                            value={formData.isSet === true ? 'yes' : formData.isSet === false ? 'no' : 'undefined'}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'yes') {
+                                    handleChange('isSet', true);
+                                    handleChange('art', 'Satz');
+                                } else if (val === 'no') {
+                                    handleChange('isSet', false);
+                                    handleChange('art', 'Teil');
+                                } else {
+                                    handleChange('isSet', undefined);
+                                    handleChange('art', '');
+                                }
+                            }}
                             onBlur={() => handleBlur('isSet')}
                         >
                             <option value="yes">Satz</option>
-                            <option value="no">(Einzelnes) Teil</option>
+                            <option value="no">Teil</option>
+                            <option value="undefined">Benutzerdefiniert</option>
                         </Select>
                         {renderError('isSet')}
+                        {formData.isSet !== true && formData.isSet !== false && (
+                            <Input
+                                id="art"
+                                name="art"
+                                type="text"
+                                placeholder="Benutzerdefinierter Typ"
+                                value={formData.art ?? ''}
+                                onChange={(e) => handleChange('art', e.target.value)}
+                                onBlur={() => handleBlur('art')}
+                                style={{ marginTop: '8px' }}
+                            />
+                        )}
+                        {renderError('art')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
@@ -675,7 +699,8 @@ const ModifyItem = () => {
                             name="availability"
                             type="number"
                             placeholder="Verfügbarkeit eingeben"
-                            value={formData.availability ?? ''}
+                            value={formData.damageLevel === 'total' ? 0 : (formData.availability ?? '')}
+                            disabled={formData.damageLevel === 'total'}
                             onChange={(e) => {
                                 const v = e.target.value;
                                 handleChange('availability', v === '' ? undefined : Number(v));
@@ -683,6 +708,12 @@ const ModifyItem = () => {
                             onBlur={() => handleBlur('availability')}
                         />
                         {renderError('availability')}
+                        {formData.damageLevel === 'total' && (
+                            <HelperText>
+                                Dieser Artikel ist zerstört. Ändere den Schadenszustand, um die Verfügbarkeit
+                                anzupassen.
+                            </HelperText>
+                        )}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
