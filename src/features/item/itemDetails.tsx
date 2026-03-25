@@ -94,8 +94,6 @@ const ItemDetails = () => {
             </StyledHeader>
 
             <StyledContentWrapper>
-                <Subtitle>Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}</Subtitle>
-
                 <StyledInfoCard $status={themeStatus}>
                     <CardContent>
                         <InfoRow>
@@ -131,7 +129,7 @@ const ItemDetails = () => {
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>
-                        Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}
+                        Typ: {item.art || '-'}
                     </InfoValue>
                 </StyledDetailsCard>
 
