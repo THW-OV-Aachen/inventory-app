@@ -73,16 +73,16 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
             <MainFilterRow>
                 <ItemFilterSearchbar />
                 <MainActions>
+                    <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
+                        <IconContainer icon={ScanLine} />
+                        <span>Scannen</span>
+                    </SecondaryButton>
                     {!packModeState.packMode && (
                         <PrimaryButton onClick={() => navigate('/items/add')}>
                             <IconContainer icon={Plus} />
                             <span>Artikel</span>
                         </PrimaryButton>
                     )}
-                    <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
-                        <IconContainer icon={ScanLine} />
-                        <span>Scannen</span>
-                    </SecondaryButton>
                 </MainActions>
             </MainFilterRow>
 
@@ -189,10 +189,16 @@ const PackActionsRow = styled.div<{ $centered?: boolean; $isPackMode?: boolean }
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: ${({ $centered }) => ($centered ? 'center' : 'flex-end')};
+    justify-content: ${({ $centered }) => ($centered ? 'stretch' : 'flex-end')};
     gap: 4px;
     width: 100%;
     margin-top: 4px;
+
+    ${({ $isPackMode }) => !$isPackMode && `
+        & > * {
+            flex: 1;
+        }
+    `}
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         margin-top: 2px;
