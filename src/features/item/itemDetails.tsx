@@ -99,7 +99,7 @@ const ItemDetails = () => {
                         <InfoRow>
                             <div style={{ flex: 1 }}>
                                 <InfoLabel>Status</InfoLabel>
-                                <InfoValue style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+                                <InfoValue style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
                                     <StatusBadge damageLevelType={item.damageLevel} />
                                 </InfoValue>
                             </div>
