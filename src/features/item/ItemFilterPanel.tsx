@@ -41,7 +41,7 @@ import {
     SelectedLabels,
 } from '../../utils/LabelBadge';
 import type { ILabel } from '../../db/labels';
-import { labelsApi } from '../../app/api';
+import { labelsApi, inventoryApi } from '../../app/api';
 import BarcodeScannerModal from '../barcodeScanner/BarcodeScannerModal';
 
 const sortFieldLabels: Record<string, string> = {
@@ -53,7 +53,7 @@ const sortFieldLabels: Record<string, string> = {
 };
 
 interface ItemFilterProps {
-    packModeState: ReturnType<typeof usePackMode>;
+    packModeState: ReturnType<typeof usePackMode> & { unselectAll?: () => void; unselectItems?: (ids: string[]) => void };
     onSavePackingPlan?: () => void;
 }
 
@@ -63,6 +63,25 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
     const location = useLocation();
     const isExistingPlan = !!(location.state as any)?.planId;
     const [showScanner, setShowScanner] = useState(false);
+    const [isSelectingAll, setIsSelectingAll] = useState(false);
+    const [filteredItemIds, setFilteredItemIds] = useState<Set<string>>(new Set());
+    const searchState = useSelector((state: RootState) => state.search);
+
+    useEffect(() => {
+        if (!packModeState.packMode) return;
+        let isActive = true;
+        (async () => {
+            try {
+                const filtered = await inventoryApi.fetchAllFilteredItems(searchState.query || '', searchState.filters);
+                if (isActive) {
+                    setFilteredItemIds(new Set(filtered.map(i => i.id.toString())));
+                }
+            } catch (error) {
+                console.error("Failed to fetch filtered items for pack mode toggle", error);
+            }
+        })();
+        return () => { isActive = false; };
+    }, [searchState, packModeState.packMode]);
 
     const handleBarcodeDetected = async (code: string) => {
         dispatch(setSearchTerm(code));
@@ -73,16 +92,55 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
             <MainFilterRow>
                 <ItemFilterSearchbar />
                 <MainActions>
+                    <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
+                        <IconContainer icon={ScanLine} />
+                        <span>Scannen</span>
+                    </SecondaryButton>
                     {!packModeState.packMode && (
                         <PrimaryButton onClick={() => navigate('/items/add')}>
                             <IconContainer icon={Plus} />
                             <span>Artikel</span>
                         </PrimaryButton>
                     )}
-                    <SecondaryButton type="button" onClick={() => setShowScanner(true)}>
-                        <IconContainer icon={ScanLine} />
-                        <span>Scannen</span>
-                    </SecondaryButton>
+                    {packModeState.packMode && (
+                        <SecondaryButton 
+                            type="button" 
+                            $noCollapse
+                            onClick={async () => {
+                                const filteredSelectedCount = Array.from(filteredItemIds).filter(id => packModeState.selectedItemIds.has(id)).length;
+                                const isAllFilteredItemsSelected = filteredItemIds.size > 0 && filteredSelectedCount === filteredItemIds.size;
+                                
+                                setIsSelectingAll(true);
+                                try {
+                                    if (isAllFilteredItemsSelected) {
+                                        if (packModeState.unselectItems) {
+                                            packModeState.unselectItems(Array.from(filteredItemIds));
+                                        }
+                                    } else {
+                                        const itemsToSelect = Array.from(filteredItemIds).map(id => ({
+                                            id,
+                                            quantity: 1
+                                        }));
+                                        packModeState.preselectItems(itemsToSelect);
+                                    }
+                                } finally {
+                                    setIsSelectingAll(false);
+                                }
+                            }} 
+                            disabled={isSelectingAll || filteredItemIds.size === 0}
+                        >
+                            {(() => {
+                                const filteredSelectedCount = Array.from(filteredItemIds).filter(id => packModeState.selectedItemIds.has(id)).length;
+                                const isAllFilteredItemsSelected = filteredItemIds.size > 0 && filteredSelectedCount === filteredItemIds.size;
+                                return (
+                                    <>
+                                        <IconContainer icon={isAllFilteredItemsSelected ? X : Check} />
+                                        <span>{isAllFilteredItemsSelected ? 'Alle entfernen' : 'Alle auswählen'}</span>
+                                    </>
+                                );
+                            })()}
+                        </SecondaryButton>
+                    )}
                 </MainActions>
             </MainFilterRow>
 
@@ -189,10 +247,16 @@ const PackActionsRow = styled.div<{ $centered?: boolean; $isPackMode?: boolean }
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: ${({ $centered }) => ($centered ? 'center' : 'flex-end')};
+    justify-content: ${({ $centered }) => ($centered ? 'stretch' : 'flex-end')};
     gap: 4px;
     width: 100%;
     margin-top: 4px;
+
+    ${({ $isPackMode }) => !$isPackMode && `
+        & > * {
+            flex: 1;
+        }
+    `}
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         margin-top: 2px;

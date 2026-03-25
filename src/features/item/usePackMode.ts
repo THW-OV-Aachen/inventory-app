@@ -86,6 +86,22 @@ export const usePackMode = (initialActive = false) => {
         toggleItem,
         setQuantity,
         preselectItems,
+        unselectAll: () => {
+            setSelectedItemIds(new Set());
+            setQtyByItemId({});
+        },
+        unselectItems: (ids: string[]) => {
+            setSelectedItemIds((prev) => {
+                const next = new Set(prev);
+                ids.forEach(id => next.delete(id));
+                return next;
+            });
+            setQtyByItemId((prev) => {
+                const next = { ...prev };
+                ids.forEach(id => delete next[id]);
+                return next;
+            });
+        },
         // Clear selection but keep pack mode active.
         clear: () => {
             setSelectedItemIds(new Set());

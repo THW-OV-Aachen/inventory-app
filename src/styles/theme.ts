@@ -46,8 +46,8 @@ export const theme = {
                 dark: '#991b1b',
             },
             critical: {
-                main: '#dc2626',
-                light: '#fee2e2',
+                main: '#ff0000ff',
+                light: '#e61010ff',
                 dark: '#7f1d1d',
             },
             neutral: {

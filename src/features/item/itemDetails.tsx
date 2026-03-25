@@ -94,14 +94,12 @@ const ItemDetails = () => {
             </StyledHeader>
 
             <StyledContentWrapper>
-                <Subtitle>Inventarnummer: {item.inventoryNumber ?? 'nicht vorhanden'}</Subtitle>
-
                 <StyledInfoCard $status={themeStatus}>
                     <CardContent>
                         <InfoRow>
                             <div style={{ flex: 1 }}>
                                 <InfoLabel>Status</InfoLabel>
-                                <InfoValue style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+                                <InfoValue style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
                                     <StatusBadge damageLevelType={item.damageLevel} />
                                 </InfoValue>
                             </div>
@@ -131,7 +129,7 @@ const ItemDetails = () => {
                     <InfoValue>Inventarnummer: {item.inventoryNumber || '-'}</InfoValue>
                     <InfoValue>Gerätenummer: {item.deviceNumber || '-'}</InfoValue>
                     <InfoValue>
-                        Typ: {item.isSet === true ? 'Satz' : item.isSet === false ? 'Einzelstück' : '-'}
+                        Typ: {item.art || '-'}
                     </InfoValue>
                 </StyledDetailsCard>
 
@@ -320,13 +318,6 @@ const StyledContentWrapper = styled(ContentWrapper)`
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         padding: 0 ${theme.spacing.md};
     }
-`;
-
-const Subtitle = styled.div`
-    font-size: ${theme.typography.fontSize.sm};
-    color: ${theme.colors.text.muted};
-    margin-bottom: ${theme.spacing.lg};
-    font-weight: ${theme.typography.fontWeight.medium};
 `;
 
 const StyledInfoCard = styled(InfoCard)`
