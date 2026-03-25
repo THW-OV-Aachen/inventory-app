@@ -471,7 +471,7 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="damageLevel">Schaden</Label>
+                        <Label htmlFor="damageLevel">Schadenszustand</Label>
                         <Select
                             id="damageLevel"
                             name="damageLevel"
