@@ -18,7 +18,7 @@ export interface IItem {
     inventoryNumber?: string;
     deviceNumber?: string;
     name: string;
-    isSet: boolean;
+    isSet?: boolean;
     art: string;
     amountTarget: number;
     amountActual: number;

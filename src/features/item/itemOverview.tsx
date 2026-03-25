@@ -173,8 +173,8 @@ const ItemOverview = () => {
                     bValue = b.name;
                     break;
                 case 'type':
-                    aValue = a.isSet ? 'Satz' : 'Teil';
-                    bValue = b.isSet ? 'Satz' : 'Teil';
+                    aValue = a.isSet === true ? 'Satz' : a.isSet === false ? 'Teil' : (a.art || 'undefiniert');
+                    bValue = b.isSet === true ? 'Satz' : b.isSet === false ? 'Teil' : (b.art || 'undefiniert');
                     break;
                 case 'amountActual':
                     aValue = a.amountActual ?? 0;
@@ -482,8 +482,15 @@ const ItemOverview = () => {
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
                                     <TableCell id="isSet">
-                                        {item.isSet === true && <IconContainer icon={Boxes} />}
-                                        {item.isSet === false && <IconContainer icon={Box} />}
+                                        <DesktopText>
+                                            {item.isSet === true && 'Satz'}
+                                            {item.isSet === false && 'Teil'}
+                                            {item.isSet !== true && item.isSet !== false && (item.art || 'undefiniert')}
+                                        </DesktopText>
+                                        <MobileIcon>
+                                            {item.isSet === true && <IconContainer icon={Boxes} />}
+                                            {item.isSet === false && <IconContainer icon={Box} />}
+                                        </MobileIcon>
                                     </TableCell>
                                     <CellAmount id="amounts" $hideOnMobile>
                                         <span>
@@ -1105,6 +1112,20 @@ const CheckboxInput = styled.input`
     &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
+    }
+`;
+
+const DesktopText = styled.span`
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: none;
+    }
+`;
+
+const MobileIcon = styled.div`
+    display: none;
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        display: flex;
+        align-items: center;
     }
 `;
 

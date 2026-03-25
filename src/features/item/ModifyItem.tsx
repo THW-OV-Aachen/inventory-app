@@ -353,7 +353,7 @@ const ModifyItem = () => {
             const updates: Partial<Omit<IItem, 'id'>> = {
                 itemId: formData.itemId!.trim(),
                 name: formData.name!.trim(),
-                isSet: formData.isSet ?? false,
+                isSet: formData.isSet,
                 art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
@@ -500,14 +500,40 @@ const ModifyItem = () => {
                         <Select
                             id="isSet"
                             name="isSet"
-                            value={formData.isSet ? 'yes' : 'no'}
-                            onChange={(e) => handleChange('isSet', e.target.value === 'yes')}
+                            value={formData.isSet === true ? 'yes' : formData.isSet === false ? 'no' : 'undefined'}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'yes') {
+                                    handleChange('isSet', true);
+                                    handleChange('art', 'Satz');
+                                } else if (val === 'no') {
+                                    handleChange('isSet', false);
+                                    handleChange('art', 'Teil');
+                                } else {
+                                    handleChange('isSet', undefined);
+                                    handleChange('art', '');
+                                }
+                            }}
                             onBlur={() => handleBlur('isSet')}
                         >
                             <option value="yes">Satz</option>
-                            <option value="no">(Einzelnes) Teil</option>
+                            <option value="no">Teil</option>
+                            <option value="undefined">Benutzerdefiniert</option>
                         </Select>
                         {renderError('isSet')}
+                        {formData.isSet !== true && formData.isSet !== false && (
+                            <Input
+                                id="art"
+                                name="art"
+                                type="text"
+                                placeholder="Benutzerdefinierter Typ"
+                                value={formData.art ?? ''}
+                                onChange={(e) => handleChange('art', e.target.value)}
+                                onBlur={() => handleBlur('art')}
+                                style={{ marginTop: '8px' }}
+                            />
+                        )}
+                        {renderError('art')}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
