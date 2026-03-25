@@ -130,4 +130,14 @@ export const packingPlanApi = {
         );
         return items ?? [];
     },
+
+    async clearAll(): Promise<void> {
+        try {
+            await db.packingPlans.clear();
+            await db.packingPlanItems.clear();
+        } catch (error) {
+            console.error('Failed to clear packing plans: ', error);
+            throw error;
+        }
+    },
 };
