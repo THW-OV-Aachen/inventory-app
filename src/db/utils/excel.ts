@@ -1,6 +1,9 @@
 import ExcelJS from 'exceljs';
 import { type IItem, DamageLevelType } from '../items';
+import { db } from '../db';
 import { inventoryApi, labelsApi } from '../../app/api';
+import { packingPlanApi } from '../../app/packingPlanApi';
+import type { IPackingPlan, IPackingPlanItem } from '../packingPlans';
 import DamageLevelTranslation from '../../utils/damageLevels';
 import type { ILabel } from '../labels';
 interface ColumnDefinition {
@@ -176,6 +179,38 @@ const LABEL_EXCEL_COLUMNS: LabelColumnDefinition[] = [
     },
 ];
 
+interface PackingPlanColumnDefinition {
+    header: string;
+    key: keyof IPackingPlan;
+    required: boolean;
+    importTransform?: (value: ExcelJS.CellValue) => any;
+}
+
+const PACKING_PLAN_EXCEL_COLUMNS: PackingPlanColumnDefinition[] = [
+    { header: 'ID', key: 'id', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Name', key: 'name', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Scenario Type', key: 'scenarioType', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Description', key: 'description', required: false, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Created At', key: 'createdAt', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Updated At', key: 'updatedAt', required: true, importTransform: (v) => v?.toString()?.trim() },
+];
+
+interface PackingPlanItemColumnDefinition {
+    header: string;
+    key: keyof IPackingPlanItem | 'Sachnummer';
+    required: boolean;
+    importTransform?: (value: ExcelJS.CellValue) => any;
+}
+
+const PACKING_PLAN_ITEM_EXCEL_COLUMNS: PackingPlanItemColumnDefinition[] = [
+    { header: 'ID', key: 'id', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Packing Plan ID', key: 'packingPlanId', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Sachnummer', key: 'Sachnummer', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Required Quantity', key: 'requiredQuantity', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+    { header: 'Notes', key: 'notes', required: false, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Order', key: 'order', required: true, importTransform: (v) => v ? parseInt(v.toString(), 10) : 0 },
+];
+
 export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promise<Blob> {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Inventory');
@@ -205,6 +240,36 @@ export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promis
         });
         labelsSheet.addRow(rowValues);
     });
+
+    const packingPlansSheet = workbook.addWorksheet('PackingPlans');
+    packingPlansSheet.addRow(PACKING_PLAN_EXCEL_COLUMNS.map((col) => col.header));
+    const allPackingPlans = await packingPlanApi.getAllPackingPlans();
+    allPackingPlans.forEach((plan) => {
+        const rowValues = PACKING_PLAN_EXCEL_COLUMNS.map((col) => plan[col.key]);
+        packingPlansSheet.addRow(rowValues);
+    });
+
+    const packingPlanItemsSheet = workbook.addWorksheet('PackingPlanItems');
+    packingPlanItemsSheet.addRow(PACKING_PLAN_ITEM_EXCEL_COLUMNS.map((col) => col.header));
+    
+    const itemIdMap = new Map<number, string>();
+    items.forEach((item) => {
+        if (item.id && item.itemId) {
+            itemIdMap.set(item.id, item.itemId);
+        }
+    });
+
+    for (const plan of allPackingPlans) {
+        const planItems = await packingPlanApi.getPackingPlanItems(plan.id);
+        planItems.forEach((pItem) => {
+            const sachnummer = itemIdMap.get(pItem.Iid) || '';
+            const rowValues = PACKING_PLAN_ITEM_EXCEL_COLUMNS.map((col) => {
+                if (col.key === 'Sachnummer') return sachnummer;
+                return pItem[col.key as keyof IPackingPlanItem];
+            });
+            packingPlanItemsSheet.addRow(rowValues);
+        });
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -384,4 +449,89 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
     }
 
     await inventoryApi.addItemsBulk(itemsToAdd);
+
+    // 2. Process PackingPlans sheet
+    const packingPlansSheet = workbook.getWorksheet('PackingPlans');
+    if (packingPlansSheet) {
+        const ppHeaderRow = packingPlansSheet.getRow(1);
+        const ppHeaderMap = new Map<string, number>();
+        ppHeaderRow.eachCell((cell, colNumber) => {
+            const text = (cell.value ?? '').toString().trim();
+            if (text) ppHeaderMap.set(text, colNumber);
+        });
+
+        const plansToAdd: IPackingPlan[] = [];
+        for (let rowIdx = 2; rowIdx <= packingPlansSheet.rowCount; rowIdx++) {
+            const row = packingPlansSheet.getRow(rowIdx);
+            if (!row.hasValues) continue;
+
+            const plan: any = {};
+            for (const col of PACKING_PLAN_EXCEL_COLUMNS) {
+                const colIdx = ppHeaderMap.get(col.header);
+                if (colIdx !== undefined) {
+                    const cValue = row.getCell(colIdx).value;
+                    plan[col.key] = col.importTransform ? col.importTransform(cValue) : cValue;
+                }
+            }
+            if (plan.id && plan.name) {
+                plansToAdd.push(plan);
+            }
+        }
+        if (plansToAdd.length > 0) {
+            await db.packingPlans.bulkPut(plansToAdd);
+        }
+    }
+
+    // 3. Process PackingPlanItems sheet
+    const packingPlanItemsSheet = workbook.getWorksheet('PackingPlanItems');
+    if (packingPlanItemsSheet) {
+        const ppiHeaderRow = packingPlanItemsSheet.getRow(1);
+        const ppiHeaderMap = new Map<string, number>();
+        ppiHeaderRow.eachCell((cell, colNumber) => {
+            const text = (cell.value ?? '').toString().trim();
+            if (text) ppiHeaderMap.set(text, colNumber);
+        });
+
+        const allItems = await db.items.toArray();
+        const sachnummerToIid = new Map<string, number>();
+        for (const it of allItems) {
+            if (it.itemId && it.id !== undefined) {
+                sachnummerToIid.set(it.itemId, it.id);
+            }
+        }
+
+        const planItemsToAdd: IPackingPlanItem[] = [];
+        for (let rowIdx = 2; rowIdx <= packingPlanItemsSheet.rowCount; rowIdx++) {
+            const row = packingPlanItemsSheet.getRow(rowIdx);
+            if (!row.hasValues) continue;
+
+            const planItem: any = {};
+            let itemSachnummer = '';
+            for (const col of PACKING_PLAN_ITEM_EXCEL_COLUMNS) {
+                const colIdx = ppiHeaderMap.get(col.header);
+                if (colIdx !== undefined) {
+                    const cValue = row.getCell(colIdx).value;
+                    const parsed = col.importTransform ? col.importTransform(cValue) : cValue;
+                    if (col.key === 'Sachnummer') {
+                        itemSachnummer = parsed;
+                    } else {
+                        planItem[col.key] = parsed;
+                    }
+                }
+            }
+
+            if (planItem.id && planItem.packingPlanId && itemSachnummer) {
+                const mappedIid = sachnummerToIid.get(itemSachnummer);
+                if (mappedIid !== undefined) {
+                    planItem.Iid = mappedIid;
+                    planItemsToAdd.push(planItem as IPackingPlanItem);
+                } else {
+                    console.warn(`Could not resolve Sachnummer ${itemSachnummer} for packing plan item ${planItem.id}`);
+                }
+            }
+        }
+        if (planItemsToAdd.length > 0) {
+            await db.packingPlanItems.bulkPut(planItemsToAdd);
+        }
+    }
 }
