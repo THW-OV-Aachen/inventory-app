@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exportExcel, importExcel } from '../../db/utils/excel';
 import { inventoryApi, labelsApi } from '../../app/api';
+import { packingPlanApi } from '../../app/packingPlanApi';
 import styled from 'styled-components';
 import { Upload, Download, ChevronLeft, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/theme';
@@ -215,6 +216,7 @@ const ImportExportScreen = () => {
                     return;
                 }
                 await inventoryApi.clearAll();
+                await packingPlanApi.clearAll();
             }
             await importExcel(f, handleProgress);
 
