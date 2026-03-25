@@ -320,13 +320,6 @@ const StyledContentWrapper = styled(ContentWrapper)`
     }
 `;
 
-const Subtitle = styled.div`
-    font-size: ${theme.typography.fontSize.sm};
-    color: ${theme.colors.text.muted};
-    margin-bottom: ${theme.spacing.lg};
-    font-weight: ${theme.typography.fontWeight.medium};
-`;
-
 const StyledInfoCard = styled(InfoCard)`
     margin-bottom: ${theme.spacing.lg};
 `;
