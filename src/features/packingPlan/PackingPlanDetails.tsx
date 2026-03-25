@@ -16,6 +16,7 @@ import {
     Check,
     CheckCircle2,
     GripVertical,
+    MessageSquare,
 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import { inventoryApi } from '../../app/api';
@@ -137,6 +138,15 @@ const PackingPlanDetails = () => {
 
                 return updatedItems;
             });
+        }
+    };
+
+    const handleUpdateNote = async (itemId: string, newNote: string) => {
+        try {
+            await packingPlanApi.updatePackingPlanItem(itemId, { notes: newNote });
+        } catch (error) {
+            console.error('Failed to update note:', error);
+            alert('Fehler beim Speichern der Notiz.');
         }
     };
 
@@ -420,6 +430,7 @@ const PackingPlanDetails = () => {
                                             onUpdateQuantity={handleUpdateQuantity}
                                             onTogglePacked={togglePacked}
                                             onDelete={handleDeleteItem}
+                                            onUpdateNote={handleUpdateNote}
                                         />
                                     ))}
                                 </ItemsList>
@@ -565,6 +576,7 @@ interface SortableItemRowProps {
     onUpdateQuantity: (id: string, value: string) => void;
     onTogglePacked: (id: string) => void;
     onDelete: (id: string) => void;
+    onUpdateNote: (id: string, newNote: string) => void;
 }
 
 const SortableItemRow = ({
@@ -575,8 +587,18 @@ const SortableItemRow = ({
     editingQuantity,
     onUpdateQuantity,
     onTogglePacked,
-    onDelete
+    onDelete,
+    onUpdateNote
 }: SortableItemRowProps) => {
+    const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteValue, setNoteValue] = useState(planItem.notes || '');
+
+    useEffect(() => {
+        if (!isEditingNote) {
+            setNoteValue(planItem.notes || '');
+        }
+    }, [planItem.notes, isEditingNote]);
+
     const {
         attributes,
         listeners,
@@ -600,7 +622,7 @@ const SortableItemRow = ({
     const isError = itemDetails && parseInt(editingQuantity || '0', 10) > itemDetails.availability;
 
     return (
-        <ItemRow 
+        <ItemCard 
             ref={setNodeRef}
             style={style}
             data-packed={isPacked ? 'true' : 'false'}
@@ -608,62 +630,97 @@ const SortableItemRow = ({
             $isPackMode={packMode}
             $isDragging={isDragging}
         >
-            {!packMode && (
-                <DragHandle {...attributes} {...listeners} $isDragging={isDragging}>
-                    <IconContainer icon={GripVertical} width="20px" height="20px" />
-                </DragHandle>
-            )}
-            <ItemInfo>
-                <ItemName>
-                    <span>{itemName}</span>
-                    {isPacked && (
-                        <PackedBadge>
-                            <IconContainer icon={CheckCircle2} />
-                            gepackt
-                        </PackedBadge>
-                    )}
-                </ItemName>
-                <ItemMeta>
-                    ID: {itemId}
-                    {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
-                    {location && ` • Ort: ${location}`}
-                    {missingNote}
-                </ItemMeta>
-            </ItemInfo>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <QuantityInput
-                    type="number"
-                    min="1"
-                    value={editingQuantity}
-                    $isError={!!isError}
-                    onChange={(e) => onUpdateQuantity(planItem.id, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                />
-                {isError && (
-                    <QuantityWarning>Max: {itemDetails.availability}</QuantityWarning>
+            <ItemRowMain>
+                {!packMode && (
+                    <DragHandle {...attributes} {...listeners} $isDragging={isDragging}>
+                        <IconContainer icon={GripVertical} width="20px" height="20px" />
+                    </DragHandle>
                 )}
-            </div>
-            {packMode ? (
-                <PackCheckboxWrapper>
-                    <Checkbox
-                        type="checkbox"
-                        checked={isPacked}
-                        onChange={() => onTogglePacked(planItem.Iid.toString())}
+                <ItemInfo>
+                    <ItemName>
+                        <span>{itemName}</span>
+                        {isPacked && (
+                            <PackedBadge>
+                                <IconContainer icon={CheckCircle2} />
+                                gepackt
+                            </PackedBadge>
+                        )}
+                    </ItemName>
+                    <ItemMeta>
+                        ID: {itemId}
+                        {inventoryNumber && ` • Inventarnr.: ${inventoryNumber}`}
+                        {location && ` • Ort: ${location}`}
+                        {missingNote}
+                    </ItemMeta>
+                </ItemInfo>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <QuantityInput
+                        type="number"
+                        min="1"
+                        value={editingQuantity}
+                        $isError={!!isError}
+                        onChange={(e) => onUpdateQuantity(planItem.id, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                     />
-                </PackCheckboxWrapper>
-            ) : (
-                <DeleteButton
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(planItem.id);
-                    }}
-                    title="Remove item"
-                >
-                    <IconContainer icon={Trash2} />
-                </DeleteButton>
+                    {isError && (
+                        <QuantityWarning>Max: {itemDetails.availability}</QuantityWarning>
+                    )}
+                </div>
+                {packMode ? (
+                    <PackCheckboxWrapper>
+                        <Checkbox
+                            type="checkbox"
+                            checked={isPacked}
+                            onChange={() => onTogglePacked(planItem.Iid.toString())}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </PackCheckboxWrapper>
+                ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <DeleteButton
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(planItem.id);
+                            }}
+                            title="Artikel entfernen"
+                        >
+                            <IconContainer icon={Trash2} />
+                        </DeleteButton>
+                        <ActionIconButton
+                            $isActive={isEditingNote || !!planItem.notes}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isEditingNote) {
+                                    onUpdateNote(planItem.id, noteValue);
+                                    setIsEditingNote(false);
+                                } else {
+                                    setIsEditingNote(true);
+                                }
+                            }}
+                            title={isEditingNote ? "Notiz speichern" : "Notiz hinzufügen/bearbeiten"}
+                        >
+                            <IconContainer icon={isEditingNote ? Check : MessageSquare} />
+                        </ActionIconButton>
+                    </div>
+                )}
+            </ItemRowMain>
+
+            {(isEditingNote || planItem.notes) && (
+                <NoteSection>
+                    {isEditingNote ? (
+                        <NoteInput 
+                            value={noteValue} 
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNoteValue(e.target.value)} 
+                            placeholder="Anmerkung..."
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            autoFocus
+                        />
+                    ) : (
+                        <NoteDisplay>{planItem.notes}</NoteDisplay>
+                    )}
+                </NoteSection>
             )}
-        </ItemRow>
+        </ItemCard>
     );
 };
 
@@ -921,11 +978,9 @@ const DragHandle = styled.div<{ $isDragging?: boolean }>`
     `}
 `;
 
-const ItemRow = styled.div<{ $isPackMode?: boolean; $isDragging?: boolean; $isDragOver?: boolean }>`
+const ItemCard = styled.div<{ $isPackMode?: boolean; $isDragging?: boolean; $isDragOver?: boolean }>`
     display: flex;
-    align-items: center;
-    gap: ${theme.spacing.md};
-    padding: ${theme.spacing.md};
+    flex-direction: column;
     background-color: ${theme.colors.background.light};
     border-radius: ${theme.borderRadius.md};
     border: 1px solid ${theme.colors.border.default};
@@ -943,6 +998,71 @@ const ItemRow = styled.div<{ $isPackMode?: boolean; $isDragging?: boolean; $isDr
         cursor: grabbing;
         box-shadow: ${theme.shadows.md};
     `}
+`;
+
+const ItemRowMain = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+    padding: ${theme.spacing.md};
+`;
+
+const ActionIconButton = styled.button<{ $isActive?: boolean }>`
+    background: none;
+    border: none;
+    color: ${props => props.$isActive ? theme.colors.primary : theme.colors.text.muted};
+    cursor: pointer;
+    padding: ${theme.spacing.xs};
+    border-radius: ${theme.borderRadius.sm};
+    transition: all 0.2s ease;
+    margin-top: 6px;
+
+    &:hover {
+        color: ${theme.colors.primary};
+        background-color: ${theme.colors.background.gray};
+    }
+`;
+
+const NoteSection = styled.div`
+    padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.md};
+    border-top: 1px dashed ${theme.colors.border.light};
+    margin-top: -${theme.spacing.sm};
+    display: flex;
+    flex-direction: column;
+`;
+
+const NoteInput = styled.textarea`
+    width: 100%;
+    min-height: 60px;
+    padding: ${theme.spacing.sm};
+    border-radius: ${theme.borderRadius.sm};
+    border: 1px solid transparent;
+    background-color: transparent;
+    font-size: ${theme.typography.fontSize.sm};
+    font-family: inherit;
+    resize: vertical;
+    margin-top: ${theme.spacing.xs};
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background-color: ${theme.colors.background.gray};
+    }
+    
+    &:focus {
+        outline: none;
+        border-color: ${theme.colors.primary};
+        background-color: ${theme.colors.primary}0a;
+        box-shadow: 0 0 0 1px ${theme.colors.primary}33;
+    }
+`;
+
+const NoteDisplay = styled.div`
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.secondary};
+    white-space: pre-wrap;
+    margin-top: ${theme.spacing.xs};
+    padding: ${theme.spacing.sm};
+    background-color: transparent;
 `;
 
 const Checkbox = styled.input`
