@@ -498,6 +498,10 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             }
         }
 
+        if (rowData.damageLevel === 'total') {
+            rowData.availability = 0;
+        }
+
         if (!rowData.itemId || !rowData.name) {
             console.warn(`Skipping row ${rowIdx}: Missing ID or Name`);
             continue;

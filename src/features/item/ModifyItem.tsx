@@ -23,6 +23,7 @@ import {
     BackButton,
     Header,
     ButtonGroup,
+    HelperText,
 } from '../../styles/components';
 import {
     LabelSearchInput,
@@ -357,7 +358,7 @@ const ModifyItem = () => {
                 art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
-                availability: formData.availability ?? 0,
+                availability: formData.damageLevel === 'total' ? 0 : (formData.availability ?? 0),
                 damageLevel: formData.damageLevel ?? 'none',
                 level: formData.level ?? 0,
 
@@ -484,7 +485,13 @@ const ModifyItem = () => {
                             id="damageLevel"
                             name="damageLevel"
                             value={formData.damageLevel ?? 'none'}
-                            onChange={(e) => handleChange('damageLevel', e.target.value as DamageLevelType)}
+                            onChange={(e) => {
+                                const val = e.target.value as DamageLevelType;
+                                handleChange('damageLevel', val);
+                                if (val === 'total') {
+                                    handleChange('availability', 0);
+                                }
+                            }}
                             onBlur={() => handleBlur('damageLevel')}
                         >
                             <option value="none">{DamageLevelTranslation.none}</option>
@@ -701,7 +708,8 @@ const ModifyItem = () => {
                             name="availability"
                             type="number"
                             placeholder="Verfügbarkeit eingeben"
-                            value={formData.availability ?? ''}
+                            value={formData.damageLevel === 'total' ? 0 : (formData.availability ?? '')}
+                            disabled={formData.damageLevel === 'total'}
                             onChange={(e) => {
                                 const v = e.target.value;
                                 handleChange('availability', v === '' ? undefined : Number(v));
@@ -709,6 +717,12 @@ const ModifyItem = () => {
                             onBlur={() => handleBlur('availability')}
                         />
                         {renderError('availability')}
+                        {formData.damageLevel === 'total' && (
+                            <HelperText>
+                                Dieser Artikel ist zerstört. Ändere den Schadenszustand, um die Verfügbarkeit
+                                anzupassen.
+                            </HelperText>
+                        )}
                     </StyledFormGroup>
 
                     <StyledFormGroup>
