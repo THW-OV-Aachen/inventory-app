@@ -1,13 +1,14 @@
 import Dexie, { type Table } from 'dexie';
 import type { IItem } from './items';
 import type { ILabel } from './labels';
-import type { IPackingPlan, IPackingPlanItem } from './packingPlans';
+import type { IPackingPlan, IPackingPlanItem, IScenarioType } from './packingPlans';
 
 export class InventoryDb extends Dexie {
     public items!: Table<IItem, number>;
     public labels!: Table<ILabel, string>;
     public packingPlans!: Table<IPackingPlan, string>;
     public packingPlanItems!: Table<IPackingPlanItem, string>;
+    public scenarioTypes!: Table<IScenarioType, string>;
 
     constructor() {
         super('InventoryDb');
@@ -123,6 +124,31 @@ export class InventoryDb extends Dexie {
             packingPlans: '&id,scenarioType,createdAt',
             packingPlanItems: '&id,packingPlanId,Iid,order',
             labels: ['++id', 'name', 'color'].join(','),
+        });
+        this.version(6).stores({
+            items: [
+                '++id',
+                'itemId',
+                '&inventoryNumber',
+                'deviceNumber',
+                'name',
+                'isSet',
+                'art',
+                'amountTarget',
+                'amountActual',
+                'availability',
+                'damageLevel',
+                'lastInspection',
+                'inspectionIntervalMonths',
+                'location',
+                'level',
+                'remark',
+                'labels',
+            ].join(','),
+            packingPlans: '&id,scenarioType,createdAt',
+            packingPlanItems: '&id,packingPlanId,Iid,order',
+            labels: ['++id', 'name', 'color'].join(','),
+            scenarioTypes: '&id,name',
         });
     }
 }

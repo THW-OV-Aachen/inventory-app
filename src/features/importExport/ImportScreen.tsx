@@ -10,12 +10,15 @@ import { Card, Button, Container, BackButton, Header, ControlsWrapper } from '..
 import IconContainer from '../../utils/IconContainer';
 
 const StyledContainer = styled(Container)`
-    padding-top: 8px;
+    padding-top: 0px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
-    max-width: 720px;
     margin: 0 auto;
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
 `;
 
 const StyledCard = styled(Card)`
@@ -354,7 +357,7 @@ const ImportExportScreen = () => {
                         <ModalBox role="dialog" aria-modal="true" aria-labelledby="import-confirm-title">
                             <ModalTitle id="import-confirm-title">Die Datenbank enthält bereits Elemente</ModalTitle>
                             <ModalText>
-                                Die aktuelle Datenbank enthält bereits Einträge. Möchten Sie die vorhandenen Daten
+                                Die aktuelle Datenbank enthält bereits Einträge. Möchtest du die vorhandenen Daten
                                 erweitern (aktuelle Einträge beibehalten und neue hinzufügen) oder die Datenbank
                                 überschreiben (vorhandene Einträge löschen und nur die neuen importieren)?
                             </ModalText>
@@ -381,7 +384,7 @@ const ImportExportScreen = () => {
                                     WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Exportiere die
                                     Datenbank, um sie zu speichern.
                                 </WarningText>
-                                Bitte geben Sie "überschreiben" ein, um zu bestätigen, dass Sie die vorhandene Datenbank
+                                Bitte geben "überschreiben" ein, um zu bestätigen, dass Sie die vorhandene Datenbank
                                 löschen und durch die neuen Daten ersetzen möchten.
                             </ModalText>
                             <ConfirmationInput

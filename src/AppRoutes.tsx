@@ -18,6 +18,7 @@ import PackingPlanOverview from './features/packingPlan/PackingPlanOverview';
 import CreatePackingPlan from './features/packingPlan/CreatePackingPlan';
 import PackingPlanDetails from './features/packingPlan/PackingPlanDetails';
 import EditPackingPlan from './features/packingPlan/EditPackingPlan';
+import ScenarioTypesManagement from './features/packingPlan/ScenarioTypesManagement';
 
 const AppRoutes = () => {
     return (
@@ -35,10 +36,13 @@ const AppRoutes = () => {
                 <Route path="items/:id/modify" element={<ModifyItem />} />
                 <Route path="items/:id" element={<ItemDetails />} />
 
-                <Route path="packing-plans" element={<PackingPlanOverview />} />
-                <Route path="packing-plans/create" element={<CreatePackingPlan />} />
-                <Route path="packing-plans/:planId" element={<PackingPlanDetails />} />
-                <Route path="packing-plans/:planId/edit" element={<EditPackingPlan />} />
+                <Route path="packing-plans">
+                    <Route index element={<PackingPlanOverview />} />
+                    <Route path="create" element={<CreatePackingPlan />} />
+                    <Route path="scenarios" element={<ScenarioTypesManagement />} />
+                    <Route path=":planId" element={<PackingPlanDetails />} />
+                    <Route path=":planId/edit" element={<EditPackingPlan />} />
+                </Route>
 
                 <Route path="import" element={<ImportExportScreen />} />
             </Route>

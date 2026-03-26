@@ -3,7 +3,7 @@ import { type IItem, DamageLevelType } from '../items';
 import { db } from '../db';
 import { inventoryApi, labelsApi } from '../../app/api';
 import { packingPlanApi } from '../../app/packingPlanApi';
-import type { IPackingPlan, IPackingPlanItem } from '../packingPlans';
+import type { IPackingPlan, IPackingPlanItem, IScenarioType } from '../packingPlans';
 import DamageLevelTranslation from '../../utils/damageLevels';
 import type { ILabel } from '../labels';
 interface ColumnDefinition {
@@ -22,19 +22,19 @@ const getDamageKeyFromTranslation = (val: string): DamageLevelType => {
     return (entry ? entry[0] : 'none') as DamageLevelType;
 };
 
-const SCENARIO_TYPE_LABELS: Record<string, string> = {
-    flood: 'Hochwasser',
-    fire: 'Feuer',
-    storm: 'Sturm',
-    earthquake: 'Erdbeben',
-    search_rescue: 'Suche & Rettung',
-    custom: 'Benutzerdefiniert',
-};
+interface ScenarioTypeColumnDefinition {
+    header: string;
+    key: keyof IScenarioType;
+    required: boolean;
+    exportTransform?: (value: any, type: IScenarioType) => ExcelJS.CellValue;
+    importTransform?: (value: ExcelJS.CellValue) => any;
+}
 
-const getScenarioTypeFromLabel = (label: string): string => {
-    const entry = Object.entries(SCENARIO_TYPE_LABELS).find(([, v]) => v === label);
-    return entry ? entry[0] : label;
-};
+const SCENARIO_TYPE_EXCEL_COLUMNS: ScenarioTypeColumnDefinition[] = [
+    { header: 'ID', key: 'id', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Name', key: 'name', required: true, importTransform: (v) => v?.toString()?.trim() },
+    { header: 'Symbol', key: 'icon', required: true, importTransform: (v) => v?.toString()?.trim() },
+];
 
 const EXCEL_COLUMNS: ColumnDefinition[] = [
     {
@@ -220,8 +220,8 @@ const PACKING_PLAN_EXCEL_COLUMNS: PackingPlanColumnDefinition[] = [
         header: 'Szenario Typ',
         key: 'scenarioType',
         required: true,
-        exportTransform: (v: string) => SCENARIO_TYPE_LABELS[v] ?? v,
-        importTransform: (v) => (v ? getScenarioTypeFromLabel(v.toString().trim()) : v),
+        exportTransform: (v: string) => v, 
+        importTransform: (v) => (v ? v.toString().trim() : v),
     },
     { header: 'Beschreibung', key: 'description', required: false, importTransform: (v) => v?.toString()?.trim() },
     { header: 'Erstellt am', key: 'createdAt', required: true, importTransform: (v) => v?.toString()?.trim() },
@@ -275,12 +275,28 @@ export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promis
         labelsSheet.addRow(rowValues);
     });
 
+    const scenarioTypesSheet = workbook.addWorksheet('ScenarioTypes');
+    const scenarioHeaderRow = SCENARIO_TYPE_EXCEL_COLUMNS.map((col) => col.header);
+    scenarioTypesSheet.addRow(scenarioHeaderRow);
+    const scenarioTypes = await packingPlanApi.getScenarioTypes();
+
+    scenarioTypes.forEach((type) => {
+        const rowValues = SCENARIO_TYPE_EXCEL_COLUMNS.map((col) => {
+            const rawValue = type[col.key as keyof IScenarioType];
+            return col.exportTransform ? col.exportTransform(rawValue, type) : rawValue;
+        });
+        scenarioTypesSheet.addRow(rowValues);
+    });
+
     const packingPlansSheet = workbook.addWorksheet('PackingPlans');
     packingPlansSheet.addRow([...PACKING_PLAN_EXCEL_COLUMNS.map((col) => col.header), 'Status']);
     const allPackingPlans = await packingPlanApi.getAllPackingPlans();
 
     const packingPlanItemsSheet = workbook.addWorksheet('PackingPlanItems');
     packingPlanItemsSheet.addRow(PACKING_PLAN_ITEM_EXCEL_COLUMNS.map((col) => col.header));
+
+    const allScenarioTypes = await packingPlanApi.getScenarioTypes();
+    const scenarioTypeMap = new Map(allScenarioTypes.map((t) => [t.id, t.name]));
 
     for (const plan of allPackingPlans) {
         const planItems = await packingPlanApi.getPackingPlanItems(plan.id);
@@ -313,8 +329,14 @@ export async function exportExcel(items: IItem[], labels: ILabel[] = []): Promis
         const planRowValues = PACKING_PLAN_EXCEL_COLUMNS.map((col) => {
             if (col.key === 'status') return null;
             const rawValue = plan[col.key as keyof IPackingPlan];
+
+            if (col.key === 'scenarioType') {
+                return scenarioTypeMap.get(rawValue as string) || rawValue;
+            }
+
             return col.exportTransform ? col.exportTransform(rawValue, plan) : rawValue;
         });
+
         planRowValues.push(planStatus);
         packingPlansSheet.addRow(planRowValues);
 
@@ -396,6 +418,49 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
         dbLabels.forEach(l => {
             existingLabelsMap.set(l.id, l);
             labelsByNameMap.set(l.name, l);
+        });
+    }
+
+    // 1.5 Process ScenarioTypes sheet
+    const scenarioTypesSheet = workbook.getWorksheet('ScenarioTypes');
+    const existingScenarioMap = new Map<string, IScenarioType>();
+    const scenariosByNameMap = new Map<string, IScenarioType>();
+
+    if (scenarioTypesSheet) {
+        const scenarioHeaderRow = scenarioTypesSheet.getRow(1);
+        const scenarioHeaderMap = new Map<string, number>();
+
+        scenarioHeaderRow.eachCell((cell, colNumber) => {
+            const text = (cell.value ?? '').toString().trim();
+            if (text) scenarioHeaderMap.set(text, colNumber);
+        });
+
+        const idCol = scenarioHeaderMap.get('ID');
+        const nameCol = scenarioHeaderMap.get('Name');
+        const iconCol = scenarioHeaderMap.get('Symbol');
+
+        if (idCol && nameCol && iconCol) {
+            for (let rowIdx = 2; rowIdx <= scenarioTypesSheet.rowCount; rowIdx++) {
+                const row = scenarioTypesSheet.getRow(rowIdx);
+                if (!row.hasValues) continue;
+
+                const id = row.getCell(idCol).value?.toString().trim();
+                const name = row.getCell(nameCol).value?.toString().trim();
+                const icon = row.getCell(iconCol).value?.toString().trim();
+
+                if (id && name && icon) {
+                    const newType: IScenarioType = { id, name, icon };
+                    await db.scenarioTypes.put(newType);
+                    existingScenarioMap.set(id, newType);
+                    scenariosByNameMap.set(name, newType);
+                }
+            }
+        }
+    } else {
+        const dbScenarios = await packingPlanApi.getScenarioTypes();
+        dbScenarios.forEach((s: IScenarioType) => {
+            existingScenarioMap.set(s.id, s);
+            scenariosByNameMap.set(s.name, s);
         });
     }
 
@@ -538,6 +603,15 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
                 }
             }
             if (plan.id && plan.name) {
+                // If the scenarioType is a label (name), map it to the ID
+                const rawScenario = plan.scenarioType?.toString() || '';
+                const foundScenario = scenariosByNameMap.get(rawScenario) || existingScenarioMap.get(rawScenario);
+                if (foundScenario) {
+                    plan.scenarioType = foundScenario.id;
+                } else {
+                    // Fallback to custom if not found
+                    plan.scenarioType = 'custom';
+                }
                 plansToAdd.push(plan);
             }
         }
