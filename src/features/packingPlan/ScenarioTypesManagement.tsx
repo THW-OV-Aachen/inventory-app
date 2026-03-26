@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, X } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import { SCENARIO_ICONS, getIconComponent } from '../../utils/scenarioIcons';
 import IconContainer from '../../utils/IconContainer';
@@ -146,30 +146,72 @@ const ActionButton = styled.button`
 
 const ModalOverlay = styled.div`
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     z-index: 1000;
 `;
 
-const ModalContent = styled.div`
-    background-color: ${theme.colors.background.light};
+const ModalBox = styled.div`
+    background: white;
     padding: ${theme.spacing.xl};
     border-radius: ${theme.borderRadius.lg};
+    max-width: 600px;
     width: 90%;
-    max-width: 400px;
-    box-shadow: ${theme.shadows.lg};
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+`;
 
-    h2 {
-        margin-top: 0;
-        margin-bottom: ${theme.spacing.lg};
+const ModalHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: ${theme.spacing.lg};
+`;
+
+const ModalTitle = styled.h3`
+    margin: 0;
+    font-size: ${theme.typography.fontSize.lg};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    color: ${theme.colors.text.primary};
+`;
+
+const ModalText = styled.p`
+    margin: 0 0 ${theme.spacing.lg} 0;
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.secondary};
+    line-height: 1.5;
+`;
+
+const CloseButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: ${theme.spacing.xs};
+    border: none;
+    background: transparent;
+    color: ${theme.colors.text.secondary};
+    cursor: pointer;
+    border-radius: ${theme.borderRadius.md};
+    transition: ${theme.transitions.default};
+
+    &:hover {
+        background-color: ${theme.colors.background.light};
         color: ${theme.colors.text.primary};
     }
+`;
+
+const ModalContentScroll = styled.div`
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing.lg};
 `;
 
 const IconGrid = styled.div`
@@ -197,16 +239,37 @@ const IconSelectBtn = styled.button<{ $isSelected?: boolean }>`
     }
 `;
 
-const ModalButtons = styled.div<{ $fullWidth?: boolean }>`
+const ModalButtons = styled.div`
     display: flex;
-    justify-content: ${props => props.$fullWidth ? 'stretch' : 'flex-end'};
     gap: ${theme.spacing.md};
+    width: 100%;
     
-    ${props => props.$fullWidth && `
-        & > * {
-            flex: 1;
-        }
-    `}
+    & > * {
+        flex: 1;
+    }
+`;
+
+const ModalButton = styled(Button)`
+    padding: 0 ${theme.spacing.lg};
+    height: 36px;
+    font-size: ${theme.typography.fontSize.sm};
+`;
+
+const DangerModalButton = styled(ModalButton)`
+    background-color: ${theme.colors.status.error.main};
+    color: white;
+    border: 1px solid ${theme.colors.status.error.main};
+
+    &:hover:not(:disabled) {
+        background-color: ${theme.colors.status.error.dark};
+        border-color: ${theme.colors.status.error.dark};
+        transform: translateY(-1px);
+        box-shadow: ${theme.shadows.md};
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
 `;
 
 const ScenarioTypesManagement = () => {
@@ -314,63 +377,73 @@ const ScenarioTypesManagement = () => {
 
             {isModalOpen && (
                 <ModalOverlay onClick={() => setIsModalOpen(false)}>
-                    <ModalContent onClick={e => e.stopPropagation()}>
-                        <h2>{editingId ? 'Szenario-Typ bearbeiten' : 'Neuer Szenario-Typ'}</h2>
-                        
-                        <Label>Name</Label>
-                        <Input 
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="z.B. Hochwasser"
-                            style={{ marginBottom: theme.spacing.lg }}
-                        />
+                    <ModalBox onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        <ModalHeader>
+                            <ModalTitle>{editingId ? 'Szenario-Typ bearbeiten' : 'Neuer Szenario-Typ'}</ModalTitle>
+                            <CloseButton onClick={() => setIsModalOpen(false)}>
+                                <IconContainer icon={X} />
+                            </CloseButton>
+                        </ModalHeader>
 
-                        <Label>Symbol wählen</Label>
-                        <IconGrid>
-                            {Object.entries(SCENARIO_ICONS).map(([iconName, IconComponent]) => (
-                                <IconSelectBtn 
-                                    key={iconName}
-                                    $isSelected={selectedIcon === iconName}
-                                    onClick={() => setSelectedIcon(iconName)}
-                                >
-                                    <IconContainer icon={IconComponent} width="24px" height="24px" />
-                                </IconSelectBtn>
-                            ))}
-                        </IconGrid>
+                        <ModalContentScroll>
+                            <Label>Name</Label>
+                            <Input 
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="z.B. Hochwasser"
+                                style={{ marginBottom: theme.spacing.lg }}
+                            />
+
+                            <Label>Symbol wählen</Label>
+                            <IconGrid>
+                                {Object.entries(SCENARIO_ICONS).map(([iconName, IconComponent]) => (
+                                    <IconSelectBtn 
+                                        key={iconName}
+                                        $isSelected={selectedIcon === iconName}
+                                        onClick={() => setSelectedIcon(iconName)}
+                                    >
+                                        <IconContainer icon={IconComponent} width="24px" height="24px" />
+                                    </IconSelectBtn>
+                                ))}
+                            </IconGrid>
+                        </ModalContentScroll>
 
                         <ModalButtons>
-                            <Button $variant="secondary" onClick={() => setIsModalOpen(false)}>
+                            <ModalButton $variant="ghost" onClick={() => setIsModalOpen(false)}>
                                 Abbrechen
-                            </Button>
-                            <Button onClick={handleSave} disabled={!name.trim()}>
+                            </ModalButton>
+                            <ModalButton $variant="primary" onClick={handleSave} disabled={!name.trim()}>
                                 Speichern
-                            </Button>
+                            </ModalButton>
                         </ModalButtons>
-                    </ModalContent>
+                    </ModalBox>
                 </ModalOverlay>
             )}
 
             {deleteConfirmType && (
                 <ModalOverlay onClick={() => setDeleteConfirmType(null)}>
-                    <ModalContent onClick={e => e.stopPropagation()}>
-                        <h2>Szenario-Typ löschen?</h2>
-                        <div style={{ marginBottom: theme.spacing.lg }}>
-                            <p style={{ margin: '0 0 8px 0', color: theme.colors.text.primary }}>
-                                Dieser Typ wird in <strong>{deletePlanCount}</strong> Packplänen verwendet.
-                            </p>
-                            <p style={{ margin: '0', fontSize: theme.typography.fontSize.sm, color: theme.colors.text.secondary }}>
-                                Die betroffenen Pläne werden auf den Standard-Typ <strong>"Sonstiges"</strong> gesetzt.
-                            </p>
-                        </div>
-                        <ModalButtons $fullWidth>
-                            <Button $variant="secondary" onClick={() => setDeleteConfirmType(null)}>
+                    <ModalBox onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        <ModalHeader>
+                            <ModalTitle>Szenario-Typ löschen?</ModalTitle>
+                            <CloseButton onClick={() => setDeleteConfirmType(null)}>
+                                <IconContainer icon={X} />
+                            </CloseButton>
+                        </ModalHeader>
+                        
+                        <ModalText>
+                            Dieser Typ wird in <strong>{deletePlanCount}</strong> Packplänen verwendet.
+                            Die betroffenen Pläne werden auf den Standard-Typ "Sonstiges" gesetzt.
+                        </ModalText>
+
+                        <ModalButtons>
+                            <ModalButton $variant="ghost" onClick={() => setDeleteConfirmType(null)}>
                                 Abbrechen
-                            </Button>
-                            <Button $variant="danger" onClick={handleFinalDelete}>
+                            </ModalButton>
+                            <DangerModalButton onClick={handleFinalDelete}>
                                 Löschen
-                            </Button>
+                            </DangerModalButton>
                         </ModalButtons>
-                    </ModalContent>
+                    </ModalBox>
                 </ModalOverlay>
             )}
         </StyledContainer>

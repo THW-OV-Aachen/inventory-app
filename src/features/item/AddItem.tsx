@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import styled from 'styled-components';
-import { Check, ChevronLeft, X, Trash } from 'lucide-react';
+import { Check, ChevronLeft, X, Trash2 } from 'lucide-react';
 import { db } from '../../db/db';
 import { type IItem, type DamageLevelType, ItemValidationSchema } from '../../db/items';
 import { type ILabel } from '../../db/labels';
@@ -46,25 +46,87 @@ const ModalOverlay = styled.div`
 
 const ModalBox = styled.div`
     background: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 480px;
-    width: 100%;
+    padding: ${theme.spacing.xl};
+    border-radius: ${theme.borderRadius.lg};
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 `;
 
+const ModalHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: ${theme.spacing.lg};
+`;
+
 const ModalTitle = styled.h3`
-    margin: 0 0 10px 0;
+    margin: 0;
+    font-size: ${theme.typography.fontSize.lg};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    color: ${theme.colors.text.primary};
 `;
 
 const ModalText = styled.div`
-    margin: 0 0 16px 0;
+    margin: 0 0 ${theme.spacing.lg} 0;
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.secondary};
+    line-height: 1.5;
+`;
+
+const CloseButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: ${theme.spacing.xs};
+    border: none;
+    background: transparent;
+    color: ${theme.colors.text.secondary};
+    cursor: pointer;
+    border-radius: ${theme.borderRadius.md};
+    transition: ${theme.transitions.default};
+
+    &:hover {
+        background-color: ${theme.colors.background.light};
+        color: ${theme.colors.text.primary};
+    }
 `;
 
 const ModalButtons = styled.div`
     display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+    gap: ${theme.spacing.sm};
+    width: 100%;
+    
+    & > * {
+        flex: 1;
+    }
+`;
+
+const ModalButton = styled(Button)`
+    padding: 0 ${theme.spacing.lg};
+    min-width: 0;
+    height: 36px;
+    font-size: ${theme.typography.fontSize.sm};
+`;
+
+const DangerModalButton = styled(ModalButton)`
+    background-color: ${theme.colors.status.error.main};
+    color: white;
+    border: 1px solid ${theme.colors.status.error.main};
+
+    &:hover:not(:disabled) {
+        background-color: ${theme.colors.status.error.dark};
+        border-color: ${theme.colors.status.error.dark};
+        transform: translateY(-1px);
+        box-shadow: ${theme.shadows.md};
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
 `;
 
 const ConfirmationInput = styled.input`
@@ -546,7 +608,7 @@ const AddItem = () => {
                                                         <IconContainer icon={Check} />
                                                     )}
                                                     <IconContainer
-                                                        icon={Trash}
+                                                        icon={Trash2}
                                                         color={theme.colors.status.error.main}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -601,9 +663,27 @@ const AddItem = () => {
                             </SelectedLabels>
                         )}
                         {labelToDelete && (
-                            <ModalOverlay>
-                                <ModalBox role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
-                                    <ModalTitle id="delete-confirm-title">Label löschen bestätigen</ModalTitle>
+                            <ModalOverlay
+                                onClick={() => {
+                                    setLabelToDelete(null);
+                                    setDeleteConfirmationInput('');
+                                }}
+                            >
+                                <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+                                    <ModalHeader>
+                                        <ModalTitle id="delete-confirm-title">Label löschen?</ModalTitle>
+                                        <CloseButton
+                                            type="button"
+                                            onClick={() => {
+                                                setLabelToDelete(null);
+                                                setDeleteConfirmationInput('');
+                                            }}
+                                            aria-label="Close"
+                                        >
+                                            <IconContainer icon={X} />
+                                        </CloseButton>
+                                    </ModalHeader>
+                                    
                                     <ModalText>
                                         <WarningText>
                                             WARNUNG: Dieses Label wird von{' '}
@@ -628,14 +708,7 @@ const AddItem = () => {
                                         autoFocus
                                     />
                                     <ModalButtons>
-                                        <StyledButton
-                                            $variant="primary"
-                                            onClick={confirmDeleteLabel}
-                                            disabled={deleteConfirmationInput.toLowerCase() !== 'ja'}
-                                        >
-                                            Bestätigen
-                                        </StyledButton>
-                                        <StyledButton
+                                        <ModalButton
                                             $variant="ghost"
                                             onClick={() => {
                                                 setLabelToDelete(null);
@@ -643,7 +716,13 @@ const AddItem = () => {
                                             }}
                                         >
                                             Abbrechen
-                                        </StyledButton>
+                                        </ModalButton>
+                                        <DangerModalButton
+                                            onClick={confirmDeleteLabel}
+                                            disabled={deleteConfirmationInput.toLowerCase() !== 'ja'}
+                                        >
+                                            Bestätigen
+                                        </DangerModalButton>
                                     </ModalButtons>
                                 </ModalBox>
                             </ModalOverlay>

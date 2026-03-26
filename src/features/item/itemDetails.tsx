@@ -1,4 +1,4 @@
-import { Box, FileText, Layers, MapPin, Pen, ChevronLeft, Trash2 } from 'lucide-react';
+import { Box, FileText, Layers, MapPin, Pen, ChevronLeft, Trash2, X } from 'lucide-react';
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -27,6 +27,8 @@ import { calculateNextInspectionDate, isDatePastOrToday, formatDate } from '../.
 const ItemDetails = () => {
     const { id } = useParams<{ id: string }>();
     const [item, setItem] = useState<IItem | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -45,14 +47,23 @@ const ItemDetails = () => {
         alert('Additional Docs clicked!');
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = async () => {
         if (!item?.id) return;
-
-        const confirmed = window.confirm(`Möchtest du "${item.name}" wirklich löschen?`);
-        if (!confirmed) return;
-
-        await db.items.delete(item.id);
-        navigate('/items');
+        setIsDeleting(true);
+        try {
+            await db.items.delete(item.id);
+            navigate('/items');
+        } catch (error) {
+            console.error('Failed to delete item:', error);
+            alert('Fehler beim Löschen des Artikels.');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+        }
     };
 
     if (!item) return <p className="text-center mt-4">Loading item...</p>;
@@ -197,6 +208,48 @@ const ItemDetails = () => {
                     </StyledButton>
                 </ButtonContainer>
             </StyledContentWrapper>
+
+            {showDeleteConfirm && (
+                <ModalOverlay
+                    onClick={() => {
+                        if (isDeleting) return;
+                        setShowDeleteConfirm(false);
+                    }}
+                >
+                    <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <ModalHeader>
+                            <ModalTitle>Artikel löschen?</ModalTitle>
+                            <CloseButton
+                                type="button"
+                                onClick={() => {
+                                    if (isDeleting) return;
+                                    setShowDeleteConfirm(false);
+                                }}
+                                aria-label="Close"
+                            >
+                                <IconContainer icon={X} />
+                            </CloseButton>
+                        </ModalHeader>
+
+                        <ModalText>
+                            Möchten Sie "{item.name}" wirklich aus dem Inventar löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                        </ModalText>
+
+                        <ModalButtons>
+                            <ModalButton
+                                $variant="ghost"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                            >
+                                Abbrechen
+                            </ModalButton>
+                            <DangerModalButton onClick={handleConfirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Löschen…' : 'Löschen'}
+                            </DangerModalButton>
+                        </ModalButtons>
+                    </ModalBox>
+                </ModalOverlay>
+            )}
         </StyledContainer>
     );
 };
@@ -204,6 +257,100 @@ const ItemDetails = () => {
 export default ItemDetails;
 
 // ─── Styled Components ────────────────────────────────────
+const ModalOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+    background: white;
+    padding: ${theme.spacing.xl};
+    border-radius: ${theme.borderRadius.lg};
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+`;
+
+const ModalHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: ${theme.spacing.lg};
+`;
+
+const ModalTitle = styled.h3`
+    margin: 0;
+    font-size: ${theme.typography.fontSize.lg};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    color: ${theme.colors.text.primary};
+`;
+
+const ModalText = styled.p`
+    margin: 0 0 ${theme.spacing.lg} 0;
+    font-size: ${theme.typography.fontSize.sm};
+    color: ${theme.colors.text.secondary};
+    line-height: 1.5;
+`;
+
+const CloseButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: ${theme.spacing.xs};
+    border: none;
+    background: transparent;
+    color: ${theme.colors.text.secondary};
+    cursor: pointer;
+    border-radius: ${theme.borderRadius.md};
+    transition: ${theme.transitions.default};
+
+    &:hover {
+        background-color: ${theme.colors.background.light};
+        color: ${theme.colors.text.primary};
+    }
+`;
+
+const ModalButtons = styled.div`
+    display: flex;
+    gap: ${theme.spacing.sm};
+    width: 100%;
+    
+    & > * {
+        flex: 1;
+    }
+`;
+
+const ModalButton = styled(Button)`
+    padding: 0 ${theme.spacing.lg};
+    min-width: 0;
+    height: 36px;
+    font-size: ${theme.typography.fontSize.sm};
+`;
+
+const DangerModalButton = styled(ModalButton)`
+    background-color: ${theme.colors.status.error.main};
+    color: white;
+    border: 1px solid ${theme.colors.status.error.main};
+
+    &:hover:not(:disabled) {
+        background-color: ${theme.colors.status.error.dark};
+        border-color: ${theme.colors.status.error.dark};
+        transform: translateY(-1px);
+        box-shadow: ${theme.shadows.md};
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+`;
 const StyledContainer = styled(Container)`
     padding-top: 8px;
     padding-left: 0;

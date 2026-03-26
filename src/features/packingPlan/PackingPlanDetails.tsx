@@ -630,7 +630,10 @@ const PackingPlanDetails = () => {
     const { planId } = useParams<{ planId: string }>();
     const [showAddItemModal, setShowAddItemModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showItemDeleteConfirm, setShowItemDeleteConfirm] = useState(false);
+    const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
     const [isDeletingPlan, setIsDeletingPlan] = useState(false);
+    const [isDeletingItem, setIsDeletingItem] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
     const [quantity, setQuantity] = useState<string>('1');
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -752,16 +755,23 @@ const PackingPlanDetails = () => {
         }
     };
 
-    const handleDeleteItem = async (itemId: string) => {
-        // Remove an item row from the plan.
-        if (!window.confirm('Sind Sie sicher, dass Sie diesen Artikel aus dem Packplan entfernen möchten?')) {
-            return;
-        }
+    const handleDeleteItem = (itemId: string) => {
+        setItemToDeleteId(itemId);
+        setShowItemDeleteConfirm(true);
+    };
+
+    const handleConfirmDeleteItem = async () => {
+        if (!itemToDeleteId) return;
+        setIsDeletingItem(true);
         try {
-            await packingPlanApi.deletePackingPlanItem(itemId);
+            await packingPlanApi.deletePackingPlanItem(itemToDeleteId);
         } catch (error) {
             console.error('Failed to delete item:', error);
             alert('Fehler beim Entfernen des Artikels aus dem Packplan.');
+        } finally {
+            setIsDeletingItem(false);
+            setShowItemDeleteConfirm(false);
+            setItemToDeleteId(null);
         }
     };
 
@@ -1014,6 +1024,48 @@ const PackingPlanDetails = () => {
                             </ModalButton>
                             <DangerModalButton onClick={handleConfirmDeletePlan} disabled={isDeletingPlan}>
                                 {isDeletingPlan ? 'Löschen…' : 'Löschen'}
+                            </DangerModalButton>
+                        </ModalButtons>
+                    </ModalBox>
+                </ModalOverlay>
+            )}
+
+            {showItemDeleteConfirm && (
+                <ModalOverlay
+                    onClick={() => {
+                        if (isDeletingItem) return;
+                        setShowItemDeleteConfirm(false);
+                    }}
+                >
+                    <ModalBox onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <ModalHeader>
+                            <ModalTitle>Artikel aus Packplan entfernen?</ModalTitle>
+                            <CloseButton
+                                type="button"
+                                onClick={() => {
+                                    if (isDeletingItem) return;
+                                    setShowItemDeleteConfirm(false);
+                                }}
+                                aria-label="Close"
+                            >
+                                <IconContainer icon={X} />
+                            </CloseButton>
+                        </ModalHeader>
+
+                        <ModalText>
+                            Diese Aktion kann nicht rückgängig gemacht werden.
+                        </ModalText>
+
+                        <ModalButtons>
+                            <ModalButton
+                                $variant="ghost"
+                                onClick={() => setShowItemDeleteConfirm(false)}
+                                disabled={isDeletingItem}
+                            >
+                                Abbrechen
+                            </ModalButton>
+                            <DangerModalButton onClick={handleConfirmDeleteItem} disabled={isDeletingItem}>
+                                {isDeletingItem ? 'Löschen…' : 'Löschen'}
                             </DangerModalButton>
                         </ModalButtons>
                     </ModalBox>
