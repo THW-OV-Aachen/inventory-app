@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { inventoryApi } from '../../app/api';
 import type { IItem } from '../../db/items';
-import { Card } from '../../styles/components';
+import { Card, Container } from '../../styles/components';
 import StatusBadge from '../../utils/StatusBadge';
 import { theme } from '../../styles/theme';
 import { Link } from 'react-router-dom';
@@ -13,10 +13,10 @@ const Home = () => {
     });
 
     return (
-        <div>
-            <h1 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>Willkommen!</h1>
+        <StyledHomeContainer $maxWidth="1000px">
+            <h1 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '16px', padding: `0 ${theme.spacing.lg}` }}>Willkommen!</h1>
 
-            <div>
+            <div style={{ padding: `0 ${theme.spacing.lg}` }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <StatisticCard>
                         <span>
@@ -48,9 +48,14 @@ const Home = () => {
                     </StatisticCard>
                 </div>
             </div>
-        </div>
+        </StyledHomeContainer>
     );
 };
+
+const StyledHomeContainer = styled(Container)`
+    padding-top: ${theme.spacing.lg};
+    padding-bottom: ${theme.spacing.xl};
+`;
 
 const PreviewItemContainer = styled.div`
     display: flex;

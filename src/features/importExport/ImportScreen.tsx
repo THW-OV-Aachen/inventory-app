@@ -15,6 +15,10 @@ const StyledContainer = styled(Container)`
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
     margin: 0 auto;
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
 `;
 
 const StyledCard = styled(Card)`

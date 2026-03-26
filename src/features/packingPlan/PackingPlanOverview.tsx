@@ -167,19 +167,22 @@ const StyledContainer = styled(Container)`
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
-    /* Removed max-width and margin: 0 auto to match ItemOverview full-width layout */
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
 `;
 
 const Header = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} 0;
+    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} ${theme.spacing.lg};
     margin-bottom: 0;
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding: 0 ${theme.spacing.sm} ${theme.spacing.lg} 0;
+        padding: 0 ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
     }
 `;
 
@@ -259,9 +262,11 @@ const PlansGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: ${theme.spacing.lg};
+    padding: 0 ${theme.spacing.lg};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         grid-template-columns: 1fr;
+        padding: 0 ${theme.spacing.md};
     }
 `;
 

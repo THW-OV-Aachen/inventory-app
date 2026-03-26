@@ -26,6 +26,7 @@ const StyledContainer = styled(Container)`
     padding-bottom: ${theme.spacing.xl};
 
     @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
         margin: 0 auto;
     }
 `;
