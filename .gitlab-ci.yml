@@ -1,8 +1,11 @@
-image: node:18
+image: node:22
 
 stages:
     - build
     - deploy
+
+variables:
+    NODE_OPTIONS: "--max-old-space-size=4096"
 
 build:
     stage: build
