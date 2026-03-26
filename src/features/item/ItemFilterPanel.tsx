@@ -269,6 +269,12 @@ const PackActionsRow = styled.div<{ $centered?: boolean; $isPackMode?: boolean }
         }
     `}
 
+    ${({ $isPackMode }) => $isPackMode && `
+        @media (min-width: ${theme.breakpoints.lg}) {
+            justify-content: flex-start;
+        }
+    `}
+
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         margin-top: 2px;
         ${({ $isPackMode }) => $isPackMode && `
@@ -342,7 +348,6 @@ const PlanNameInput = styled.input`
     font-size: 12px;
     min-width: 150px;
     flex: 1;
-    max-width: 300px;
 
     &:focus {
         outline: none;
@@ -359,7 +364,7 @@ const PlanNameWrapper = styled.div`
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 2;
+    flex: 1;
     min-width: 0;
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
@@ -862,14 +867,14 @@ const ScenarioSelector = ({
 
     return (
         <ScenarioSelectorWrapper ref={dropdownRef}>
-            <IconButton 
+            <ScenarioButton 
                 type="button" 
                 onClick={() => !disabled && setIsOpen(!isOpen)} 
                 $disabled={disabled}
-                title={selectedType?.name || 'Szenariotyp'}
             >
                 <IconContainer icon={Icon} />
-            </IconButton>
+                <span>{selectedType?.name || 'Szenariotyp'}</span>
+            </ScenarioButton>
 
             {isOpen && (
                 <ScenarioDropdown>
@@ -901,19 +906,20 @@ const ScenarioSelectorWrapper = styled.div`
     flex-shrink: 0;
 `;
 
-const IconButton = styled.button<{ $disabled?: boolean }>`
-    width: 36px;
+const ScenarioButton = styled.button<{ $disabled?: boolean }>`
     height: 36px;
+    padding: 0 12px;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
     background: white;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
     cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
     color: ${theme.colors.text.secondary};
     transition: all 0.2s ease;
-    padding: 0;
+    font-size: 13px;
+    white-space: nowrap;
 
     &:hover {
         ${props => !props.$disabled && `
@@ -923,10 +929,13 @@ const IconButton = styled.button<{ $disabled?: boolean }>`
         `}
     }
 
-    & > div {
-        display: flex;
-        align-items: center;
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        width: 36px;
+        padding: 0;
         justify-content: center;
+        span {
+            display: none;
+        }
     }
 `;
 
