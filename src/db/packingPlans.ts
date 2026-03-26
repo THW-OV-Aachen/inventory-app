@@ -1,14 +1,10 @@
-// Emergency scenario types
-export const EmergencyScenarioType = {
-    FLOOD: 'flood',
-    FIRE: 'fire',
-    EARTHQUAKE: 'earthquake',
-    STORM: 'storm',
-    SEARCH_RESCUE: 'search_rescue',
-    CUSTOM: 'custom',
-} as const;
+export interface IScenarioType {
+    id: string;
+    name: string;
+    icon: string;
+}
 
-export type EmergencyScenarioType = (typeof EmergencyScenarioType)[keyof typeof EmergencyScenarioType];
+export type EmergencyScenarioType = string; // Legacy alias for backward compatibility during migration
 
 // Packing plan (emergency scenario template)
 export interface IPackingPlan {

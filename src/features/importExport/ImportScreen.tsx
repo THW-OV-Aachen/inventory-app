@@ -10,11 +10,10 @@ import { Card, Button, Container, BackButton, Header, ControlsWrapper } from '..
 import IconContainer from '../../utils/IconContainer';
 
 const StyledContainer = styled(Container)`
-    padding-top: 8px;
+    padding-top: 0px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
-    max-width: 720px;
     margin: 0 auto;
 `;
 

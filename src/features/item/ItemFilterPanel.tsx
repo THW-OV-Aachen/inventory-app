@@ -16,6 +16,8 @@ import {
     ScanLine,
 } from 'lucide-react';
 import IconContainer from '../../utils/IconContainer';
+import { getIconComponent } from '../../utils/scenarioIcons';
+import { packingPlanApi } from '../../app/packingPlanApi';
 import React from 'react';
 import { Form } from 'react-bootstrap';
 import DamageLevelTranslation from '../../utils/damageLevels';
@@ -149,14 +151,21 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                 $isPackMode={packModeState.packMode}
             >
                 {packModeState.packMode && (
-                    <PlanNameInput
-                        type="text"
-                        placeholder="Name des Packplans..."
-                        value={packModeState.planName}
-                        onChange={(e) => packModeState.setPlanName(e.target.value)}
-                        disabled={isExistingPlan}
-                        title={isExistingPlan ? "Name kann bei bestehendem Plan nicht hier geändert werden" : ""}
-                    />
+                    <PlanNameWrapper>
+                        <ScenarioSelector 
+                            currentType={packModeState.scenarioType} 
+                            onSelect={packModeState.setScenarioType}
+                            disabled={isExistingPlan}
+                        />
+                        <PlanNameInput
+                            type="text"
+                            placeholder="Name des Packplans..."
+                            value={packModeState.planName}
+                            onChange={(e) => packModeState.setPlanName(e.target.value)}
+                            disabled={isExistingPlan}
+                            title={isExistingPlan ? "Name kann bei bestehendem Plan nicht hier geändert werden" : ""}
+                        />
+                    </PlanNameWrapper>
                 )}
                 {packModeState.packMode && onSavePackingPlan && (
                     <PrimaryButton 
@@ -187,6 +196,8 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
         </ItemFilterWrapper>
     );
 };
+
+// ─── Styled Components for ItemFilter ──────────────────────────
 
 const SearchInputWrapper = styled.div`
     width: 100%;
@@ -344,6 +355,21 @@ const PlanNameInput = styled.input`
     }
 `;
 
+const PlanNameWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 2;
+    min-width: 0;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        flex: 2;
+        & > input {
+            flex: 1;
+        }
+    }
+`;
+
 const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
     position: sticky;
     top: 0;
@@ -366,6 +392,8 @@ const ItemFilterWrapper = styled.div<{ $isScrolled?: boolean }>`
         gap: 2px;
     }
 `;
+
+// ─── LabelSelector Component ───────────────────────────────
 
 import { store } from '../../store/store';
 
@@ -469,6 +497,8 @@ const LabelSelector = () => {
 const DropdownContainer = styled.div`
     position: relative;
 `;
+
+// ─── ItemSortButton Component ──────────────────────────────
 
 const ItemSortButton = () => {
     const dispatch = useDispatch();
@@ -793,6 +823,156 @@ const SortOptionLabel = styled.div`
     align-items: center;
     gap: 8px;
 `;
+
+// ─── ScenarioSelector Component ────────────────────────────
+
+const ScenarioSelector = ({ 
+    currentType, 
+    onSelect,
+    disabled 
+}: { 
+    currentType: string, 
+    onSelect: (id: string) => void,
+    disabled?: boolean
+}) => {
+    const scenarioTypes = packingPlanApi.useScenarioTypes();
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const selectedType = scenarioTypes.find(t => t.id === currentType) || 
+                         scenarioTypes.find(t => t.id === 'custom');
+    
+    const Icon = selectedType ? getIconComponent(selectedType.icon) : getIconComponent('Package');
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
+
+    return (
+        <ScenarioSelectorWrapper ref={dropdownRef}>
+            <IconButton 
+                type="button" 
+                onClick={() => !disabled && setIsOpen(!isOpen)} 
+                $disabled={disabled}
+                title={selectedType?.name || 'Szenariotyp'}
+            >
+                <IconContainer icon={Icon} />
+            </IconButton>
+
+            {isOpen && (
+                <ScenarioDropdown>
+                    {scenarioTypes.map((type) => {
+                        const TypeIcon = getIconComponent(type.icon);
+                        return (
+                            <ScenarioOption 
+                                key={type.id} 
+                                onClick={() => {
+                                    onSelect(type.id);
+                                    setIsOpen(false);
+                                }}
+                                $isActive={currentType === type.id}
+                            >
+                                <IconContainer icon={TypeIcon} />
+                                <span>{type.name}</span>
+                                {currentType === type.id && <IconContainer icon={Check} />}
+                            </ScenarioOption>
+                        );
+                    })}
+                </ScenarioDropdown>
+            )}
+        </ScenarioSelectorWrapper>
+    );
+};
+
+const ScenarioSelectorWrapper = styled.div`
+    position: relative;
+    flex-shrink: 0;
+`;
+
+const IconButton = styled.button<{ $disabled?: boolean }>`
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+    color: ${theme.colors.text.secondary};
+    transition: all 0.2s ease;
+    padding: 0;
+
+    &:hover {
+        ${props => !props.$disabled && `
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: var(--color-primary);
+        `}
+    }
+
+    & > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+`;
+
+const ScenarioDropdown = styled.div`
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 1001;
+    padding: 4px;
+`;
+
+const ScenarioOption = styled.button<{ $isActive: boolean }>`
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: none;
+    background: ${props => props.$isActive ? '#f1f5f9' : 'transparent'};
+    color: ${props => props.$isActive ? 'var(--color-primary)' : theme.colors.text.primary};
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    font-weight: ${props => props.$isActive ? '600' : '400'};
+
+    &:hover {
+        background: #f8fafc;
+    }
+
+    & > span {
+        flex: 1;
+    }
+
+    & svg:last-child {
+        width: 14px;
+        height: 14px;
+    }
+`;
+
+// ─── ItemFilterSearchbar Component ─────────────────────────
 
 const ItemFilterSearchbar = () => {
     const dispatch = useDispatch();

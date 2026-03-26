@@ -6,6 +6,7 @@ export const usePackMode = (initialActive = false) => {
     const [packMode, setPackMode] = useState(initialActive);
     const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
     const [qtyByItemId, setQtyByItemId] = useState<Record<string, number>>({});
+    const [scenarioType, setScenarioType] = useState<string>('custom');
     const [planName, setPlanName] = useState(initialActive ? `Packplan - ${new Date().toLocaleDateString('de-DE', {
                         day: '2-digit',
                         month: '2-digit',
@@ -19,6 +20,7 @@ export const usePackMode = (initialActive = false) => {
                 setSelectedItemIds(new Set());
                 setQtyByItemId({});
                 setPlanName('');
+                setScenarioType('custom');
             } else {
                 // Entering pack mode - set default plan name
                 setPlanName(`Packplan - ${new Date().toLocaleDateString('de-DE', {
@@ -26,6 +28,7 @@ export const usePackMode = (initialActive = false) => {
                         month: '2-digit',
                         year: 'numeric',
                     })}`);
+                setScenarioType('custom');
             }
             return !prev;
         });
@@ -80,6 +83,8 @@ export const usePackMode = (initialActive = false) => {
         packMode,
         selectedItemIds,
         qtyByItemId,
+        scenarioType,
+        setScenarioType,
         planName,
         setPlanName,
         togglePackMode,
@@ -106,6 +111,7 @@ export const usePackMode = (initialActive = false) => {
         clear: () => {
             setSelectedItemIds(new Set());
             setQtyByItemId({});
+            setScenarioType('custom');
             setPlanName(`Packplan - ${new Date().toLocaleDateString('de-DE', {
                         day: '2-digit',
                         month: '2-digit',
