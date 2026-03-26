@@ -1,4 +1,4 @@
-import { Box, FileText, Layers, MapPin, Pen, ChevronLeft, Trash2, X } from 'lucide-react';
+import { Box, Layers, MapPin, Pen, ChevronLeft, Trash2, X } from 'lucide-react';
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -43,9 +43,6 @@ const ItemDetails = () => {
         fetchItem();
     }, [id]);
 
-    const handleAdditionalDocs = () => {
-        alert('Additional Docs clicked!');
-    };
 
     const handleDelete = () => {
         setShowDeleteConfirm(true);
@@ -201,12 +198,6 @@ const ItemDetails = () => {
                     <StyledTextarea value={item.remark || ''} disabled readOnly />
                 </StyledDetailsCard>
 
-                <ButtonContainer>
-                    <StyledButton $variant="primary" onClick={handleAdditionalDocs}>
-                        <IconContainer icon={FileText} />
-                        Weitere Dokumente
-                    </StyledButton>
-                </ButtonContainer>
             </StyledContentWrapper>
 
             {showDeleteConfirm && (
@@ -254,7 +245,7 @@ const ItemDetails = () => {
     );
 };
 
-export default ItemDetails;
+
 
 // ─── Styled Components ────────────────────────────────────
 const ModalOverlay = styled.div`
@@ -503,34 +494,11 @@ const StyledTextarea = styled(Textarea)`
     min-height: 80px;
 `;
 
-const StyledButton = styled(Button)`
-    height: 36px;
-    padding: 0 ${theme.spacing.md};
-    font-size: ${theme.typography.fontSize.sm};
-    gap: ${theme.spacing.xs};
-`;
-
-const ButtonContainer = styled.div`
-    display: flex;
-    gap: ${theme.spacing.sm};
-    flex-direction: column;
-
-    & > ${StyledButton} {
-        width: 100%;
-    }
-
-    @media (min-width: ${theme.breakpoints.md}) {
-        flex-direction: row;
-        justify-content: flex-start;
-
-        & > ${StyledButton} {
-            width: unset;
-        }
-    }
-`;
 
 const LabelContainer = styled.div`
     display: flex;
     gap: ${theme.spacing.xs};
     flex-wrap: wrap;
 `;
+
+export default ItemDetails;
