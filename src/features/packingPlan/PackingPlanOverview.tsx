@@ -1,53 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Droplets, Flame, Wind, Search, FileText, ChevronLeft, Plus, CheckCircle2 } from 'lucide-react';
+import { FileText, ChevronLeft, Plus, CheckCircle2, Settings } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import type { EmergencyScenarioType } from '../../db/packingPlans';
 import { Card, Container, BackButton, Button } from '../../styles/components';
 import { theme } from '../../styles/theme';
 import IconContainer from '../../utils/IconContainer';
-
-// Icon mapping for scenario types shown on cards.
-const getScenarioIcon = (scenarioType: EmergencyScenarioType) => {
-    switch (scenarioType) {
-        case 'flood':
-            return Droplets;
-        case 'fire':
-            return Flame;
-        case 'storm':
-            return Wind;
-        case 'earthquake':
-        case 'search_rescue':
-            return Search;
-        default:
-            return FileText;
-    }
-};
-
-// Human-readable labels for scenario types.
-const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
-    switch (scenarioType) {
-        case 'flood':
-            return 'Hochwasser';
-        case 'fire':
-            return 'Feuer';
-        case 'storm':
-            return 'Sturm';
-        case 'earthquake':
-            return 'Erdbeben';
-        case 'search_rescue':
-            return 'Suche & Rettung';
-        case 'custom':
-            return 'Benutzerdefiniert';
-        default:
-            return scenarioType;
-    }
-};
+import { getIconComponent } from '../../utils/scenarioIcons';
 
 const PackingPlanOverview = () => {
     const navigate = useNavigate();
     // Live list of saved packing plans from Dexie.
     const packingPlans = packingPlanApi.usePackingPlans();
+    const scenarioTypes = packingPlanApi.useScenarioTypes();
 
     const handlePlanClick = (planId: string) => {
         navigate(`/packing-plans/${planId}`);
@@ -63,6 +28,10 @@ const PackingPlanOverview = () => {
                     <Title>Packpläne</Title>
                 </HeaderLeft>
                 <HeaderRight>
+                    <SettingsButton onClick={() => navigate('/packing-plans/scenarios')}>
+                        <IconContainer icon={Settings} />
+                        <span>Szenariotypen verwalten</span>
+                    </SettingsButton>
                     <CreateButton $variant="primary" onClick={() =>
                                             navigate('/items', {
                                                 state: {
@@ -89,8 +58,9 @@ const PackingPlanOverview = () => {
             ) : (
                 <PlansGrid>
                     {packingPlans.map((plan) => {
-                        const Icon = getScenarioIcon(plan.scenarioType);
-                        const scenarioLabel = getScenarioLabel(plan.scenarioType);
+                        const scenario = scenarioTypes.find(t => t.id === plan.scenarioType);
+                        const Icon = scenario ? getIconComponent(scenario.icon) : getIconComponent('Package');
+                        const scenarioLabel = scenario ? scenario.name : 'Unbekannt';
 
                         return (
                             <PlanCardItem 
@@ -193,21 +163,26 @@ const PlanCardItem = ({
 // ─── Styled Components ────────────────────────────────────
 
 const StyledContainer = styled(Container)`
-    padding: ${theme.spacing.xl};
-    max-width: 1200px;
-    margin: 0 auto;
+    padding-top: 8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: ${theme.spacing.xl};
+    @media (min-width: ${theme.breakpoints.lg}) {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
 `;
 
 const Header = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: ${theme.spacing.xl};
+    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} ${theme.spacing.lg};
+    margin-bottom: 0;
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        flex-direction: row;
-        align-items: center;
+        padding: 0 ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
     }
 `;
 
@@ -240,6 +215,28 @@ const HeaderRight = styled.div`
     gap: ${theme.spacing.sm};
 `;
 
+const SettingsButton = styled(Button)`
+    height: 36px;
+    padding: 0 ${theme.spacing.md};
+    font-size: ${theme.typography.fontSize.sm};
+    gap: ${theme.spacing.xs};
+    background-color: transparent;
+    color: ${theme.colors.text.secondary};
+    border: 1px solid ${theme.colors.border.default};
+    
+    &:hover {
+        background-color: ${theme.colors.background.gray};
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        width: 36px;
+        padding: 0;
+        span {
+            display: none;
+        }
+    }
+`;
+
 const CreateButton = styled(Button)`
     height: 36px;
     padding: 0 ${theme.spacing.md};
@@ -265,9 +262,11 @@ const PlansGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: ${theme.spacing.lg};
+    padding: 0 ${theme.spacing.lg};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
         grid-template-columns: 1fr;
+        padding: 0 ${theme.spacing.md};
     }
 `;
 

@@ -3,6 +3,9 @@ import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { ILabel } from '../db/labels';
 
+const STABLE_EMPTY_ARRAY: any[] = [];
+const STABLE_EMPTY_COUNT = { totalCount: 0, firstThreeEntries: STABLE_EMPTY_ARRAY };
+
 export type Scope = 'user' | 'editor' | 'admin';
 export interface PaginationParams {
     page: number;
@@ -199,7 +202,7 @@ export const inventoryApi = {
     },
     useItems() {
         const items: IItem[] | undefined = useLiveQuery(() => db.items.orderBy('id').toArray(), []);
-        return items ?? [];
+        return items ?? STABLE_EMPTY_ARRAY;
     },
     useItemsPaginated(page: number, pageSize: number) {
         const offset = (page - 1) * pageSize;
@@ -207,7 +210,7 @@ export const inventoryApi = {
             () => db.items.orderBy('id').offset(offset).limit(pageSize).toArray(),
             [page, pageSize]
         );
-        return items ?? [];
+        return items ?? STABLE_EMPTY_ARRAY;
     },
 
     useTotalItemCount() {
@@ -288,7 +291,7 @@ export const inventoryApi = {
             [filters?.damageLevel]
         );
 
-        return result ?? { totalCount: 0, firstThreeEntries: [] };
+        return result ?? STABLE_EMPTY_COUNT;
     },
 
     useCountItemsWithLabel(labelId: string | undefined) {

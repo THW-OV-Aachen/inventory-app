@@ -15,7 +15,7 @@ import type { RootState } from '../../store/store';
 import { setSortDirection, setSortField } from '../../store/slices/searchSlice';
 import { db } from '../../db/db';
 import type { IPackingPlan, IPackingPlanItem } from '../../db/packingPlans';
-import { EmergencyScenarioType } from '../../db/packingPlans';
+
 
 import { usePackMode } from './usePackMode';
 import QuantitySpinner from '../../components/QuantitySpinner';
@@ -35,7 +35,7 @@ const ItemOverview = () => {
         Boolean(navState?.packMode || navState?.planId) // ← initialize as active
     );
 
-    const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName } = packModeState;
+    const { packMode, selectedItemIds, toggleItem, qtyByItemId, setQuantity, planName, scenarioType } = packModeState;
     const searchState = useSelector((state: RootState) => state.search);
     const { query: searchTerm, sortField, sortDirection, filters } = searchState;
 
@@ -281,7 +281,7 @@ const ItemOverview = () => {
                 const packingPlan: IPackingPlan = {
                     id: createId('plan'),
                     name: planName.trim(),
-                    scenarioType: EmergencyScenarioType.CUSTOM,
+                    scenarioType: (scenarioType as any) || 'custom',
                     description: '',
                     createdAt: now,
                     updatedAt: now,

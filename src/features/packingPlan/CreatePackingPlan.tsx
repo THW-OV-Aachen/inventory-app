@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { ChevronLeft, Plus, X, Trash2 } from 'lucide-react';
 import { packingPlanApi } from '../../app/packingPlanApi';
 import { inventoryApi } from '../../app/api';
-import { EmergencyScenarioType } from '../../db/packingPlans';
 import type { IItem } from '../../db/items';
 import IconContainer from '../../utils/IconContainer';
 import {
@@ -30,18 +29,24 @@ const StyledContainer = styled(Container)`
     padding-bottom: ${theme.spacing.xl};
 
     @media (min-width: ${theme.breakpoints.lg}) {
-        max-width: 960px;
         margin: 0 auto;
     }
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    padding: ${theme.spacing.md} 0;
     margin-bottom: 0;
     margin-left: 0;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+    padding-left: ${theme.spacing.lg};
+    padding-right: ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding-left: ${theme.spacing.md};
+        padding-right: ${theme.spacing.md};
+    }
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -50,7 +55,11 @@ const StyledBackButton = styled(BackButton)`
 `;
 
 const StyledContentWrapper = styled(ContentWrapper)`
-    padding: 0;
+    padding: 0 ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md};
+    }
 `;
 
 const StyledCard = styled(Card)`
@@ -307,24 +316,7 @@ const ModalButton = styled(Button)`
     font-size: ${theme.typography.fontSize.sm};
 `;
 
-const getScenarioLabel = (scenarioType: EmergencyScenarioType): string => {
-    switch (scenarioType) {
-        case 'flood':
-            return 'Hochwasser';
-        case 'fire':
-            return 'Feuer';
-        case 'storm':
-            return 'Sturm';
-        case 'earthquake':
-            return 'Erdbeben';
-        case 'search_rescue':
-            return 'Suche & Rettung';
-        case 'custom':
-            return 'Benutzerdefiniert';
-        default:
-            return scenarioType;
-    }
-};
+
 
 interface TempPackingPlanItem {
     Iid: number;
@@ -336,11 +328,11 @@ const CreatePackingPlan = () => {
 
     const [formData, setFormData] = useState<{
         name: string;
-        scenarioType: EmergencyScenarioType;
+        scenarioType: string;
         description: string;
     }>({
         name: '',
-        scenarioType: EmergencyScenarioType.FLOOD,
+        scenarioType: 'flood',
         description: '',
     });
 
@@ -353,8 +345,16 @@ const CreatePackingPlan = () => {
     const [tempItems, setTempItems] = useState<TempPackingPlanItem[]>([]);
 
     const allInventoryItems = inventoryApi.useItems();
+    const scenarioTypes = packingPlanApi.useScenarioTypes();
 
-    const handleChange = (key: string, value: string | EmergencyScenarioType) => {
+    // Default to the first available scenario if none is set
+    useEffect(() => {
+        if (scenarioTypes.length > 0 && formData.scenarioType === 'flood') {
+            setFormData(prev => ({ ...prev, scenarioType: scenarioTypes[0].id }));
+        }
+    }, [scenarioTypes]);
+
+    const handleChange = (key: string, value: string) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
 
         if (errors[key]) {
@@ -495,11 +495,11 @@ const CreatePackingPlan = () => {
                             id="scenarioType"
                             name="scenarioType"
                             value={formData.scenarioType}
-                            onChange={(e) => handleChange('scenarioType', e.target.value as EmergencyScenarioType)}
+                            onChange={(e) => handleChange('scenarioType', e.target.value)}
                         >
-                            {Object.values(EmergencyScenarioType).map((type) => (
-                                <option key={type} value={type}>
-                                    {getScenarioLabel(type)}
+                            {scenarioTypes.map((type) => (
+                                <option key={type.id} value={type.id}>
+                                    {type.name}
                                 </option>
                             ))}
                         </Select>
