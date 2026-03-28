@@ -55,6 +55,11 @@ export const theme = {
                 light: '#e2e8f0',
                 dark: '#475569',
             },
+            missing: {
+                main: '#7e22ce',
+                light: '#f3e8ff',
+                dark: '#581c87',
+            },
         },
     },
     

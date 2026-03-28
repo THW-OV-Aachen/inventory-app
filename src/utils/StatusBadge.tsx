@@ -21,12 +21,18 @@ export const DamageLevelStyles = {
         color: 'var(--color-danger-text)',
         colorBg: 'var(--color-danger-bg)',
         colorRGB: 'var(--color-danger-text-rgb)',
-        icon: XCircle,
+        icon: AlertCircle,
     },
     total: {
         color: 'var(--color-forbidden-text)',
         colorBg: 'var(--color-forbidden-bg)',
         colorRGB: 'var(--color-forbidden-text-rgb)',
+        icon: XCircle,
+    },
+    missing: {
+        color: 'var(--color-missing-text)',
+        colorBg: 'var(--color-missing-bg)',
+        colorRGB: 'var(--color-missing-text-rgb)',
         icon: XCircle,
     },
 };

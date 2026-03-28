@@ -477,7 +477,7 @@ const ItemOverview = () => {
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
                                     $mobileShadowColor={damageLevel.colorRGB}
-                                    className={isSelected ? 'selected' : ''} // ✅
+                                    className={`${isSelected ? 'selected' : ''} status-${item.id}`}
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
