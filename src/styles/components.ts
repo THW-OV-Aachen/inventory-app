@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { theme } from './theme';
+import type { ThemeStatus } from './utils';
 
 // Card component
 export const Card = styled.div<{ $withLeftBorder?: boolean; $leftBorderColor?: string }>`
@@ -239,7 +240,7 @@ export const StatusBadge = styled.span<{ $status?: 'good' | 'warning' | 'error' 
 `;
 
 // Info Card (with status border)
-export const InfoCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
+export const InfoCard = styled.div<{ $status?: ThemeStatus }>`
     width: 100%;
     max-width: 100%;
     border-radius: ${theme.borderRadius.lg};
@@ -247,8 +248,8 @@ export const InfoCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'c
     margin-bottom: ${theme.spacing.lg};
     background-color: ${theme.colors.background.white};
     box-sizing: border-box;
-    border-left: 4px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].main};
-    border: 1px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].light};
+    border-left: 4px solid ${({ $status = 'neutral' }) => (theme.colors.status as any)[$status].main};
+    border: 1px solid ${({ $status = 'neutral' }) => (theme.colors.status as any)[$status].light};
     border-left-width: 4px;
     box-shadow: ${theme.shadows.md};
 `;
@@ -358,7 +359,7 @@ export const ControlsWrapper = styled.div`
 `;
 
 // Item Card (for item lists)
-export const ItemCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'critical' | 'neutral' }>`
+export const ItemCard = styled.div<{ $status?: ThemeStatus }>`
     width: 100%;
     max-width: 100%;
     border-radius: ${theme.borderRadius.lg};
@@ -366,8 +367,8 @@ export const ItemCard = styled.div<{ $status?: 'good' | 'warning' | 'error' | 'c
     margin-bottom: ${theme.spacing.md};
     background-color: ${theme.colors.background.white};
     box-sizing: border-box;
-    border-left: 4px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].main};
-    border: 1px solid ${({ $status = 'neutral' }) => theme.colors.status[$status].light};
+    border-left: 4px solid ${({ $status = 'neutral' }) => (theme.colors.status as any)[$status].main};
+    border: 1px solid ${({ $status = 'neutral' }) => (theme.colors.status as any)[$status].light};
     border-left-width: 4px;
     box-shadow: ${theme.shadows.md};
     cursor: pointer;

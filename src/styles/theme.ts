@@ -46,8 +46,8 @@ export const theme = {
                 dark: '#991b1b',
             },
             critical: {
-                main: '#ff0000ff',
-                light: '#e61010ff',
+                main: '#636668',
+                light: '#d9d9d9',
                 dark: '#7f1d1d',
             },
             neutral: {
@@ -55,6 +55,12 @@ export const theme = {
                 light: '#e2e8f0',
                 dark: '#475569',
             },
+            missing: {
+                main: '#7e22ce',
+                light: '#f3e8ff',
+                dark: '#581c87',
+            },
+            
         },
     },
     

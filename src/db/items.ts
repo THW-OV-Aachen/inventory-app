@@ -7,6 +7,7 @@ export const DamageLevelType = {
     MINOR: 'minor',
     MAJOR: 'major',
     TOTAL: 'total',
+    MISSING: 'missing',
 } as const;
 
 

@@ -23,6 +23,10 @@
     --color-success-bg: #d1fae5;
     --color-success-text: #065f46;
     --color-success-text-rgb: 6, 95, 70;
+
+    --color-missing-bg: #f3e8ff;
+    --color-missing-text: #7e22ce;
+    --color-missing-text-rgb: 126, 34, 206;
 }
 
 body {

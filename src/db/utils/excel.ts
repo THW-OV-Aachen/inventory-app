@@ -563,7 +563,8 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             }
         }
 
-        if (rowData.damageLevel === 'total') {
+        if (rowData.damageLevel === 'total' || (rowData.availability === 0 && !headerMap.has('Schadenszustand'))) {
+            rowData.damageLevel = 'total';
             rowData.availability = 0;
         }
 
