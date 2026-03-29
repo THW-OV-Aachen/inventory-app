@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 const Home = () => {
     const { totalCount, firstThreeEntries } = inventoryApi.useCountWithFilter({});
     const { totalCount: damagedCount, firstThreeEntries: threeDamaged } = inventoryApi.useCountWithFilter({
-        damageLevel: ['minor', 'major', 'total'],
+        damageLevel: ['minor', 'major', 'total', 'missing'],
     });
 
     return (

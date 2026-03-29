@@ -412,7 +412,7 @@ const ModifyItem = () => {
                 art: formData.art ?? '',
                 amountTarget: formData.amountTarget ?? 0,
                 amountActual: formData.amountActual ?? 0,
-                availability: formData.damageLevel === 'total' ? 0 : (formData.availability ?? 0),
+                availability: (formData.damageLevel === 'total' || formData.damageLevel === 'missing') ? 0 : (formData.availability ?? 0),
                 damageLevel: formData.damageLevel ?? 'none',
                 level: formData.level ?? 0,
 
@@ -541,7 +541,7 @@ const ModifyItem = () => {
                             onChange={(e) => {
                                 const val = e.target.value as DamageLevelType;
                                 handleChange('damageLevel', val);
-                                if (val === 'total') {
+                                if (val === 'total' || val === 'missing') {
                                     handleChange('availability', 0);
                                 }
                             }}
@@ -551,6 +551,7 @@ const ModifyItem = () => {
                             <option value="minor">{DamageLevelTranslation.minor}</option>
                             <option value="major">{DamageLevelTranslation.major}</option>
                             <option value="total">{DamageLevelTranslation.total}</option>
+                            <option value="missing">{DamageLevelTranslation.missing}</option>
                         </Select>
                         {renderError('damageLevel')}
                     </StyledFormGroup>
@@ -778,8 +779,8 @@ const ModifyItem = () => {
                             name="availability"
                             type="number"
                             placeholder="Verfügbarkeit eingeben"
-                            value={formData.damageLevel === 'total' ? 0 : (formData.availability ?? '')}
-                            disabled={formData.damageLevel === 'total'}
+                            value={(formData.damageLevel === 'total' || formData.damageLevel === 'missing') ? 0 : (formData.availability ?? '')}
+                            disabled={formData.damageLevel === 'total' || formData.damageLevel === 'missing'}
                             onChange={(e) => {
                                 const v = e.target.value;
                                 handleChange('availability', v === '' ? undefined : Number(v));
@@ -787,10 +788,10 @@ const ModifyItem = () => {
                             onBlur={() => handleBlur('availability')}
                         />
                         {renderError('availability')}
-                        {formData.damageLevel === 'total' && (
+                        {(formData.damageLevel === 'total' || formData.damageLevel === 'missing') && (
                             <HelperText>
-                                Dieser Artikel ist zerstört. Ändere den Schadenszustand, um die Verfügbarkeit
-                                anzupassen.
+                                Dieser Artikel {formData.damageLevel === 'total' ? 'ist zerstört' : 'fehlt'}. 
+                                Ändere den Schadenszustand, um die Verfügbarkeit anzupassen.
                             </HelperText>
                         )}
                     </StyledFormGroup>
