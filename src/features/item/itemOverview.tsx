@@ -84,39 +84,17 @@ const ItemOverview = () => {
         }
     }, []);
 
-    // Separate effect for fetching items so pagination doesn't reset selections
-    useEffect(() => {
-        const fetchItems = async () => {
-            setIsLoading(true);
-            try {
-                const result = await inventoryApi.fetchItemsPaginatedWithFilter(
-                    { page: currentPage, pageSize },
-                    searchTerm || '',
-                    filters || {}
-                );
-                setItems(result.data);
-                setTotalItems(result.pagination.totalItems);
-                setTotalPages(result.pagination.totalPages);
-            } catch (error) {
-                console.error('Error fetching items:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchItems();
-    }, [currentPage, searchTerm, filters]);
-
     // Fetch items with pagination + search/filter state from Redux.
     useEffect(() => {
         const fetchItems = async () => {
             setIsLoading(true);
             try {
-                console.log('filters', filters);
                 const result = await inventoryApi.fetchItemsPaginatedWithFilter(
                     { page: currentPage, pageSize },
                     searchTerm || '',
-                    filters || {}
+                    filters || {},
+                    sortField,
+                    sortDirection
                 );
                 setItems(result.data);
                 setTotalItems(result.pagination.totalItems);
@@ -129,7 +107,7 @@ const ItemOverview = () => {
         };
 
         fetchItems();
-    }, [currentPage, pageSize, searchTerm, filters]);
+    }, [currentPage, pageSize, searchTerm, filters, sortField, sortDirection]);
 
     // Reset to page 1 when search term or filters change.
     useEffect(() => {
@@ -154,76 +132,8 @@ const ItemOverview = () => {
         }
     };
 
-    const getSortedItems = (itemsToSort: IItem[]) => {
-        if (!sortField) return itemsToSort;
 
-        // Local sort for the current page based on active column + direction.
-        const sorted = [...itemsToSort];
-        sorted.sort((a, b) => {
-            let aValue: any;
-            let bValue: any;
-
-            switch (sortField) {
-                case 'itemId':
-                    aValue = a.id;
-                    bValue = b.id;
-                    break;
-                case 'name':
-                    aValue = a.name;
-                    bValue = b.name;
-                    break;
-                case 'type':
-                    aValue = a.isSet === true ? 'Satz' : a.isSet === false ? 'Teil' : (a.art || 'undefiniert');
-                    bValue = b.isSet === true ? 'Satz' : b.isSet === false ? 'Teil' : (b.art || 'undefiniert');
-                    break;
-                case 'amountActual':
-                    aValue = a.amountActual ?? 0;
-                    bValue = b.amountActual ?? 0;
-                    break;
-                case 'availability':
-                    aValue = a.availability;
-                    bValue = b.availability;
-                    break;
-                case 'damageLevel':
-                    aValue = a.damageLevel;
-                    bValue = b.damageLevel;
-                    break;
-                case 'location':
-                    aValue = a.location;
-                    bValue = b.location;
-                    break;
-                case 'inventoryNumber':
-                    aValue = a.inventoryNumber ?? '';
-                    bValue = b.inventoryNumber ?? '';
-                    break;
-                case 'deviceNumber':
-                    aValue = a.deviceNumber ?? '';
-                    bValue = b.deviceNumber ?? '';
-                    break;
-                case 'nextInspection': {
-                    const aDate = calculateNextInspectionDate(a.lastInspection, a.inspectionIntervalMonths);
-                    const bDate = calculateNextInspectionDate(b.lastInspection, b.inspectionIntervalMonths);
-                    aValue = aDate ? aDate.getTime() : sortDirection === 'asc' ? Infinity : -Infinity;
-                    bValue = bDate ? bDate.getTime() : sortDirection === 'asc' ? Infinity : -Infinity;
-                    break;
-                }
-                default:
-                    return 0;
-            }
-
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
-                const comparison = aValue.localeCompare(bValue);
-                return sortDirection === 'asc' ? comparison : -comparison;
-            } else {
-                const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-                return sortDirection === 'asc' ? comparison : -comparison;
-            }
-        });
-
-        return sorted;
-    };
-
-    const sortedItems = getSortedItems(items);
+    const sortedItems = items;
 
     const createId = (prefix = 'id'): string => {
         // `crypto.randomUUID()` is not always available (e.g. http:// on LAN IPs).
@@ -389,10 +299,21 @@ const ItemOverview = () => {
                             <HeaderCell onClick={() => handleSort('amountActual')}>
                                 <HeaderContent>
                                     <span>Menge</span>
-                                    <SortIndicator
-                                        active={sortField === 'amountActual'}
-                                        sortDirection={sortDirection}
-                                    />
+                                    <OverlayTrigger
+                                        placement="top"
+                                        overlay={
+                                            <Tooltip id="qty-sort-tooltip">
+                                                sortiert nach tatsächlicher Menge
+                                            </Tooltip>
+                                        }
+                                    >
+                                        <span>
+                                            <SortIndicator
+                                                active={sortField === 'amountActual'}
+                                                sortDirection={sortDirection}
+                                            />
+                                        </span>
+                                    </OverlayTrigger>
                                 </HeaderContent>
                             </HeaderCell>
                             <HeaderCell onClick={() => handleSort('damageLevel')}>
@@ -477,7 +398,7 @@ const ItemOverview = () => {
                                     $mobileBgColor={damageLevel.colorBg}
                                     $mobileColor={damageLevel.color}
                                     $mobileShadowColor={damageLevel.colorRGB}
-                                    className={isSelected ? 'selected' : ''} // ✅
+                                    className={`${isSelected ? 'selected' : ''} status-${item.id}`}
                                 >
                                     <TableCell id="inventoryNumber">{item.inventoryNumber ?? '-'}</TableCell>
                                     <TableCell id="name">{item.name ?? '-'}</TableCell>
@@ -783,7 +704,7 @@ const InfoInline = (props: { children: ReactNode | ReactNode[]; infoComponent: R
 
     return (
         <OverlayTrigger
-            placement="bottom"
+            placement="top"
             overlay={
                 <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
                     {infoComponent}
@@ -822,7 +743,7 @@ const InfoIndicator = (props: { children: ReactNode | ReactNode[] }) => {
 
     return (
         <OverlayTrigger
-            placement="bottom"
+            placement="top"
             overlay={
                 <Tooltip id="info-tooltip" style={{ fontSize: '14px' }}>
                     {children}

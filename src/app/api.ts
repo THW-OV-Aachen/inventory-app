@@ -2,6 +2,7 @@ import { DamageLevelType, type IItem } from '../db/items';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { ILabel } from '../db/labels';
+import { calculateNextInspectionDate } from '../utils/date';
 
 const STABLE_EMPTY_ARRAY: any[] = [];
 const STABLE_EMPTY_COUNT = { totalCount: 0, firstThreeEntries: STABLE_EMPTY_ARRAY };
@@ -92,7 +93,9 @@ export const inventoryApi = {
     async fetchItemsPaginatedWithFilter(
         params: PaginationParams,
         searchTerm: string,
-        filters?: FilterParams
+        filters?: FilterParams,
+        sortField?: SortField | null,
+        sortDirection?: SortDirection
     ): Promise<PaginatedResult<IItem>> {
         const { page, pageSize } = params;
         const offset = (page - 1) * pageSize;
@@ -105,7 +108,9 @@ export const inventoryApi = {
                     filters.location ||
                     (filters.labels && filters.labels.length > 0));
 
-            if (!searchTerm && !hasFilters) {
+            const hasSort = !!sortField;
+
+            if (!searchTerm && !hasFilters && !hasSort) {
                 return await this.fetchItemsPaginated(params);
             }
 
@@ -138,6 +143,50 @@ export const inventoryApi = {
             });
 
             const totalItems = filteredItems.length;
+
+            // Sorting
+            if (sortField) {
+                filteredItems.sort((a, b) => {
+                    let aValue: any;
+                    let bValue: any;
+
+                    switch (sortField) {
+                        case 'itemId': aValue = a.itemId ?? ''; bValue = b.itemId ?? ''; break;
+                        case 'name': aValue = a.name ?? ''; bValue = b.name ?? ''; break;
+                        case 'type':
+                            aValue = a.isSet === true ? 'Satz' : a.isSet === false ? 'Teil' : (a.art || 'undefiniert');
+                            bValue = b.isSet === true ? 'Satz' : b.isSet === false ? 'Teil' : (b.art || 'undefiniert');
+                            break;
+                        case 'amountActual': aValue = a.amountActual ?? 0; bValue = b.amountActual ?? 0; break;
+                        case 'availability': aValue = a.availability; bValue = b.availability; break;
+                        case 'damageLevel': {
+                            const order: Record<string, number> = { none: 1, minor: 2, major: 3, total: 4, missing: 5 };
+                            aValue = order[a.damageLevel] ?? 0;
+                            bValue = order[b.damageLevel] ?? 0;
+                            break;
+                        }
+                        case 'location': aValue = a.location ?? ''; bValue = b.location ?? ''; break;
+                        case 'inventoryNumber': aValue = a.inventoryNumber ?? ''; bValue = b.inventoryNumber ?? ''; break;
+                        case 'deviceNumber': aValue = a.deviceNumber ?? ''; bValue = b.deviceNumber ?? ''; break;
+                        case 'nextInspection': {
+                            const aDate = calculateNextInspectionDate(a.lastInspection, a.inspectionIntervalMonths);
+                            const bDate = calculateNextInspectionDate(b.lastInspection, b.inspectionIntervalMonths);
+                            aValue = aDate ? aDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
+                            bValue = bDate ? bDate.getTime() : (sortDirection === 'asc' ? Infinity : -Infinity);
+                            break;
+                        }
+                        default: aValue = 0; bValue = 0;
+                    }
+
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                        const comp = aValue.localeCompare(bValue);
+                        return sortDirection === 'asc' ? comp : -comp;
+                    }
+                    const comp = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+                    return sortDirection === 'asc' ? comp : -comp;
+                });
+            }
+
             const totalPages = Math.ceil(totalItems / pageSize);
             const paginatedData = filteredItems.slice(offset, offset + pageSize);
 
