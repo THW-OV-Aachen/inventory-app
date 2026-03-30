@@ -1,6 +1,9 @@
-import { useMemo, useState, type ComponentType } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { useMemo, useEffect, type ComponentType } from 'react';
+import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import type { RootState } from '../../store/store';
+import { setLastTopic, clearLastTopic } from '../../store/slices/guideSlice';
 import {
     ArrowDownAZ,
     ArrowDownNarrowWide,
@@ -8,33 +11,20 @@ import {
     ClipboardList,
     Download,
     FolderSync,
-    FileUp,
-    Image as ImageIcon,
-    ListChecks,
     MousePointerClick,
     Package,
     PlusCircle,
     Search,
     SquarePen,
     CheckCircle2,
-    TriangleAlert,
     Upload,
     Plus,
     Wrench,
+    ScanLine
 } from 'lucide-react';
 
 import { Card, Container } from '../../styles/components';
 import { theme } from '../../styles/theme';
-
-const FIND_ITEM_SCREENSHOT_SRC = '/guide/find-item.png';
-const ADD_ITEM_SCREENSHOT_SRC = '/guide/AddItem.jpeg';
-const ADD_ITEM_SAVE_SCREENSHOT_SRC = '/guide/Hinzufungen.jpeg';
-const IMPORT_EXPORT_SCREENSHOT_SRC = '/guide/ImportExport.jpeg';
-const IMPORT_EXPORT_CONFIRMATION_SCREENSHOT_SRC = '/guide/ImportConfirmation.jpeg';
-const IMPORT_IN_PROCESS_SCREENSHOT_SRC = '/guide/ImportInProcess.jpeg';
-const PACKING_PLANS_SCREENSHOT_SRC = '/guide/PackPlan.jpeg';
-const PACKING_PLANS_SCREENSHOT_2_SRC = '/guide/PackPlan2.jpeg';
-const PACKING_PLANS_SCREENSHOT_3_SRC = '/guide/PackPlan3.jpeg';
 
 type GuideTopicId = 'find-item' | 'add-item' | 'inspect-item' | 'import-export' | 'packing-plans';
 
@@ -47,6 +37,17 @@ type GuideTopic = {
 };
 
 const Guide = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const lastTopicId = useSelector((state: RootState) => state.guide.lastTopicId);
+
+    // If the user returns to the Guide base path and a last topic exists, redirect there.
+    useEffect(() => {
+        if (location.pathname === '/guide' && lastTopicId) {
+            navigate(lastTopicId, { replace: true });
+        }
+    }, [location.pathname, lastTopicId, navigate]);
+
     return (
         <Routes>
             <Route index element={<GuideListScreen />} />
@@ -68,7 +69,7 @@ const GuideListScreen = () => {
             {
                 id: 'find-item',
                 title: 'Artikelsuche',
-                description: 'Nutze die Suche, Filter und Sortierung, um einen Artikel schnell zu finden.',
+                description: 'Nutze Suche, Filtern, Sortieren und Scannen, um einen Artikel schnell zu finden.',
                 icon: Search,
                 available: true,
             },
@@ -81,16 +82,16 @@ const GuideListScreen = () => {
             },
             {
                 id: 'inspect-item',
-                title: 'Inspektion',
-                description: 'Überprüfe den Zustand deiner Artikel und aktualisiere die Daten.',
+                title: 'Inspektion und Wartung',
+                description: 'Überprüfe den Zustand deiner Artikel und aktualisiere das nächste Inspektionsdatum.',
                 icon: Wrench,
                 available: true,
             },
             {
                 id: 'import-export',
-                title: 'Import / Export von Daten',
+                title: 'Import / Export',
                 description: 'Importiere deine Daten aus Excel oder exportiere den Stand deines Inventars.',
-                icon: FileUp,
+                icon: FolderSync,
                 available: true,
             },
             {
@@ -116,8 +117,10 @@ const GuideListScreen = () => {
                     <TopicGrid>
                         {topics.map((t) => {
                             const Icon = t.icon;
+                            const dispatch = useDispatch();
                             const onClick = () => {
                                 if (!t.available) return;
+                                dispatch(setLastTopic(t.id));
                                 navigate(t.id);
                             };
 
@@ -153,13 +156,18 @@ const GuideListScreen = () => {
 
 const FindItemGuideScreen = () => {
     const navigate = useNavigate();
-    const [hasScreenshot, setHasScreenshot] = useState(true);
+    const dispatch = useDispatch();
+
+    const handleBack = () => {
+        dispatch(clearLastTopic());
+        navigate('/guide');
+    };
 
     return (
         <div>
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
-                    <BackToGuidesButton type="button" onClick={() => navigate('/guide')}>
+                    <BackToGuidesButton type="button" onClick={handleBack}>
                         <ChevronLeft size={18} />
                         <span>Guides</span>
                     </BackToGuidesButton>
@@ -168,14 +176,10 @@ const FindItemGuideScreen = () => {
                 <TaskCard $withLeftBorder $leftBorderColor={theme.colors.primary}>
                     <TaskHeader>
                         <TaskTitle>
-                            <IconPill>
-                                <ListChecks size={16} />
-                            </IconPill>
                             <span>Artikelsuche</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Nutzen Sie Suche, Filter und Sortierung, um einen Artikel schnell zu finden, und klicken Sie
-                            ihn anschließend an, um die Details zu öffnen.
+                            Nutze Suche, Filtern, Sortieren und Scannen, um einen Artikel schnell zu finden, und klicke ihn anschließend an, um die Details zu öffnen.
                         </TaskSubtitle>
                     </TaskHeader>
 
@@ -186,8 +190,8 @@ const FindItemGuideScreen = () => {
                                     <Package size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>„Inventar“ öffnen</StepTitle>
-                                    <StepText>Öffnen Sie über die Sidebar-Navigation die Inventarliste.</StepText>
+                                    <StepTitle>Artikelübersicht öffnen</StepTitle>
+                                    <StepText>Öffne über die Navigationsleiste das Inventar.</StepText>
                                 </div>
                             </FindItemStep>
 
@@ -198,7 +202,7 @@ const FindItemGuideScreen = () => {
                                 <div>
                                     <StepTitle>Suchen</StepTitle>
                                     <StepText>
-                                        Geben Sie ein, was Sie wissen (z. B. Inventarnummer, Name, ID), um die Liste
+                                        Gib ein, was du weißt (z. B. Name, Sachnummer, Inventarnummer), um die Liste
                                         einzugrenzen.
                                     </StepText>
                                 </div>
@@ -211,8 +215,7 @@ const FindItemGuideScreen = () => {
                                 <div>
                                     <StepTitle>Filtern</StepTitle>
                                     <StepText>
-                                        Nutzen Sie Filter (z. B. Schadensstufe oder Standort), um die Ergebnisse weiter
-                                        zu reduzieren.
+                                        Über das Dropdown-Menü neben der Suchleiste kannst du die Ergebnisse filtern. Labelfilter werden dabei UND-verknüpft.
                                     </StepText>
                                 </div>
                             </FindItemStep>
@@ -224,59 +227,24 @@ const FindItemGuideScreen = () => {
                                 <div>
                                     <StepTitle>Sortieren</StepTitle>
                                     <StepText>
-                                        Klicken Sie auf eine Spaltenüberschrift (z. B. Inventar-Nr., Name, Standort), um
-                                        die Liste zu sortieren.
+                                        Klicke auf eine Spaltenüberschrift (z. B. Inventar-Nr., Name, Standort), um
+                                        die Liste zu sortieren. Ein erneuter Klick kehrt die Sortierreihenfolge um. Ebenso kannst du die Sortierreihenfolge über das Dropdown-Menü ändern.
                                     </StepText>
                                 </div>
                             </FindItemStep>
 
                             <FindItemStep>
                                 <StepIcon>
-                                    <MousePointerClick size={16} />
+                                    <ScanLine size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Details öffnen</StepTitle>
+                                    <StepTitle>Scannen</StepTitle>
                                     <StepText>
-                                        Klicken Sie auf eine Artikelzeile/-karte, um die Detailseite zu öffnen. Dort
-                                        sehen Sie u. a. Mengen, Status, Standort und weitere Informationen.
+                                        Klicke auf das Scan-Symbol, um den Barcode-Scanner zu öffnen. Scanne den Barcode eines Artikels, um den entsprechenden Artikel zu finden.
                                     </StepText>
                                 </div>
                             </FindItemStep>
                         </FindItemSteps>
-
-                        <FindItemVisualColumn>
-                            {hasScreenshot ? (
-                                <ScreenshotFigure aria-label="Screenshot der Inventarliste">
-                                    <FindItemScreenshotImage
-                                        src={FIND_ITEM_SCREENSHOT_SRC}
-                                        alt="Inventarliste mit Suche, Artikelübersicht und Aktionen"
-                                        loading="lazy"
-                                        decoding="async"
-                                        // Fallback to placeholder if the public screenshot is missing.
-                                        onError={() => setHasScreenshot(false)}
-                                    />
-                                </ScreenshotFigure>
-                            ) : (
-                                <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot der Inventarliste">
-                                    <ScreenshotTopBar>
-                                        <Dot $color="#ef4444" />
-                                        <Dot $color="#f59e0b" />
-                                        <Dot $color="#10b981" />
-                                    </ScreenshotTopBar>
-
-                                    <ScreenshotBody>
-                                        <PlaceholderIcon>
-                                            <ImageIcon size={28} />
-                                        </PlaceholderIcon>
-                                        <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                        <PlaceholderText>
-                                            Fügen Sie <code>public/guide/find-item.png</code> hinzu, um den Screenshot
-                                            der Inventarliste anzuzeigen.
-                                        </PlaceholderText>
-                                    </ScreenshotBody>
-                                </ScreenshotPlaceholder>
-                            )}
-                        </FindItemVisualColumn>
                     </FindItemTaskGrid>
                 </TaskCard>
             </StyledContainer>
@@ -286,14 +254,18 @@ const FindItemGuideScreen = () => {
 
 const AddItemGuideScreen = () => {
     const navigate = useNavigate();
-    const [hasAddItemScreenshot, setHasAddItemScreenshot] = useState(true);
-    const [hasHinzufugenScreenshot, setHasHinzufugenScreenshot] = useState(true);
+    const dispatch = useDispatch();
+
+    const handleBack = () => {
+        dispatch(clearLastTopic());
+        navigate('/guide');
+    };
 
     return (
         <div>
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
-                    <BackToGuidesButton type="button" onClick={() => navigate('/guide')}>
+                    <BackToGuidesButton type="button" onClick={handleBack}>
                         <ChevronLeft size={18} />
                         <span>Guides</span>
                     </BackToGuidesButton>
@@ -302,14 +274,10 @@ const AddItemGuideScreen = () => {
                 <TaskCard $withLeftBorder $leftBorderColor={theme.colors.primary}>
                     <TaskHeader>
                         <TaskTitle>
-                            <IconPill>
-                                <PlusCircle size={16} />
-                            </IconPill>
-                            <span>So fügen Sie einen Artikel hinzu</span>
+                            <span>Neuen Artikel hinzufügen</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Fügen Sie einen neuen Inventareintrag aus der „Inventar“-Liste hinzu. Sie müssen eine
-                            eindeutige ID und einen Namen angeben.
+                            
                         </TaskSubtitle>
                     </TaskHeader>
 
@@ -317,83 +285,22 @@ const AddItemGuideScreen = () => {
                         <AddItemSteps>
                             <AddItemStep>
                                 <StepIcon>
-                                    <Package size={16} />
-                                </StepIcon>
-                                <div>
-                                    <StepTitle>„Inventar“ öffnen</StepTitle>
-                                    <StepText>Öffnen Sie über die Sidebar-Navigation die Inventarliste.</StepText>
-                                </div>
-                            </AddItemStep>
-
-                            <AddItemStep>
-                                <StepIcon>
                                     <PlusCircle size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Auf „Item“ klicken</StepTitle>
-                                    <StepText>
-                                        Klicken Sie in der fixierten Filterleiste auf die Schaltfläche{' '}
-                                        <strong>Item</strong> (Plus-Symbol), um das Formular zum Hinzufügen zu öffnen.
-                                    </StepText>
+                                    <StepTitle>Neuen Artikel anlegen</StepTitle>
+                                    <StepText>Öffne über das Symbol <Package size={16} /> in der Navigationsleiste die Artikelübersicht und füge einen neuen Artikel über den Plus-Button in der oberen rechten Ecke hinzu.</StepText>
                                 </div>
                             </AddItemStep>
-
-                            <MobileOnly>
-                                {hasAddItemScreenshot ? (
-                                    <ScreenshotFigure aria-label="Screenshot: Artikel hinzufügen">
-                                        <AddItemScreenshotImage
-                                            src={ADD_ITEM_SCREENSHOT_SRC}
-                                            alt="Formular zum Hinzufügen eines Artikels mit Pflichtfeldern und Hinzufügen-Schaltfläche"
-                                            loading="lazy"
-                                            decoding="async"
-                                            // Fallback to placeholder if the public screenshot is missing.
-                                            onError={() => setHasAddItemScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Artikel hinzufügen">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/AddItem.jpeg</code> hinzu, um den Screenshot
-                                                des Formulars zum Hinzufügen anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </MobileOnly>
 
                             <AddItemStep>
                                 <StepIcon>
                                     <SquarePen size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Pflichtfelder ausfüllen</StepTitle>
+                                    <StepTitle>Felder ausfüllen</StepTitle>
                                     <StepText>
-                                        Geben Sie <strong>Name</strong> und <strong>Identifikationsnummer (ID)</strong>{' '}
-                                        ein. Die ID muss eindeutig sein.
-                                    </StepText>
-                                </div>
-                            </AddItemStep>
-
-                            <AddItemStep>
-                                <StepIcon>
-                                    <ArrowDownNarrowWide size={16} />
-                                </StepIcon>
-                                <div>
-                                    <StepTitle>Details ergänzen (optional)</StepTitle>
-                                    <StepText>
-                                        Ergänzen Sie bei Bedarf Inventar-/Gerätenummern, Mengen (Soll/Ist/Verfügbarkeit),
-                                        Standort und Prüfinformationen.
+                                        <strong>Pflichtfelder</strong> sind durch einen roten Stern gekennzeichnet. Die verbleibenden Felder sind optional.
                                     </StepText>
                                 </div>
                             </AddItemStep>
@@ -404,126 +311,12 @@ const AddItemGuideScreen = () => {
                                 </StepIcon>
                                 <div>
                                     <StepTitle>Speichern</StepTitle>
-                                    <StepText>
-                                        Klicken Sie auf <strong>Hinzufügen</strong>. Nach dem Speichern gelangen Sie
-                                        direkt zur Artikeldetailseite.
-                                    </StepText>
-                                </div>
-                            </AddItemStep>
-
-                            <MobileOnly>
-                                {hasHinzufugenScreenshot ? (
-                                    <ScreenshotFigure aria-label="Screenshot: Artikel speichern">
-                                        <AddItemScreenshotImage
-                                            src={ADD_ITEM_SAVE_SCREENSHOT_SRC}
-                                            alt="Ansicht „Artikel hinzufügen“ mit der Aktion „Hinzufügen“"
-                                            loading="lazy"
-                                            decoding="async"
-                                            // Fallback to placeholder if the public screenshot is missing.
-                                            onError={() => setHasHinzufugenScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Speichern">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/Hinzufungen.jpeg</code> hinzu, um den
-                                                Screenshot der Aktion „Hinzufügen“ anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </MobileOnly>
-
-                            <AddItemStep>
-                                <StepIcon>
-                                    <Search size={16} />
-                                </StepIcon>
-                                <div>
-                                    <StepTitle>Prüfen</StepTitle>
-                                    <StepText>
-                                        Gehen Sie zurück zu „Inventar“ und suchen Sie nach der neuen ID/dem Namen, um zu
-                                        bestätigen, dass der Eintrag in der Liste ist.
+                                    <StepText>  
+                                        Klicke auf <strong>Hinzufügen</strong>, um den Artikel zu speichern.
                                     </StepText>
                                 </div>
                             </AddItemStep>
                         </AddItemSteps>
-
-                        <DesktopOnly>
-                            <AddItemVisualColumn>
-                                {hasAddItemScreenshot ? (
-                                    <ScreenshotFigure aria-label="Screenshot: Artikel hinzufügen">
-                                        <AddItemScreenshotImage
-                                            src={ADD_ITEM_SCREENSHOT_SRC}
-                                            alt="Formular zum Hinzufügen eines Artikels mit Pflichtfeldern und Hinzufügen-Schaltfläche"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={() => setHasAddItemScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Artikel hinzufügen">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/AddItem.jpeg</code> hinzu, um den Screenshot
-                                                des Formulars zum Hinzufügen anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-
-                                {hasHinzufugenScreenshot ? (
-                                    <ScreenshotFigure aria-label="Screenshot: Artikel speichern">
-                                        <AddItemScreenshotImage
-                                            src={ADD_ITEM_SAVE_SCREENSHOT_SRC}
-                                            alt="Ansicht „Artikel hinzufügen“ mit der Aktion „Hinzufügen“"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={() => setHasHinzufugenScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Platzhalter für Screenshot: Speichern">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/Hinzufungen.jpeg</code> hinzu, um den
-                                                Screenshot der Aktion „Hinzufügen“ anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </AddItemVisualColumn>
-                        </DesktopOnly>
                     </AddItemTaskGrid>
                 </TaskCard>
             </StyledContainer>
@@ -532,20 +325,19 @@ const AddItemGuideScreen = () => {
 };
 
 const InspectItemGuideScreen = () => {
-
-};
-
-const ImportExportGuideScreen = () => {
     const navigate = useNavigate();
-    const [hasImportExportScreenshot, setHasImportExportScreenshot] = useState(true);
-    const [hasImportConfirmationScreenshot, setHasImportConfirmationScreenshot] = useState(true);
-    const [hasImportInProcessScreenshot, setHasImportInProcessScreenshot] = useState(true);
+    const dispatch = useDispatch();
+
+    const handleBack = () => {
+        dispatch(clearLastTopic());
+        navigate('/guide');
+    };
 
     return (
         <div>
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
-                    <BackToGuidesButton type="button" onClick={() => navigate('/guide')}>
+                    <BackToGuidesButton type="button" onClick={handleBack}>
                         <ChevronLeft size={18} />
                         <span>Guides</span>
                     </BackToGuidesButton>
@@ -554,13 +346,79 @@ const ImportExportGuideScreen = () => {
                 <TaskCard $withLeftBorder $leftBorderColor={theme.colors.primary}>
                     <TaskHeader>
                         <TaskTitle>
-                            <IconPill>
-                                <FileUp size={16} />
-                            </IconPill>
-                            <span>Import / Export von Daten</span>
+                            <span>Inspektion und Wartung</span>
                         </TaskTitle>
                         <TaskSubtitle>
-                            Öffne über die Navigationsleiste (oder „Mehr“) den Bereich Import / Export.
+                            
+
+                        </TaskSubtitle>
+                    </TaskHeader>
+
+                    <InspectItemTaskGrid>
+                        <InspectItemSteps>
+                            <InspectItemStep>
+                                <StepIcon>
+                                    <SquarePen size={16} />
+                                </StepIcon>
+                                <div>
+                                    <StepTitle>Wartungsattribute pflegen</StepTitle>
+                                    <StepText>Wenn du deine Artikel regelmäßig inspizieren möchtest, kannst du in den Artikeldetails die Attribute <strong>Schadenszustand</strong>, <strong>Letzte Inspektion</strong> und <strong>Inspektionsintervall</strong> pflegen.</StepText>
+                                </div>
+                            </InspectItemStep>
+
+                            <InspectItemStep>
+                                <StepIcon>
+                                    <ArrowDownNarrowWide size={16} />
+                                </StepIcon>
+                                <div>
+                                    <StepTitle>Nach nächsten Inspektionsterminen sortieren</StepTitle>
+                                    <StepText>Um den Zustand deiner Artikel vor dem nächsten Inspektionstermin zu überprüfen, kannst du in der Artikelübersicht nach <strong>Nächste Inspektion</strong> sortieren. Ist das Datum rot hervorgehoben, liegt es in der Vergangenheit und die Inspektion ist besonders dringlich.</StepText>
+                                </div>
+                            </InspectItemStep>
+
+                            <InspectItemStep>
+                                <StepIcon>
+                                    <CheckCircle2 size={16} />
+                                </StepIcon>
+                                <div>
+                                    <StepTitle>Inspektion abschließen</StepTitle>
+                                    <StepText>Aktualisiere die Schadensstufe und füge bei Bedarf Kommentare zu Mängeln hinzu. Setze das Datum der letzten Inspektion auf das heutige Datum. Das nächste Inspektionsdatum wird automatisch aus dem eingestellten Inspektionsintervall berechnet.</StepText>
+                                </div>
+                            </InspectItemStep>
+                        </InspectItemSteps>
+                    </InspectItemTaskGrid>
+                </TaskCard>
+            </StyledContainer>
+        </div>
+    );
+};
+
+const ImportExportGuideScreen = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const handleBack = () => {
+        dispatch(clearLastTopic());
+        navigate('/guide');
+    };
+
+    return (
+        <div>
+            <StyledContainer $maxWidth="960px">
+                <DetailHeader>
+                    <BackToGuidesButton type="button" onClick={handleBack}>
+                        <ChevronLeft size={18} />
+                        <span>Guides</span>
+                    </BackToGuidesButton>
+                </DetailHeader>
+
+                <TaskCard $withLeftBorder $leftBorderColor={theme.colors.primary}>
+                    <TaskHeader>
+                        <TaskTitle>
+                            <span>Import/Export</span>
+                        </TaskTitle>
+                        <TaskSubtitle>
+                            Öffne über das Symbol <FolderSync size={16} /> in der Navigationsleiste den Bereich Import/Export.
                             Hier kannst du eine bereits vorhandene Excel-Datei importieren oder den aktuellen Stand des Inventars als Excel-Datei exportieren.
                         </TaskSubtitle>
                     </TaskHeader>
@@ -571,240 +429,66 @@ const ImportExportGuideScreen = () => {
                                 Import
                             </StepTitle> 
                         </ImportExportStep>
-                        <ImportExportSteps>
-                            
-
-                            <ImportExportStep>
+                        <ImportExportStep>
                                 <StepIcon>
-                                    <Download size={16} />
+                                    <MousePointerClick size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Backup exportieren (empfohlen)</StepTitle>
+                                    <StepTitle>Excel-Datei auswählen</StepTitle>
                                     <StepText>
-                                        Klicken Sie auf <strong>Exportieren</strong>, um vor größeren Änderungen ein{' '}
-                                        <code>.xlsx</code>-Backup herunterzuladen.
+                                        Klicke auf <strong>Durchsuchen</strong> und wähle eine Excel-Datei (
+                                        <code>.xlsx</code>, <code>.xls</code> oder <code>.csv</code>). Achte darauf, dass im vom Exportformat abweichende Importdateien die Spalten folgendermaßen bezeichnet sind: 
+                                        <ul>
+                                            <li>Ebene</li>
+                                            <li>OE</li>
+                                            <li>Art</li>
+                                            <li>FB</li>
+                                            <li>Menge</li>
+                                            <li>Menge Ist</li>
+                                            <li>Verfügbar</li>
+                                            <li>Ort</li>
+                                            <li>Ausstattung | Hersteller | Typ </li>
+                                            <li>Sachnummer</li>
+                                            <li>Inventar Nr</li>
+                                            <li>Gerätenr.</li>
+                                            <li>Status</li>
+                                            <li>Bemerkung</li>
+                                        </ul>
+                                        Andersnamige Spalten werden ignoriert. Die Spalten <i>Ausstattung | Hersteller | Typ</i> und <i>Sachnummer</i> müssen vorhanden sein. 
                                     </StepText>
                                 </div>
                             </ImportExportStep>
-
                             <ImportExportStep>
                                 <StepIcon>
                                     <Upload size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Excel-Datei auswählen</StepTitle>
-                                    <StepText>
-                                        Klicken Sie auf <strong>Durchsuchen</strong> und wählen Sie eine Excel-Datei (
-                                        <code>.xlsx</code>, <code>.xls</code> oder <code>.csv</code>).
-                                    </StepText>
-                                </div>
-                            </ImportExportStep>
-
-                            <ImportExportStep>
-                                <StepIcon>
-                                    <MousePointerClick size={16} />
-                                </StepIcon>
-                                <div>
                                     <StepTitle>Import starten</StepTitle>
                                     <StepText>
-                                        Klicken Sie auf <strong>Importieren</strong>. Der Fortschritt wird angezeigt,
+                                        Klicke auf <strong>Importieren</strong>. Der Fortschritt wird angezeigt,
                                         während der Import läuft.
                                     </StepText>
                                 </div>
                             </ImportExportStep>
 
-                            <MobileOnly>
-                                {hasImportInProcessScreenshot ? (
-                                    <ScreenshotFigure aria-label="Import progress screenshot">
-                                        <ScreenshotImage
-                                            src={IMPORT_IN_PROCESS_SCREENSHOT_SRC}
-                                            alt="Import mit Fortschrittsanzeige"
-                                            loading="lazy"
-                                            decoding="async"
-                                            // Fallback to placeholder if the public screenshot is missing.
-                                            onError={() => setHasImportInProcessScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for import progress">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/ImportInProcess.jpeg</code> hinzu, um den
-                                                Screenshot des laufenden Imports anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </MobileOnly>
-
+                        <ImportExportStep>
+                            <StepTitle>
+                                Export
+                            </StepTitle> 
+                        </ImportExportStep>
+                        <ImportExportSteps>
                             <ImportExportStep>
                                 <StepIcon>
-                                    <TriangleAlert size={16} />
+                                    <Download size={16} />
                                 </StepIcon>
                                 <div>
-                                    <StepTitle>Erweitern oder überschreiben wählen</StepTitle>
                                     <StepText>
-                                        Wenn bereits Einträge existieren, wählen Sie <strong>Erweitern</strong> (bestehende
-                                        behalten + neue hinzufügen) oder <strong>Überschreiben</strong> (bestehende löschen
-                                        + ersetzen). Zum Überschreiben müssen Sie <strong>überschreiben</strong> eingeben.
-                                    </StepText>
-                                </div>
-                            </ImportExportStep>
-
-                            <MobileOnly>
-                                {hasImportConfirmationScreenshot ? (
-                                    <ScreenshotFigure aria-label="Import confirmation screenshot">
-                                        <ScreenshotImage
-                                            src={IMPORT_EXPORT_CONFIRMATION_SCREENSHOT_SRC}
-                                            alt="Import-Bestätigung mit den Optionen Erweitern und Überschreiben"
-                                            loading="lazy"
-                                            decoding="async"
-                                            // Fallback to placeholder if the public screenshot is missing.
-                                            onError={() => setHasImportConfirmationScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for import confirmation">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/ImportConfirmation.jpeg</code> hinzu, um den
-                                                Bestätigungs-Screenshot anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </MobileOnly>
-
-                            <ImportExportStep>
-                                <StepIcon>
-                                    <Search size={16} />
-                                </StepIcon>
-                                <div>
-                                    <StepTitle>Ergebnis prüfen</StepTitle>
-                                    <StepText>
-                                        Gehen Sie zu „Inventar“ und suchen Sie nach einigen bekannten Artikeln, um den
-                                        Import zu prüfen.
+                                        Klicke auf <strong>Exportieren</strong>, um vor größeren Änderungen ein{' '}
+                                        <code>.xlsx</code>-Backup herunterzuladen. 
                                     </StepText>
                                 </div>
                             </ImportExportStep>
                         </ImportExportSteps>
-
-                        <DesktopOnly>
-                            <ImportExportVisualColumn>
-                                {hasImportExportScreenshot ? (
-                                    <ScreenshotFigure aria-label="Import / Export screenshot">
-                                        <ScreenshotImage
-                                            src={IMPORT_EXPORT_SCREENSHOT_SRC}
-                                            alt="Import/Export-Ansicht mit Dateiauswahl und Import/Export-Aktionen"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={() => setHasImportExportScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for import / export">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/ImportExport.jpeg</code> hinzu, um den
-                                                Import/Export-Screenshot anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-
-                                {hasImportConfirmationScreenshot ? (
-                                    <ScreenshotFigure aria-label="Import confirmation screenshot">
-                                        <ScreenshotImage
-                                            src={IMPORT_EXPORT_CONFIRMATION_SCREENSHOT_SRC}
-                                            alt="Import-Bestätigung mit den Optionen Erweitern und Überschreiben"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={() => setHasImportConfirmationScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for import confirmation">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/ImportConfirmation.jpeg</code> hinzu, um den
-                                                Bestätigungs-Screenshot anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-
-                                {hasImportInProcessScreenshot ? (
-                                    <ScreenshotFigure aria-label="Import progress screenshot">
-                                        <ScreenshotImage
-                                            src={IMPORT_IN_PROCESS_SCREENSHOT_SRC}
-                                            alt="Import mit Fortschrittsanzeige"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={() => setHasImportInProcessScreenshot(false)}
-                                        />
-                                    </ScreenshotFigure>
-                                ) : (
-                                    <ScreenshotPlaceholder aria-label="Screenshot placeholder for import progress">
-                                        <ScreenshotTopBar>
-                                            <Dot $color="#ef4444" />
-                                            <Dot $color="#f59e0b" />
-                                            <Dot $color="#10b981" />
-                                        </ScreenshotTopBar>
-
-                                        <ScreenshotBody>
-                                            <PlaceholderIcon>
-                                                <ImageIcon size={28} />
-                                            </PlaceholderIcon>
-                                            <PlaceholderTitle>Hier kommt ein Screenshot hin</PlaceholderTitle>
-                                            <PlaceholderText>
-                                                Fügen Sie <code>public/guide/ImportInProcess.jpeg</code> hinzu, um den
-                                                Screenshot des laufenden Imports anzuzeigen.
-                                            </PlaceholderText>
-                                        </ScreenshotBody>
-                                    </ScreenshotPlaceholder>
-                                )}
-                            </ImportExportVisualColumn>
-                        </DesktopOnly>
                     </ImportExportTaskGrid>
                 </TaskCard>
             </StyledContainer>
@@ -814,15 +498,18 @@ const ImportExportGuideScreen = () => {
 
 const PackingPlansGuideScreen = () => {
     const navigate = useNavigate();
-    const [hasPackPlanScreenshot, setHasPackPlanScreenshot] = useState(true);
-    const [hasPackPlan2Screenshot, setHasPackPlan2Screenshot] = useState(true);
-    const [hasPackPlan3Screenshot, setHasPackPlan3Screenshot] = useState(true);
+    const dispatch = useDispatch();
+
+    const handleBack = () => {
+        dispatch(clearLastTopic());
+        navigate('/guide');
+    };
 
     return (
         <div>
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
-                    <BackToGuidesButton type="button" onClick={() => navigate('/guide')}>
+                    <BackToGuidesButton type="button" onClick={handleBack}>
                         <ChevronLeft size={18} />
                         <span>Guides</span>
                     </BackToGuidesButton>
@@ -831,15 +518,12 @@ const PackingPlansGuideScreen = () => {
                 <TaskCard $withLeftBorder $leftBorderColor={theme.colors.primary}>
                     <TaskHeader>
                         <TaskTitle>
-                            <IconPill>
-                                <ClipboardList size={16} />
-                            </IconPill>
                             <span>Packpläne</span>
                         </TaskTitle>
                         <TaskSubtitle>
                             Ein Packplan ist eine Liste von Artikeln, die für einen bestimmten Einsatz zusammengestellt werden.
-                            Er kann aus der Übersicht der Packpläne oder direkt aus der Inventarliste erstellt werden. 
-
+                            Er kann aus der Übersicht der Packpläne (Symbol <ClipboardList size={16} /> in der Navigationsleiste) oder direkt aus der Inventarliste erstellt werden. 
+ 
                         </TaskSubtitle>
                     </TaskHeader>
 
@@ -866,7 +550,7 @@ const PackingPlansGuideScreen = () => {
                                     <StepTitle>„Pack“-Modus aktivieren</StepTitle>
                                     <StepText>
                                         Klicke in der oberen Leiste auf <strong>Packen</strong>. Die UI wechselt in
-                                        den Auswahlmodus.
+                                        den Auswahlmodus. Auch hier kannst du die Suchleiste und die Filter nutzen, um die Artikel zu finden, die du für den Packplan verwenden möchtest.
                                     </StepText>
                                 </div>
                             </PackingPlansStep>
@@ -878,7 +562,7 @@ const PackingPlansGuideScreen = () => {
                                 <div>
                                     <StepTitle>Artikel auswählen</StepTitle>
                                     <StepText>
-                                        Klicke Artikelzeilen/-karten an, um sie für den Plan auszuwählen.
+                                        Klicke Artikelzeilen/-karten an, um sie für den Plan auszuwählen. Du kannst auch alle Artikel auf einmal auswählen, indem du auf "Alle auswählen" klickst. Dadurch werden alle Artikel, die den aktuellen Filtern entsprechen, ausgewählt. Wenn du "Alle abwählen" klickst, werden alle Artikel wieder abgewählt.
                                     </StepText>
                                 </div>
                             </PackingPlansStep>
@@ -891,7 +575,7 @@ const PackingPlansGuideScreen = () => {
                                     <StepTitle>Mengen festlegen</StepTitle>
                                     <StepText>
                                         Nutze die Mengensteuerung, um die{' '}
-                                        <strong>benötigte Menge</strong> pro ausgewähltem Artikel zu setzen.
+                                        <strong>benötigte Menge</strong> pro ausgewähltem Artikel zu setzen. Überschreitet die Menge die verfügbare Menge, wird dir in den Packplan-Details eine Warnung angezeigt.
                                     </StepText>
                                 </div>
                             </PackingPlansStep>
@@ -903,7 +587,7 @@ const PackingPlansGuideScreen = () => {
                                 <div>
                                     <StepTitle>Plan benennen</StepTitle>
                                     <StepText>
-                                        Trage im Feld <strong>Packplan-…</strong> einen Namen ein.
+                                        Trage im Feld <strong>Packplan-…</strong> einen Namen ein und wähle ein Szenario über das Dropdown-Menü.
                                     </StepText>
                                 </div>
                             </PackingPlansStep>
@@ -944,8 +628,8 @@ const PackingPlansGuideScreen = () => {
                                 <div>
                                     <StepTitle>Gespeicherten Plan öffnen</StepTitle>
                                     <StepText>
-                                        Klicke in der Übersicht auf einen gespeicherten Plan, um ihn zu öffnen. Hier kannst du den Packplan bearbeiten, Notizen zum Plan und zu den einzelnen Artikeln hinzufügen, die Artikelliste ändern oder den Packplan löschen.
-                                        Auch kannst du Artikel "einpacken" und damit die Übersicht darüber behalten, welche Artikel schon ins Fahrzeug geladen sind.
+                                        Klicke in der Übersicht auf einen gespeicherten Plan, um ihn zu öffnen. Hier kannst du den Packplan bearbeiten, Notizen zum Plan und zu den einzelnen Artikeln hinzufügen, die Artikelliste und -reihenfolge ändern oder den Packplan löschen.
+                                        Auch kannst du Artikel "einpacken" und damit die Übersicht darüber behalten, welche Artikel schon ins Fahrzeug geladen sind. In der Übersicht der Packpläne siehst du dann, welche Pläne du schon angefangen hast zu packen und welche du schon fertig gepackt hast.
                                     </StepText>
                                 </div>
                             </PackingPlansStep>
@@ -1106,17 +790,6 @@ const TaskTitle = styled.div`
     font-size: ${theme.typography.fontSize.lg};
 `;
 
-const IconPill = styled.span`
-    width: 32px;
-    height: 32px;
-    border-radius: ${theme.borderRadius.round};
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: ${theme.colors.primaryLight};
-    color: ${theme.colors.primary};
-`;
-
 const TaskSubtitle = styled.p`
     margin: 0;
     color: ${theme.colors.text.muted};
@@ -1124,13 +797,10 @@ const TaskSubtitle = styled.p`
 `;
 
 const TaskGrid = styled.div`
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: ${theme.spacing.xl};
-
-    @media (max-width: ${theme.breakpoints.lg}) {
-        grid-template-columns: 1fr;
-    }
+    max-width: 800px;
 `;
 
 const Steps = styled.div`
@@ -1145,164 +815,33 @@ const Step = styled.div`
     align-items: flex-start;
 `;
 
-const MobileOnly = styled.div`
-    display: none;
-
-    @media (max-width: ${theme.breakpoints.lg}) {
-        display: block;
-    }
-`;
-
-const DesktopOnly = styled.div`
-    @media (max-width: ${theme.breakpoints.lg}) {
-        display: none;
-    }
-`;
-
 // Desktop-only layout polish for the Find-Item guide (mobile stays unchanged)
-const FindItemTaskGrid = styled(TaskGrid)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        grid-template-columns: minmax(0, 1fr) 420px;
-        align-items: start;
-    }
-`;
+const FindItemTaskGrid = styled(TaskGrid)``;
 
-const FindItemSteps = styled(Steps)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        gap: ${theme.spacing.md};
-    }
-`;
+const FindItemSteps = styled(Steps)``;
 
-const FindItemStep = styled(Step)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        padding: ${theme.spacing.md};
-        border-radius: ${theme.borderRadius.lg};
-        border: 1px solid ${theme.colors.border.default};
-        background: ${theme.colors.background.white};
-        box-shadow: ${theme.shadows.sm};
-    }
-`;
+const FindItemStep = styled(Step)``;
 
 // Desktop-only layout polish for the Add-Item guide (mobile stays unchanged)
-const AddItemTaskGrid = styled(TaskGrid)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        grid-template-columns: minmax(0, 1fr) 420px;
-        align-items: start;
-    }
-`;
+const AddItemTaskGrid = styled(TaskGrid)``;
 
-const AddItemSteps = styled(Steps)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        gap: ${theme.spacing.md};
-    }
-`;
+const AddItemSteps = styled(Steps)``;
 
-const AddItemStep = styled(Step)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        padding: ${theme.spacing.md};
-        border-radius: ${theme.borderRadius.lg};
-        border: 1px solid ${theme.colors.border.default};
-        background: ${theme.colors.background.white};
-        box-shadow: ${theme.shadows.sm};
-    }
-`;
+const AddItemStep = styled(Step)``;
 
 // Desktop-only layout polish for the Import/Export guide (mobile stays unchanged)
-const ImportExportTaskGrid = styled(TaskGrid)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        grid-template-columns: minmax(0, 1fr) 420px;
-        align-items: start;
-    }
-`;
+const ImportExportTaskGrid = styled(TaskGrid)``;
 
-const ImportExportSteps = styled(Steps)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        gap: ${theme.spacing.md};
-    }
-`;
+const ImportExportSteps = styled(Steps)``;
 
-const ImportExportStep = styled(Step)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        padding: ${theme.spacing.md};
-        border-radius: ${theme.borderRadius.lg};
-        border: 1px solid ${theme.colors.border.default};
-        background: ${theme.colors.background.white};
-        box-shadow: ${theme.shadows.sm};
-    }
-`;
-
-const ImportExportVisualColumn = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.lg};
-
-    @media (min-width: ${theme.breakpoints.lg}) {
-        position: sticky;
-        top: 96px;
-    }
-`;
+const ImportExportStep = styled(Step)``;
 
 // Desktop-only layout polish for the Packing Plans guide (mobile stays unchanged)
-const PackingPlansTaskGrid = styled(TaskGrid)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        grid-template-columns: minmax(0, 1fr) 420px;
-        align-items: start;
-    }
-`;
+const PackingPlansTaskGrid = styled(TaskGrid)``;
 
-const PackingPlansSteps = styled(Steps)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        gap: ${theme.spacing.md};
-    }
-`;
+const PackingPlansSteps = styled(Steps)``;
 
-const PackingPlansStep = styled(Step)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        padding: ${theme.spacing.md};
-        border-radius: ${theme.borderRadius.lg};
-        border: 1px solid ${theme.colors.border.default};
-        background: ${theme.colors.background.white};
-        box-shadow: ${theme.shadows.sm};
-    }
-`;
-
-const PackingPlansVisualColumn = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.lg};
-
-    @media (min-width: ${theme.breakpoints.lg}) {
-        position: sticky;
-        top: 96px;
-    }
-`;
-
-// NOTE: Don't extend `VisualColumn` / `ScreenshotImage` here because they are defined later in the file.
-// Extending forward-referenced consts can crash at runtime (white screen).
-const AddItemVisualColumn = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.lg};
-
-    @media (min-width: ${theme.breakpoints.lg}) {
-        position: sticky;
-        top: 96px;
-    }
-`;
-
-const AddItemScreenshotImage = styled.img`
-    width: 100%;
-    height: auto;
-    display: block;
-
-    @media (min-width: ${theme.breakpoints.lg}) {
-        box-sizing: border-box;
-        border: 1px solid ${theme.colors.border.default};
-        border-radius: ${theme.borderRadius.lg};
-        height: 260px;
-        object-fit: contain;
-    }
-`;
+const PackingPlansStep = styled(Step)``;
 
 const StepIcon = styled.div`
     width: 32px;
@@ -1329,109 +868,11 @@ const StepText = styled.div`
     line-height: 1.5;
 `;
 
-const VisualColumn = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing.lg};
-`;
+// Desktop-only layout polish for the Inspect-Item guide (mobile stays unchanged)
+const InspectItemTaskGrid = styled(TaskGrid)``;
 
-const FindItemVisualColumn = styled(VisualColumn)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        position: sticky;
-        top: 96px;
-    }
-`;
+const InspectItemSteps = styled(Steps)``;
 
-const ScreenshotPlaceholder = styled.div`
-    border-radius: ${theme.borderRadius.lg};
-    border: 1px dashed ${theme.colors.border.default};
-    background: ${theme.colors.background.light};
-    overflow: hidden;
-    box-shadow: ${theme.shadows.sm};
-`;
-
-const ScreenshotFigure = styled.figure`
-    margin: 0;
-    border-radius: ${theme.borderRadius.lg};
-    border: 1px solid ${theme.colors.border.default};
-    background: ${theme.colors.background.white};
-    overflow: hidden;
-    box-shadow: ${theme.shadows.sm};
-
-    /* Desktop: don't draw the "frame" around image + caption */
-    @media (min-width: ${theme.breakpoints.lg}) {
-        border: none;
-    }
-`;
-
-const ScreenshotImage = styled.img`
-    width: 100%;
-    height: auto;
-    display: block;
-
-    /* Desktop: put the border around the image only (caption stays clean) */
-    @media (min-width: ${theme.breakpoints.lg}) {
-        box-sizing: border-box;
-        border: 1px solid ${theme.colors.border.default};
-        border-radius: ${theme.borderRadius.lg};
-    }
-`;
-
-const FindItemScreenshotImage = styled(ScreenshotImage)`
-    @media (min-width: ${theme.breakpoints.lg}) {
-        height: 520px;
-        object-fit: contain;
-    }
-`;
-
-const ScreenshotTopBar = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    border-bottom: 1px solid ${theme.colors.border.default};
-    background: ${theme.colors.background.white};
-`;
-
-const Dot = styled.span<{ $color: string }>`
-    width: 10px;
-    height: 10px;
-    border-radius: ${theme.borderRadius.round};
-    background: ${({ $color }) => $color};
-    opacity: 0.9;
-`;
-
-const ScreenshotBody = styled.div`
-    padding: 18px 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    text-align: center;
-`;
-
-const PlaceholderIcon = styled.div`
-    width: 56px;
-    height: 56px;
-    border-radius: ${theme.borderRadius.round};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: ${theme.colors.background.white};
-    border: 1px solid ${theme.colors.border.default};
-    color: ${theme.colors.text.muted};
-`;
-
-const PlaceholderTitle = styled.div`
-    font-weight: ${theme.typography.fontWeight.semibold};
-    color: ${theme.colors.text.primary};
-`;
-
-const PlaceholderText = styled.p`
-    margin: 0;
-    color: ${theme.colors.text.muted};
-    font-size: ${theme.typography.fontSize.sm};
-    line-height: 1.5;
-`;
+const InspectItemStep = styled(Step)``;
 
 export default Guide;
