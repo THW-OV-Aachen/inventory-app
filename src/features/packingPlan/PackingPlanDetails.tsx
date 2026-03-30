@@ -53,7 +53,7 @@ import { getIconComponent } from '../../utils/scenarioIcons';
 // ─── Styled Components ────────────────────────────────────
 
 const StyledContainer = styled(Container)`
-    padding-top: 0px;
+    padding-top: 8px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
@@ -64,8 +64,8 @@ const StyledContainer = styled(Container)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} 0;
-    margin-bottom: 0;
+    padding: 0;
+    margin-bottom: 8px;
     margin-left: 0;
     position: relative;
 `;

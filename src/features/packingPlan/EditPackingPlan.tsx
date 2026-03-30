@@ -20,7 +20,7 @@ import {
 import { theme } from '../../styles/theme';
 
 const StyledContainer = styled(Container)`
-    padding-top: 8px;
+    padding-top: 0px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
@@ -32,19 +32,34 @@ const StyledContainer = styled(Container)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} ${theme.spacing.lg};
     margin-bottom: 0;
-    margin-left: 0;
+    margin-top: 12px;
+    gap: ${theme.spacing.md};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
+    }
+`;
+
+const HeaderLeft = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
-    padding-left: ${theme.spacing.lg};
-    padding-right: ${theme.spacing.lg};
+    flex: 1;
+    min-width: 0;
+`;
 
-    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding-left: ${theme.spacing.md};
-        padding-right: ${theme.spacing.md};
-    }
+const Title = styled.h1`
+    font-size: ${theme.typography.fontSize.xxl};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    color: ${theme.colors.text.primary};
+    margin: 0;
+    flex: 1;
+    min-width: 0;
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -178,9 +193,12 @@ const EditPackingPlan = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <StyledBackButton onClick={() => navigate(-1)}>
-                    <ChevronLeft size={20} />
-                </StyledBackButton>
+                <HeaderLeft>
+                    <StyledBackButton onClick={() => navigate(-1)}>
+                        <ChevronLeft size={20} />
+                    </StyledBackButton>
+                    <Title>Packplan bearbeiten</Title>
+                </HeaderLeft>
             </StyledHeader>
 
             <StyledContentWrapper>

@@ -143,7 +143,7 @@ const WarningText = styled.div`
 `;
 
 const StyledContainer = styled(Container)`
-    padding-top: 8px;
+    padding-top: 4px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
@@ -154,9 +154,9 @@ const StyledContainer = styled(Container)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    padding: ${theme.spacing.md} ${theme.spacing.lg};
     margin-bottom: 0;
-    margin-left: 0;
+    margin-left: -4px;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
@@ -168,7 +168,11 @@ const StyledBackButton = styled(BackButton)`
 `;
 
 const StyledContentWrapper = styled(ContentWrapper)`
-    padding: 0;
+    padding: 0 ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md};
+    }
 `;
 
 const StyledCard = styled(Card)`

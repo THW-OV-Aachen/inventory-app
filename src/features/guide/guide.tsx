@@ -23,7 +23,7 @@ import {
     ScanLine
 } from 'lucide-react';
 
-import { Card, Container } from '../../styles/components';
+import { Card, Container, BackButton } from '../../styles/components';
 import { theme } from '../../styles/theme';
 
 type GuideTopicId = 'find-item' | 'add-item' | 'inspect-item' | 'import-export' | 'packing-plans';
@@ -168,8 +168,8 @@ const FindItemGuideScreen = () => {
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
                     <BackToGuidesButton type="button" onClick={handleBack}>
-                        <ChevronLeft size={18} />
-                        <span>Guides</span>
+                        <ChevronLeft size={20} />
+                        <span>Funktionsübersicht</span>
                     </BackToGuidesButton>
                 </DetailHeader>
 
@@ -266,8 +266,8 @@ const AddItemGuideScreen = () => {
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
                     <BackToGuidesButton type="button" onClick={handleBack}>
-                        <ChevronLeft size={18} />
-                        <span>Guides</span>
+                        <ChevronLeft size={20} />
+                        <span>Funktionsübersicht</span>
                     </BackToGuidesButton>
                 </DetailHeader>
 
@@ -338,8 +338,8 @@ const InspectItemGuideScreen = () => {
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
                     <BackToGuidesButton type="button" onClick={handleBack}>
-                        <ChevronLeft size={18} />
-                        <span>Guides</span>
+                        <ChevronLeft size={20} />
+                        <span>Funktionsübersicht</span>
                     </BackToGuidesButton>
                 </DetailHeader>
 
@@ -407,8 +407,8 @@ const ImportExportGuideScreen = () => {
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
                     <BackToGuidesButton type="button" onClick={handleBack}>
-                        <ChevronLeft size={18} />
-                        <span>Guides</span>
+                        <ChevronLeft size={20} />
+                        <span>Funktionsübersicht</span>
                     </BackToGuidesButton>
                 </DetailHeader>
 
@@ -510,8 +510,8 @@ const PackingPlansGuideScreen = () => {
             <StyledContainer $maxWidth="960px">
                 <DetailHeader>
                     <BackToGuidesButton type="button" onClick={handleBack}>
-                        <ChevronLeft size={18} />
-                        <span>Guides</span>
+                        <ChevronLeft size={20} />
+                        <span>Funktionsübersicht</span>
                     </BackToGuidesButton>
                 </DetailHeader>
 
@@ -642,7 +642,7 @@ const PackingPlansGuideScreen = () => {
 };
 
 const StyledContainer = styled(Container)`
-    padding: 0 ${theme.spacing.xl} ${theme.spacing.xxl};
+    padding: 0 0 ${theme.spacing.xxl};
     display: flex;
     flex-direction: column;
     gap: ${theme.spacing.xl};
@@ -672,21 +672,11 @@ const DetailHeader = styled.div`
     margin-bottom: ${theme.spacing.md};
 `;
 
-const BackToGuidesButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: none;
-    background: transparent;
-    padding: 6px 0;
+const BackToGuidesButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: -${theme.spacing.xs};
+    gap: ${theme.spacing.xs};
     color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.fontSize.base};
-    font-weight: ${theme.typography.fontWeight.medium};
-    cursor: pointer;
-
-    &:hover {
-        color: ${theme.colors.primary};
-    }
 `;
 
 const TopicGrid = styled.div`
