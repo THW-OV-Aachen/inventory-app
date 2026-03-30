@@ -6,11 +6,11 @@ import { packingPlanApi } from '../../app/packingPlanApi';
 import styled from 'styled-components';
 import { Upload, Download, ChevronLeft, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/theme';
-import { Card, Button, Container, BackButton, Header, ControlsWrapper } from '../../styles/components';
+import { Card, Button, Container, BackButton, Header, ContentWrapper } from '../../styles/components';
 import IconContainer from '../../utils/IconContainer';
 
 const StyledContainer = styled(Container)`
-    padding-top: 0px;
+    padding-top: 12px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
@@ -105,12 +105,33 @@ const StyledSecondaryButton = styled(Button)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} ${theme.spacing.lg};
     margin-bottom: 0;
-    margin-left: 0;
+    gap: ${theme.spacing.md};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
+    }
+`;
+
+const HeaderLeft = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+    flex: 1;
+    min-width: 0;
+`;
+
+const Title = styled.h1`
+    font-size: ${theme.typography.fontSize.xxl};
+    font-weight: ${theme.typography.fontWeight.semibold};
+    color: ${theme.colors.text.primary};
+    margin: 0;
+    flex: 1;
+    min-width: 0;
 `;
 
 const StyledBackButton = styled(BackButton)`
@@ -295,11 +316,14 @@ const ImportExportScreen = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <StyledBackButton onClick={() => navigate(-1)}>
-                    <ChevronLeft size={20} />
-                </StyledBackButton>
+                <HeaderLeft>
+                    <StyledBackButton onClick={() => navigate(-1)}>
+                        <ChevronLeft size={20} />
+                    </StyledBackButton>
+                    <Title>Import/Export</Title>
+                </HeaderLeft>
             </StyledHeader>
-            <ControlsWrapper>
+            <ContentWrapper>
                 <StyledCard>
                     <FileInputWrapper>
                         <Upload size={18} color={theme.colors.text.muted} />
@@ -418,7 +442,7 @@ const ImportExportScreen = () => {
                         </ModalBox>
                     </ModalOverlay>
                 )}
-            </ControlsWrapper>
+            </ContentWrapper>
         </StyledContainer>
     );
 };

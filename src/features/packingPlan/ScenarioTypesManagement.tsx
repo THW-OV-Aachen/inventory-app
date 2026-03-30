@@ -33,13 +33,19 @@ const Header = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} 0;
+    padding: 0 ${theme.spacing.lg} ${theme.spacing.xl} ${theme.spacing.lg};
     margin-bottom: 0;
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding: 0 ${theme.spacing.sm} ${theme.spacing.lg} 0;
+        padding: 0 ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
     }
+`;
+
+const StyledBackButton = styled(BackButton)`
+    padding-left: 0;
+    margin-left: 0;
+    flex-shrink: 0;
 `;
 
 const HeaderLeft = styled.div`
@@ -342,9 +348,9 @@ const ScenarioTypesManagement = () => {
         <StyledContainer>
             <Header>
                 <HeaderLeft>
-                    <BackButton onClick={() => navigate('/packing-plans')}>
-                        <IconContainer icon={ChevronLeft} />
-                    </BackButton>
+                    <StyledBackButton onClick={() => navigate('/packing-plans')}>
+                        <IconContainer icon={ChevronLeft} width="20px" height="20px" />
+                    </StyledBackButton>
                     <Title>Szenario-Typen</Title>
                 </HeaderLeft>
                 <HeaderRight>
