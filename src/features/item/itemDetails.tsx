@@ -71,34 +71,32 @@ const ItemDetails = () => {
     return (
         <StyledContainer>
             <StyledHeader>
-                <HeaderContent>
-                    <StyledBackButton onClick={() => navigate(-1)}>
-                        <ChevronLeft size={20} />
-                    </StyledBackButton>
+                <StyledBackButton onClick={() => navigate(-1)}>
+                    <ChevronLeft size={20} />
+                </StyledBackButton>
 
-                    <Title>
-                        {item.isSet === true ? (
-                            <Layers size={20} color={theme.colors.text.muted} />
-                        ) : item.isSet === false ?(
-                            <Box size={20} color={theme.colors.text.muted} />
-                        ) : (
-                            ''
-                        )}
-                        {item.name}
-                    </Title>
+                <Title>
+                    {item.isSet === true ? (
+                        <Layers size={20} color={theme.colors.text.muted} />
+                    ) : item.isSet === false ? (
+                        <Box size={20} color={theme.colors.text.muted} />
+                    ) : (
+                        ''
+                    )}
+                    {item.name}
+                </Title>
 
-                    <HeaderActions>
-                        <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
-                            <IconContainer icon={Pen} />
-                            <span>Bearbeiten</span>
-                        </HeaderEditButton>
+                <HeaderActions>
+                    <HeaderEditButton $variant="primary" onClick={() => navigate(`/items/${item.id}/modify`)}>
+                        <IconContainer icon={Pen} />
+                        <span>Bearbeiten</span>
+                    </HeaderEditButton>
 
-                        <HeaderDeleteButton onClick={handleDelete}>
-                            <IconContainer icon={Trash2} />
-                            <span>Löschen</span>
-                        </HeaderDeleteButton>
-                    </HeaderActions>
-                </HeaderContent>
+                    <HeaderDeleteButton onClick={handleDelete}>
+                        <IconContainer icon={Trash2} />
+                        <span>Löschen</span>
+                    </HeaderDeleteButton>
+                </HeaderActions>
             </StyledHeader>
 
             <StyledContentWrapper>
@@ -343,7 +341,7 @@ const DangerModalButton = styled(ModalButton)`
     }
 `;
 const StyledContainer = styled(Container)`
-    padding-top: 8px;
+    padding-top: 0px;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: ${theme.spacing.xl};
@@ -354,23 +352,17 @@ const StyledContainer = styled(Container)`
 `;
 
 const StyledHeader = styled(Header)`
-    padding: ${theme.spacing.md} 0;
+    padding: ${theme.spacing.md} ${theme.spacing.lg};
     margin-bottom: 0;
     margin-left: 0;
     position: relative;
-`;
-
-const HeaderContent = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
     width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 ${theme.spacing.lg};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        padding: 0 ${theme.spacing.md};
+        padding: ${theme.spacing.md} ${theme.spacing.md};
     }
 `;
 

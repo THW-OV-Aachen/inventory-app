@@ -272,7 +272,11 @@ export const Container = styled.div<{ $maxWidth?: string }>`
 
 // Content Wrapper
 export const ContentWrapper = styled.div`
-    padding: ${theme.spacing.xl};
+    padding: 0 ${theme.spacing.lg};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        padding: 0 ${theme.spacing.md};
+    }
 `;
 
 // Back Button (shared across multiple components)
