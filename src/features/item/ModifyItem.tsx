@@ -858,7 +858,7 @@ const ModifyItem = () => {
                     </StyledFormGroup>
 
                     <StyledFormGroup>
-                        <Label htmlFor="remark">Kommentar</Label>
+                        <Label htmlFor="remark">Kommentare</Label>
                         <Textarea
                             id="remark"
                             name="remark"

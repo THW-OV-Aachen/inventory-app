@@ -563,8 +563,13 @@ export async function importExcel(file: File, onProgress?: (percentage: number) 
             }
         }
 
-        if (rowData.damageLevel === 'total' || (rowData.availability === 0 && !headerMap.has('Schadenszustand'))) {
-            rowData.damageLevel = 'total';
+        // If availability is 0 and no specific damage status was provided or it matches 'none', we default to 'missing' (fehlt)
+        if (rowData.availability === 0 && (rowData.damageLevel === 'none' || !headerMap.has('Schadenszustand'))) {
+            rowData.damageLevel = 'missing';
+        }  
+
+        // If explicitly set to 'total' (zerstört) or if availability was already 0 and forced previously, we maintain the availability as 0.
+        if (rowData.damageLevel === 'total') {
             rowData.availability = 0;
         }
 

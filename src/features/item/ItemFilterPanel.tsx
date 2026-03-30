@@ -137,7 +137,7 @@ export const ItemFilter = ({ packModeState, onSavePackingPlan }: ItemFilterProps
                                 return (
                                     <>
                                         <IconContainer icon={isAllFilteredItemsSelected ? X : Check} />
-                                        <span>{isAllFilteredItemsSelected ? 'Alle entfernen' : 'Alle auswählen'}</span>
+                                        <span>{isAllFilteredItemsSelected ? 'Alle abwählen' : 'Alle auswählen'}</span>
                                     </>
                                 );
                             })()}
