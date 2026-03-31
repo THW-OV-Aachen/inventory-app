@@ -118,7 +118,7 @@ const IconWrapper = styled.div`
     justify-content: center;
     width: 48px;
     height: 48px;
-    background-color: ${theme.colors.background.gray};
+    background-color: ${theme.colors.primaryLight};
     border-radius: ${theme.borderRadius.md};
     color: ${theme.colors.primary};
 `;
@@ -132,12 +132,6 @@ const ScenarioName = styled.div`
 
 const Actions = styled.div`
     display: flex;
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
-    
-    ${ScenarioCard}:hover & {
-        opacity: 1;
-    }
 `;
 
 const ActionButton = styled.button`

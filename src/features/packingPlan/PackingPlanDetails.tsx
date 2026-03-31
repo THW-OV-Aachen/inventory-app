@@ -413,8 +413,31 @@ const ItemName = styled.div`
     margin-bottom: ${theme.spacing.xs};
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: ${theme.spacing.sm};
+`;
+
+const RightControls = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+    flex-shrink: 0;
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        flex-direction: column;
+        align-items: flex-end;
+        align-self: flex-start;
+        gap: ${theme.spacing.sm};
+    }
+`;
+
+const ControlsRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        gap: ${theme.spacing.sm};
+    }
 `;
 
 const PackedBadge = styled.span`
@@ -1230,12 +1253,6 @@ const SortableItemRow = ({
                 <ItemInfo>
                     <ItemName>
                         <span>{itemName}</span>
-                        {isPacked && (
-                            <PackedBadge>
-                                <IconContainer icon={CheckCircle2} />
-                                gepackt
-                            </PackedBadge>
-                        )}
                     </ItemName>
                     <ItemMeta>
                         ID: {itemId}
@@ -1244,56 +1261,66 @@ const SortableItemRow = ({
                         {missingNote}
                     </ItemMeta>
                 </ItemInfo>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <QuantityInput
-                        type="number"
-                        min="1"
-                        value={editingQuantity}
-                        $isError={!!isError}
-                        onChange={(e) => onUpdateQuantity(planItem.id, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                    {isError && (
-                        <QuantityWarning>Max: {itemDetails.availability}</QuantityWarning>
+                <RightControls>
+                    {isPacked && (
+                        <PackedBadge>
+                            <IconContainer icon={CheckCircle2} />
+                            gepackt
+                        </PackedBadge>
                     )}
-                </div>
-                {packMode ? (
-                    <PackCheckboxWrapper>
-                        <Checkbox
-                            type="checkbox"
-                            checked={isPacked}
-                            onChange={() => onTogglePacked(planItem.Iid.toString())}
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                    </PackCheckboxWrapper>
-                ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <DeleteButton
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(planItem.id);
-                            }}
-                            title="Artikel entfernen"
-                        >
-                            <IconContainer icon={Trash2} />
-                        </DeleteButton>
-                        <ActionIconButton
-                            $isActive={isEditingNote || !!planItem.notes}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (isEditingNote) {
-                                    onUpdateNote(planItem.id, noteValue);
-                                    setIsEditingNote(false);
-                                } else {
-                                    setIsEditingNote(true);
-                                }
-                            }}
-                            title={isEditingNote ? "Notiz speichern" : "Notiz hinzufügen/bearbeiten"}
-                        >
-                            <IconContainer icon={isEditingNote ? Check : MessageSquare} />
-                        </ActionIconButton>
-                    </div>
-                )}
+                    <ControlsRow>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <QuantityInput
+                                type="number"
+                                min="1"
+                                value={editingQuantity}
+                                $isError={!!isError}
+                                onChange={(e) => onUpdateQuantity(planItem.id, e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            {isError && (
+                                <QuantityWarning>Max: {itemDetails.availability}</QuantityWarning>
+                            )}
+                        </div>
+                        {packMode ? (
+                            <PackCheckboxWrapper>
+                                <Checkbox
+                                    type="checkbox"
+                                    checked={isPacked}
+                                    onChange={() => onTogglePacked(planItem.Iid.toString())}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </PackCheckboxWrapper>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <DeleteButton
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(planItem.id);
+                                    }}
+                                    title="Artikel entfernen"
+                                >
+                                    <IconContainer icon={Trash2} />
+                                </DeleteButton>
+                                <ActionIconButton
+                                    $isActive={isEditingNote || !!planItem.notes}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isEditingNote) {
+                                            onUpdateNote(planItem.id, noteValue);
+                                            setIsEditingNote(false);
+                                        } else {
+                                            setIsEditingNote(true);
+                                        }
+                                    }}
+                                    title={isEditingNote ? "Notiz speichern" : "Notiz hinzufügen/bearbeiten"}
+                                >
+                                    <IconContainer icon={isEditingNote ? Check : MessageSquare} />
+                                </ActionIconButton>
+                            </div>
+                        )}
+                    </ControlsRow>
+                </RightControls>
             </ItemRowMain>
 
             {(isEditingNote || planItem.notes) && (
