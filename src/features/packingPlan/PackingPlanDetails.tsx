@@ -414,6 +414,9 @@ const ItemName = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing.sm};
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
 `;
 
 const RightControls = styled.div`
@@ -423,9 +426,10 @@ const RightControls = styled.div`
     flex-shrink: 0;
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
-        flex-direction: column;
-        align-items: flex-end;
-        align-self: flex-start;
+        display: grid;
+        grid-template-rows: 1fr auto 1fr;
+        justify-items: end;
+        align-self: stretch;
         gap: ${theme.spacing.sm};
     }
 `;
@@ -436,7 +440,10 @@ const ControlsRow = styled.div`
     gap: ${theme.spacing.md};
 
     @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        grid-row: 2;
+        align-self: center;
         gap: ${theme.spacing.sm};
+        margin: 0;
     }
 `;
 
@@ -453,6 +460,11 @@ const PackedBadge = styled.span`
 
     & svg {
         color: white;
+    }
+
+    @media only screen and (max-device-width: 812px) and (orientation: portrait) {
+        grid-row: 1;
+        align-self: start;
     }
 `;
 
@@ -475,8 +487,14 @@ const QuantityInput = styled(Input)<{ $isError?: boolean }>`
 const QuantityWarning = styled.div`
     color: ${theme.colors.status.error.main};
     font-size: 10px;
-    margin-top: 2px;
     font-weight: ${theme.typography.fontWeight.medium};
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    margin-top: 2px;
+    pointer-events: none;
 `;
 
 const DeleteButton = styled.button`
@@ -1269,7 +1287,7 @@ const SortableItemRow = ({
                         </PackedBadge>
                     )}
                     <ControlsRow>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
                             <QuantityInput
                                 type="number"
                                 min="1"
