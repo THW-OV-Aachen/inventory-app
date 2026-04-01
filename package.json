@@ -1,6 +1,6 @@
 {
     "name": "frontend",
-    "homepage": "https://THW-OV-Aachen.github.io/inventory-app",
+    "homepage": "https://thw-ov-aachen.github.io/inventory-app/",
     "private": true,
     "version": "0.0.0",
     "type": "module",
